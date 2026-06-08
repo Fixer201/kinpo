@@ -1,3 +1,15 @@
 .qtcreator/
 build/
 docs/
+*.o
+*.gcda
+*.gcno
+.qmake.stash
+Makefile
+app/Makefile
+tests/Makefile
+moc_*.cpp
+moc_*.h
+target_wrapper.sh
+app/app
+tests/tests
