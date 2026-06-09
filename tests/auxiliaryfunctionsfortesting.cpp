@@ -6,9 +6,9 @@
 #include "auxiliaryfunctionsfortesting.h"
 #include <QTest>
 
-// =======================================================================
-// Хелперы создания данных
-// =======================================================================
+// =====================================================================
+// Вспомогательные функции создания строк CoNLL-U
+// =====================================================================
 
 QString makeTokenLine(int id,
                       const QString& form,
@@ -32,7 +32,7 @@ QString makeTokenLine(int id,
 QString makeMwtLine(const QString& rangeId, const QString& form)
 {
     // Собирает строку Multi-Word Token (MWT) CoNLL-U.
-    // MWT имеет ID вида "N-M" (например, "2-3"), FORM - исходная форма,
+    // MWT имеет ID вида "N-M" (например, "2-3"), FORM — исходная форма,
     // все остальные колонки должны содержать символ "_".
     return QStringLiteral("%1\t%2\t_\t_\t_\t_\t_\t_\t_\t_")
         .arg(rangeId).arg(form);
@@ -46,9 +46,62 @@ QString makeComment(const QString& content)
     return QStringLiteral("# %1").arg(content);
 }
 
-// =======================================================================
-// Хелперы сравнения (с дополнительным логированием несовпадений)
-// =======================================================================
+// =====================================================================
+// Вспомогательные функции создания RawSentence вручную (изолированно от парсера)
+// =====================================================================
+
+RawSentence makeRawSentence(int firstLine, const QString& sentId, const QString& text)
+{
+    // Создаёт пустой RawSentence с заданными метаданными.
+    // Списки tokens и mwtRecords инициализируются пустыми.
+    RawSentence s;
+    s.firstLineNumber = firstLine;
+    s.sentId = sentId;
+    s.text = text;
+    return s;
+}
+
+RawToken makeRawToken(int lineNumber, int id, const QString& form,
+                      const QString& upos, int headId, const QString& deprel)
+{
+    // Создаёт RawToken с минимальным набором полей.
+    // Поля, которые не важны для структурной валидации,
+    // заполняются символом "_" (LEMMA, XPOS, FEATS, DEPS, MISC).
+    RawToken t;
+    t.lineNumber = lineNumber;
+    t.id = id;
+    t.form = form;
+    t.lemma = QStringLiteral("_");
+    t.upos = upos;
+    t.xpos = QStringLiteral("_");
+    t.featsRaw = QStringLiteral("_");
+    t.headId = headId;
+    t.deprel = deprel;
+    t.depsRaw = QStringLiteral("_");
+    t.miscRaw = QStringLiteral("_");
+    return t;
+}
+
+void addToken(RawSentence& sentence, const RawToken& token)
+{
+    // Добавляет токен в конец списка tokens предложения.
+    sentence.tokens.append(token);
+}
+
+void addMwt(RawSentence& sentence, int lineNumber, int rangeStart, int rangeEnd, const QString& form)
+{
+    // Создаёт MwtRecord и добавляет её в конец списка mwtRecords предложения.
+    MwtRecord rec;
+    rec.lineNumber = lineNumber;
+    rec.rangeStart = rangeStart;
+    rec.rangeEnd = rangeEnd;
+    rec.form = form;
+    sentence.mwtRecords.append(rec);
+}
+
+// =====================================================================
+// Вспомогательные функции сравнения
+// =====================================================================
 
 void compareRawSentence(const QString& /*testName*/,
                         const RawSentence& actual,
@@ -67,7 +120,7 @@ void compareRawSentence(const QString& /*testName*/,
     // Проверяет общее количество токенов (обычных + без MWT).
     QCOMPARE(actual.tokens.size(), expectedTokenCount);
 
-    // Если токены есть — дополнительно проверяет FORM первого
+    // Если токены есть дополнительно проверяет FORM первого
     // и UPOS последнего токена (чтобы убедиться, что парсинг
     // прочитал все поля правильно и не потерял порядок).
     if (!actual.tokens.isEmpty()) {
@@ -87,4 +140,26 @@ void compareDiagnostic(const QString& /*testName*/,
 
     // Проверяет текст сообщения об ошибке: должно полностью совпадать.
     QCOMPARE(actual.message, expectedMessage);
+}
+
+void compareOptionalDiagnostic(const QString& /*testName*/,
+                               const std::optional<Diagnostic>& actual,
+                               bool expectValid,
+                               const QString& expectedMessage)
+{
+    if (expectValid) {
+        // Если ожидаем успех, но пришла ошибка выводим её для отладки.
+        if (actual.has_value()) {
+            qDebug() << "[TEST] Неожиданная ошибка валидации:" << actual->message;
+        }
+
+        // Проверяем, что ошибки нет (должно быть std::nullopt).
+        QVERIFY(!actual.has_value());
+    } else {
+        // Ожидаем ошибку с конкретным сообщением.
+        // Сначала проверяем, что ошибка вообще есть.
+        QVERIFY(actual.has_value());
+        // Затем проверяем, что текст сообщения совпадает с ожидаемым.
+        QCOMPARE(actual->message, expectedMessage);
+    }
 }

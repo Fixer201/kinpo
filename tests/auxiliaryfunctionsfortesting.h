@@ -2,9 +2,8 @@
 * \file auxiliaryfunctionsfortesting.h
 * \brief Хелперы для создания тестовых данных и сравнения сложных структур в тестах.
 *
-* Предоставляет функции для сборки строк CoNLL-U и сравнения результатов
-* с детальным логированием (вместо стандартных QCOMPARE, которые не пишут
-* что именно не совпало).
+* Предоставляет функции для сборки строк CoNLL-U, создания RawSentence
+* вручную и сравнения результатов с детальным логированием.
 */
 
 #ifndef AUXILIARYFUNCTIONSFORTESTING_H
@@ -12,7 +11,12 @@
 
 #include <QString>
 #include <QStringList>
+#include <optional>
 #include "datamodel.h"
+
+// ========================================================================
+// Хелперы создания строк CoNLL-U
+// ========================================================================
 
 /*!
 * \brief Собирает строку CoNLL-U из заданных полей.
@@ -55,6 +59,53 @@ QString makeMwtLine(const QString& rangeId,
 */
 QString makeComment(const QString& content);
 
+// ========================================================================
+// Хелперы создания RawSentence вручную (изолированно от парсера)
+// ========================================================================
+
+/*!
+* \brief Создаёт пустой RawSentence с заданными метаданными.
+* \param [in] firstLine Номер первой строки блока.
+* \param [in] sentId    Идентификатор предложения.
+* \param [in] text      Исходный текст предложения.
+* \return Объект RawSentence с пустыми списками tokens и mwtRecords.
+*/
+RawSentence makeRawSentence(int firstLine, const QString& sentId, const QString& text);
+
+/*!
+* \brief Создаёт RawToken с минимальным набором полей (остальные = "_").
+* \param [in] lineNumber Номер строки во входном файле.
+* \param [in] id         Целочисленный ID токена.
+* \param [in] form       Словоформа (FORM).
+* \param [in] upos       Универсальная часть речи (UPOS).
+* \param [in] headId     ID головного токена (HEAD).
+* \param [in] deprel     Синтаксическое отношение (DEPREL).
+* \return Объект RawToken с заполненными полями.
+*/
+RawToken makeRawToken(int lineNumber, int id, const QString& form,
+                      const QString& upos, int headId, const QString& deprel);
+
+/*!
+* \brief Добавляет токен в список tokens предложения.
+* \param [in,out] sentence Предложение, в которое добавляется токен.
+* \param [in]     token    Токен для добавления.
+*/
+void addToken(RawSentence& sentence, const RawToken& token);
+
+/*!
+* \brief Добавляет MWT-запись в список mwtRecords предложения.
+* \param [in,out] sentence Предложение, в которое добавляется MWT.
+* \param [in] lineNumber   Номер строки MWT.
+* \param [in] rangeStart   Начальный ID диапазона.
+* \param [in] rangeEnd     Конечный ID диапазона.
+* \param [in] form         Исходная форма.
+*/
+void addMwt(RawSentence& sentence, int lineNumber, int rangeStart, int rangeEnd, const QString& form);
+
+// ========================================================================
+// Хелперы сравнения (с детальным логированием при несовпадении)
+// ========================================================================
+
 /*!
 * \brief Сравнивает структуру RawSentence с ожидаемыми значениями.
 * \param [in] testName                Имя текущего теста (для логирования).
@@ -88,5 +139,20 @@ void compareDiagnostic(const QString& /*testName*/,
                        const Diagnostic& actual,
                        const QString& expectedKind,
                        const QString& expectedMessage);
+
+/*!
+* \brief Сравнивает std::optional<Diagnostic> с ожидаемым результатом.
+* \param [in] testName       Имя текущего теста (для логирования).
+* \param [in] actual         Фактический результат (nullopt или Diagnostic).
+* \param [in] expectValid    true если ожидается std::nullopt, false если ожидается ошибка.
+* \param [in] expectedMessage Ожидаемое сообщение об ошибке (игнорируется при expectValid=true).
+*
+* При ожидании успеха, но получении ошибки выводит сообщение ошибки в qDebug.
+* При ожидании ошибки проверяет наличие значения и совпадение сообщения.
+*/
+void compareOptionalDiagnostic(const QString& /*testName*/,
+                               const std::optional<Diagnostic>& actual,
+                               bool expectValid,
+                               const QString& expectedMessage);
 
 #endif // AUXILIARYFUNCTIONSFORTESTING_H

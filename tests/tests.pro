@@ -11,12 +11,16 @@ SOURCES += \
     main.cpp \
     auxiliaryfunctionsfortesting.cpp \
     TEST_ParseSentenceBlock.cpp \
+    TEST_ValidateSentenceStructure.cpp \
     $$PWD/../src/datamodel.cpp \
     $$PWD/../src/inputmodule.cpp
 
 HEADERS += \
     TEST_ParseSentenceBlock.h \
+    TEST_ValidateSentenceStructure.h \
     auxiliaryfunctionsfortesting.h \
+    $$PWD/../src/datamodel.h \
+    $$PWD/../src/inputmodule.h
 
 # gcov
 QMAKE_CXXFLAGS += --coverage -O0 -g
