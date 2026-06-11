@@ -82,6 +82,18 @@ RawToken makeRawToken(int lineNumber, int id, const QString& form,
     return t;
 }
 
+
+RawToken makeRawToken(int lineNumber, int id, const QString& form,
+                      const QString& upos, int headId, const QString& deprel,
+                      const QString& featsRaw) {
+    RawToken t = makeRawToken(lineNumber, id, form, upos, headId, deprel);
+
+    t.featsRaw = featsRaw;
+
+    return t;
+}
+
+
 void addToken(RawSentence& sentence, const RawToken& token)
 {
     // Добавляет токен в конец списка tokens предложения.
@@ -103,7 +115,7 @@ void addMwt(RawSentence& sentence, int lineNumber, int rangeStart, int rangeEnd,
 // Вспомогательные функции сравнения
 // =====================================================================
 
-void compareRawSentence(const QString& /*testName*/,
+void compareRawSentence(const QString& testName,
                         const RawSentence& actual,
                         const QString& expectedSentId,
                         const QString& expectedText,
@@ -112,7 +124,13 @@ void compareRawSentence(const QString& /*testName*/,
                         const QString& expectedLastTokenUpos)
 {
     // Проверяет sentId: должен точно совпадать с ожидаемым значением.
+    if (actual.sentId != expectedSentId) {
+        qDebug() << "[TEST FAIL]" << testName << "sendId не совпадает:"
+                 << "actual =" << actual.sentId
+                 << "expected =" << expectedSentId;
+    }
     QCOMPARE(actual.sentId, expectedSentId);
+
 
     // Проверяет text: должен точно совпадать с ожидаемым значением.
     QCOMPARE(actual.text, expectedText);
@@ -129,20 +147,27 @@ void compareRawSentence(const QString& /*testName*/,
     }
 }
 
-void compareDiagnostic(const QString& /*testName*/,
+void compareDiagnostic(const QString& testName,
                        const Diagnostic& actual,
                        const QString& expectedKind,
                        const QString& expectedMessage)
 {
     // Преобразует вид ошибки в строку (например, InputFormatError)
     // и сравнивает с ожидаемым.
-    QCOMPARE(diagnosticKindToString(actual.kind), expectedKind);
+    QString actualKind = diagnosticKindToString(actual.kind);
+
+    if (actualKind != expectedKind) {
+        qDebug() << "[TEST FAIL]" << testName << "ошибки не совпадают:"
+                 << actualKind << "!=" << expectedKind;
+    }
+    QCOMPARE(actualKind, expectedKind);
+
 
     // Проверяет текст сообщения об ошибке: должно полностью совпадать.
     QCOMPARE(actual.message, expectedMessage);
 }
 
-void compareOptionalDiagnostic(const QString& /*testName*/,
+void compareOptionalDiagnostic(const QString& testName,
                                const std::optional<Diagnostic>& actual,
                                bool expectValid,
                                const QString& expectedMessage)
@@ -150,7 +175,7 @@ void compareOptionalDiagnostic(const QString& /*testName*/,
     if (expectValid) {
         // Если ожидаем успех, но пришла ошибка выводим её для отладки.
         if (actual.has_value()) {
-            qDebug() << "[TEST] Неожиданная ошибка валидации:" << actual->message;
+            qDebug() << "[TEST FAIL] Неожиданная ошибка валидации:" << testName << actual->message;
         }
 
         // Проверяем, что ошибки нет (должно быть std::nullopt).
@@ -159,6 +184,12 @@ void compareOptionalDiagnostic(const QString& /*testName*/,
         // Ожидаем ошибку с конкретным сообщением.
         // Сначала проверяем, что ошибка вообще есть.
         QVERIFY(actual.has_value());
+
+        if (actual->message != expectedMessage) {
+            qDebug() << "[TEST FAIL]" << testName
+                     << "сообщеиня не совпадают:" << actual->message
+                     << "!=" << expectedMessage;
+        }
         // Затем проверяем, что текст сообщения совпадает с ожидаемым.
         QCOMPARE(actual->message, expectedMessage);
     }

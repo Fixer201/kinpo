@@ -86,6 +86,22 @@ RawToken makeRawToken(int lineNumber, int id, const QString& form,
                       const QString& upos, int headId, const QString& deprel);
 
 /*!
+* \brief Создаёт RawToken с минимальным набором полей (остальные = "_").
+* \param [in] lineNumber Номер строки во входном файле.
+* \param [in] id         Целочисленный ID токена.
+* \param [in] form       Словоформа (FORM).
+* \param [in] upos       Универсальная часть речи (UPOS).
+* \param [in] headId     ID головного токена (HEAD).
+* \param [in] deprel     Синтаксическое отношение (DEPREL).
+* \param [in] featsRaw   Синтаксические признаки (FEATS).
+* \return Объект RawToken с заполненными полями.
+*/
+RawToken makeRawToken(int lineNumber, int id, const QString& form,
+                      const QString& upos, int headId, const QString& deprel,
+                      const QString& featsRaw);
+
+
+/*!
 * \brief Добавляет токен в список tokens предложения.
 * \param [in,out] sentence Предложение, в которое добавляется токен.
 * \param [in]     token    Токен для добавления.
