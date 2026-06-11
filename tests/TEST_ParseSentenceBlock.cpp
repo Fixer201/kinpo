@@ -22,7 +22,7 @@ TEST_ParseSentenceBlock::~TEST_ParseSentenceBlock() {}
 
 void TEST_ParseSentenceBlock::TestParseSentenceBlock_data()
 {
-    // Колонки DDT-таблицы
+    // Колонки DDT таблицы
     QTest::addColumn<QStringList>("block");               ///< Строки CoNLL-U блока
     QTest::addColumn<int>("firstLineNumber");             ///< Номер первой строки во входном файле
     QTest::addColumn<QString>("expectedSentId");          ///< Ожидаемый sentId (или пусто при ошибке)

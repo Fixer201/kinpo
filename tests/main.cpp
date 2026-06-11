@@ -8,12 +8,14 @@
 
 #include <QtTest>
 
+#include "TEST_Buildsentencemodel.h"
 #include "TEST_ParseSentenceBlock.h"
 #include "TEST_ValidateSentenceStructure.h"
 
 int main(int argc, char *argv[])
 {
     int status = 0;
+    status |= QTest::qExec(new TEST_BuildSentenceModel, argc, argv);
     status |= QTest::qExec(new TEST_ParseSentenceBlock, argc, argv);
     status |= QTest::qExec(new TEST_ValidateSentenceStructure, argc, argv);
     return status;

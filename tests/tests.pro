@@ -8,6 +8,7 @@ TEMPLATE = app
 INCLUDEPATH += $$PWD/../src
 
 SOURCES += \
+    TEST_Buildsentencemodel.cpp \
     main.cpp \
     auxiliaryfunctionsfortesting.cpp \
     TEST_ParseSentenceBlock.cpp \
@@ -16,6 +17,7 @@ SOURCES += \
     $$PWD/../src/inputmodule.cpp
 
 HEADERS += \
+    TEST_Buildsentencemodel.h \
     TEST_ParseSentenceBlock.h \
     TEST_ValidateSentenceStructure.h \
     auxiliaryfunctionsfortesting.h \
