@@ -11,7 +11,78 @@
 #include <QString>
 #include <QList>
 #include <QHash>
+#include <QMetaType>
 #include <optional>
+
+/*!
+* \brief Типизированное представление синтаксических отношений (DEPREL).
+*
+* Соответствует спецификации CoNLL-U и расширениям UD English EWT.
+* Подтипы (например, nsubj:pass) представлены отдельными значениями,
+* а не приравниваются к базовому типу. Исходная строка сохраняется
+* в TokenNode::deprelRaw.
+*/
+enum class Deprel {
+    Det,        ///< Определитель (det)
+    Amod,       ///< Атрибутивное прилагательное (amod)
+    Nsubj,      ///< Подлежащее (nsubj)
+    NsubjPass,  ///< Подлежащее пассива (nsubj:pass)
+    Obj,        ///< Прямое дополнение (obj)
+    Obl,        ///< Косвенное дополнение (obl)
+    Case,       ///< Предложный падеж (case)
+    Nmod,       ///< Именное модификатор (nmod)
+    NmodPoss,   ///< Притяжательный модификатор (nmod:poss)
+    NmodDesc,   ///< Описательный модификатор — титул + имя (nmod:desc)
+    Flat,       ///< Плоский составной (flat)
+    FlatName,   ///< Плоский составной — имя (flat:name)
+    Compound,   ///< Составное (compound)
+    Fixed,      ///< Фиксированное выражение (fixed)
+    Root,       ///< Корневое отношение (root)
+    Aux,        ///< Вспомогательный глагол (aux)
+    AuxPass,    ///< Вспомогательный глагол пассива (aux:pass)
+    Cop,        ///< Связка (cop)
+    Mark,       ///< Маркер подчинённой клаузы (mark)
+    Punct,      ///< Пунктуация (punct)
+    Vocative,   ///< Обращение (vocative)
+    Advmod,     ///< Наречие-модификатор (advmod)
+    Conj,       ///< Сочинительный элемент (conj)
+    Cc,         ///< Союз (cc)
+    CcPreconj,  ///< Предсоюз (cc:preconj)
+    Expl,       ///< Эксплетив (expl)
+    Xcomp,      ///< Открытый клаузальный комплемент (xcomp)
+    Appos,      ///< Аппозиция (appos)
+    Advcl,      ///< Наречная клауза (advcl)
+    Other       ///< Любое значение, не используемое правилами
+};
+Q_DECLARE_METATYPE(Deprel)
+
+/*!
+* \brief Типизированное представление универсальных частей речи (UPOS).
+*
+* Соответствует спецификации CoNLL-U: каждому строковому тегу UPOS
+* сопоставлено значение перечисления. Преобразование выполняется
+* в buildSentenceModel при построении TokenNode из RawToken.
+*/
+enum class Upos {
+    ADJ,      ///< Прилагательное (Adjective)
+    ADP,      ///< Адпозиция (Adposition)
+    ADV,      ///< Наречие (Adverb)
+    AUX,      ///< Вспомогательный глагол (Auxiliary)
+    CCONJ,    ///< Сочинительный союз (Coordinating conjunction)
+    DET,      ///< Детерминатив (Determiner)
+    INTJ,     ///< Междометие (Interjection)
+    NOUN,     ///< Существительное (Noun)
+    NUM,      ///< Числительное (Numeral)
+    PART,     ///< Частица (Particle)
+    PRON,     ///< Местоимение (Pronoun)
+    PROPN,    ///< Имя собственное (Proper noun)
+    PUNCT,    ///< Пунктуация (Punctuation)
+    SCONJ,    ///< Подчинительный союз (Subordinating conjunction)
+    SYM,      ///< Символ (Symbol)
+    VERB,     ///< Глагол (Verb)
+    X         ///< Прочее (Other)
+};
+Q_DECLARE_METATYPE(Upos)
 
 /*!
 * \brief Перечисление категорий ошибок, прерывающих конвейер.
@@ -100,4 +171,108 @@ struct RawSentence {
     QString text;                 ///< Исходный текст предложения
     QList<RawToken> tokens;       ///< Обычные токены с целочисленным ID
     QList<MwtRecord> mwtRecords;  ///< MWT-записи (ID вида N-M)
+};
+
+Q_DECLARE_METATYPE(RawSentence)
+
+// ------------------------------------------------------------------------
+// Типы для аналитической модели (buildSentenceModel)
+// ------------------------------------------------------------------------
+
+/*!
+* \brief Значение числа (Number) в FEATS.
+*/
+enum class NumberValue { Sing, Plur };
+
+/*!
+* \brief Значение времени (Tense) в FEATS.
+*/
+enum class TenseValue { Past, Pres };
+
+/*!
+* \brief Значение формы глагола (VerbForm) в FEATS.
+*/
+enum class VerbFormValue { Inf, Part };
+
+/*!
+* \brief Значение степени сравнения (Degree) в FEATS.
+*/
+enum class DegreeValue { Pos, Cmp, Sup };
+
+/*!
+* \brief Значение падежа (Case) в FEATS.
+*/
+enum class CaseValue { Nom, Acc };
+
+/*!
+* \brief Типизированное представление FEATS, используемых правилами.
+*
+* Парсится из строки FEATS в buildSentenceModel. Неиспользуемые
+* признаки (например, Person) не хранятся.
+*/
+struct TokenFeatures {
+    std::optional<NumberValue> number;      ///< Number=Sing/Plur
+    std::optional<TenseValue> tense;        ///< Tense=Past/Pres
+    std::optional<VerbFormValue> verbForm;  ///< VerbForm=Inf/Part
+    std::optional<DegreeValue> degree;      ///< Degree=Pos/Cmp/Sup
+    std::optional<CaseValue> caseValue;     ///< Case=Nom/Acc
+    bool poss = false;                      ///< Poss=Yes
+    bool polarityNeg = false;               ///< Polarity=Neg
+    bool numTypeOrd = false;                ///< NumType=Ord
+    bool voicePass = false;                 ///< Voice=Pass
+};
+
+/*!
+* \brief Один токен в аналитической модели.
+*
+* Содержит типизированные поля (Upos, Deprel, TokenFeatures),
+* связи дерева зависимостей (parent/children) и линейные связи.
+*/
+struct TokenNode {
+    int lineNumber = 0;                ///< Номер строки во входном файле
+    int id = 0;                        ///< Целочисленный ID токена
+    int headId = 0;                    ///< ID родителя (0 для корня)
+    QString form;                      ///< FORM
+    QString lemma;                     ///< LEMMA
+    Upos upos = Upos::X;               ///< Типизированный UPOS
+    QString xpos;                      ///< XPOS
+    QString deprelRaw;                 ///< DEPREL как строка
+    Deprel deprel = Deprel::Other;     ///< Типизированный DEPREL
+    QString featsRaw;                  ///< FEATS строка
+    TokenFeatures features;            ///< Типизированные FEATS
+    QString depsRaw;                   ///< DEPS
+    QString miscRaw;                   ///< MISC
+
+    TokenNode* parent = nullptr;              ///< Родительский токен
+    QList<TokenNode*> children;                 ///< Прямые зависимые
+    TokenNode* previousToken = nullptr;         ///< Предыдущий токен
+    TokenNode* nextToken = nullptr;             ///< Следующий токен
+    bool isMwtFragment = false;               ///< Входит в MWT-диапазон
+
+    /*! \brief Следующий токен, пропуская PUNCT и MWT. */
+    const TokenNode* nextNonPunct() const;
+    /*! \brief Предыдущий токен, пропуская PUNCT и MWT. */
+    const TokenNode* previousNonPunct() const;
+};
+
+/*!
+* \brief Внутреннее представление одного предложения.
+*
+* Хранит TokenNode в nodeStorage (по значению); tokens и tokensById
+* — адреса тех же объектов. Копирование запрещено.
+*/
+struct SentenceModel {
+    std::vector<TokenNode> nodeStorage;    ///< Хранилище токенов по значению
+    QString sentId;                        ///< Идентификатор предложения
+    QString text;                          ///< Исходный текст
+    QList<TokenNode*> tokens;              ///< Линейный порядок
+    QHash<int, TokenNode*> tokensById;     ///< Доступ по ID
+    TokenNode* rootToken = nullptr;        ///< Корневой токен
+    QList<MwtRecord> mwtRecords;           ///< MWT-записи
+
+    SentenceModel() = default;
+    SentenceModel(const SentenceModel&) = delete;
+    SentenceModel& operator=(const SentenceModel&) = delete;
+    SentenceModel(SentenceModel&&) = default;
+    SentenceModel& operator=(SentenceModel&&) = default;
 };

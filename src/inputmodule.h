@@ -14,6 +14,24 @@
 #include <variant>
 
 /*!
+* \brief Преобразует строковый UPOS-тег в enum.
+* \param [in] upos Строка из входного файла (например, "NOUN").
+* \return Соответствующее значение Upos.
+* \note Вызывается после валидации parseTokenLine — строка гарантированно
+*       содержится в справочнике validUpos.
+*/
+Upos parseUpos(const QString& upos);
+
+/*!
+* \brief Преобразует строковый DEPREL-тег в enum.
+* \param [in] deprel Строка из входного файла (например, "nsubj").
+* \return Соответствующее значение Deprel; Deprel::Other для тегов,
+*         не используемых правилами.
+* \note Вызывается в buildSentenceModel после парсинга токена.
+*/
+Deprel parseDeprel(const QString& deprel);
+
+/*!
 * \brief Разобрать один блок строк CoNLL-U в RawSentence.
 * \param [in] block Список строк одного предложения (без пустых-разделительных строк).
 * \param [in] firstLineNumber Номер первой строки блока во входном файле.
@@ -29,3 +47,24 @@
 */
 std::variant<RawSentence, Diagnostic> parseSentenceBlock(
     const QStringList& block, int firstLineNumber);
+
+/*!
+* \brief Проверить корректность структуры предложения по условиям, для которых нужно знать все токены сразу.
+* \param [in] sentence Валидированное предложение (после parseSentenceBlock).
+* \return std::nullopt если ошибок нет; Diagnostic{kind=InputFormatError} если структура нарушена.
+*
+* Проверяет:
+*  - число токенов <= 200;
+*  - для каждого MwtRecord: rangeStart/rangeEnd в диапазоне ID токенов, все ID в диапазоне присутствуют и образуют непрерывную последовательность;
+*  - для каждого токена: HEAD в {ID токенов} ∪ {0}, HEAD != ID токена;
+*  - ровно один токен имеет HEAD=0;
+*  - нет циклов в дереве зависимостей (обход цепочки HEAD с маркировкой "в пути" / "завершён").
+*/
+std::optional<Diagnostic> validateSentenceStructure(const RawSentence& sentence);
+
+/*!
+* \brief Построить SentenceModel из валидированного RawSentence.
+* \param [in] rawSentence Сырое предложение после validateSentenceStructure.
+* \return Внутреннее представление предложения с деревом, линейными связями и типизированными полями.
+*/
+SentenceModel buildSentenceModel(const RawSentence& rawSentence);
