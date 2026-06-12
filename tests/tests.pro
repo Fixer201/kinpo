@@ -9,6 +9,7 @@ INCLUDEPATH += $$PWD/../src
 
 SOURCES += \
     TEST_Buildsentencemodel.cpp \
+    TEST_CheckSentence.cpp \
     main.cpp \
     auxiliaryfunctionsfortesting.cpp \
     TEST_ParseSentenceBlock.cpp \
@@ -18,6 +19,7 @@ SOURCES += \
 
 HEADERS += \
     TEST_Buildsentencemodel.h \
+    TEST_CheckSentence.h \
     TEST_ParseSentenceBlock.h \
     TEST_ValidateSentenceStructure.h \
     auxiliaryfunctionsfortesting.h \
