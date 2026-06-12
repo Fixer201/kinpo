@@ -167,8 +167,53 @@ void compareDiagnostic(const QString& /*testName*/,
 * При ожидании ошибки проверяет наличие значения и совпадение сообщения.
 */
 void compareOptionalDiagnostic(const QString& /*testName*/,
-                               const std::optional<Diagnostic>& actual,
-                               bool expectValid,
-                               const QString& expectedMessage);
+                                const std::optional<Diagnostic>& actual,
+                                bool expectValid,
+                                const QString& expectedMessage);
+
+// =====================================================================
+// Хелперы сравнения CandidateError / QSet<CandidateError>
+// =====================================================================
+
+/*!
+* \brief Сравнивает набор CandidateError с ожидаемыми ruleId.
+* \param [in] testName      Имя текущего теста.
+* \param [in] actual        Фактический набор кандидатов.
+* \param [in] expectedRuleIds Множество ожидаемых идентификаторов правил.
+*
+* При несовпадении выводит в лог имя теста и расхождение.
+*/
+void compareCandidateSet(const QString& testName,
+                         const QSet<CandidateError>& actual,
+                         const QSet<QString>& expectedRuleIds);
+
+/*!
+* \brief Сравнивает наборы conflictTokenIds.
+* \param [in] testName        Имя текущего теста.
+* \param [in] actual            Фактический набор кандидатов.
+* \param [in] expectedZones     Список ожидаемых conflictTokenIds.
+*
+* Каждый QSet<int> из expectedZones должен присутствовать у ровно одного кандидата.
+* При несовпадении выводит в лог имя теста и расхождение.
+*/
+void compareConflictZones(const QString& testName,
+                          const QSet<CandidateError>& actual,
+                          const QList<QSet<int>>& expectedZones);
+
+/*!
+* \brief Сравнивает содержимое конкретной зоны ConflictZoneMap.
+* \param [in] testName        Имя текущего теста.
+* \param [in] zoneMap         Фактическая карта зон.
+* \param [in] zoneKey         Ключ зоны (conflictTokenIds).
+* \param [in] expectedCount   Ожидаемое число кандидатов в зоне.
+* \param [in] expectedRuleIds Ожидаемые ruleId в зоне.
+*
+* При несовпадении выводит в лог имя теста и расхождение.
+*/
+void compareZoneCandidates(const QString& testName,
+                           const ConflictZoneMap& zoneMap,
+                           const QSet<int>& zoneKey,
+                           int expectedCount,
+                           const QSet<QString>& expectedRuleIds);
 
 #endif // AUXILIARYFUNCTIONSFORTESTING_H

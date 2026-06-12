@@ -168,21 +168,16 @@ void compareDiagnostic(const QString& testName,
 }
 
 void compareOptionalDiagnostic(const QString& testName,
-                               const std::optional<Diagnostic>& actual,
-                               bool expectValid,
-                               const QString& expectedMessage)
+                                const std::optional<Diagnostic>& actual,
+                                bool expectValid,
+                                const QString& expectedMessage)
 {
     if (expectValid) {
-        // Если ожидаем успех, но пришла ошибка выводим её для отладки.
         if (actual.has_value()) {
             qDebug() << "[TEST FAIL] Неожиданная ошибка валидации:" << testName << actual->message;
         }
-
-        // Проверяем, что ошибки нет (должно быть std::nullopt).
         QVERIFY(!actual.has_value());
     } else {
-        // Ожидаем ошибку с конкретным сообщением.
-        // Сначала проверяем, что ошибка вообще есть.
         QVERIFY(actual.has_value());
 
         if (actual->message != expectedMessage) {
@@ -190,7 +185,95 @@ void compareOptionalDiagnostic(const QString& testName,
                      << "сообщеиня не совпадают:" << actual->message
                      << "!=" << expectedMessage;
         }
-        // Затем проверяем, что текст сообщения совпадает с ожидаемым.
         QCOMPARE(actual->message, expectedMessage);
     }
+}
+
+// =====================================================================
+// Вспомогательные функции сравнения CandidateError / QSet<CandidateError>
+// =====================================================================
+
+void compareCandidateSet(const QString& testName,
+                         const QSet<CandidateError>& actual,
+                         const QSet<QString>& expectedRuleIds)
+{
+    QSet<QString> actualRuleIds;
+    for (const auto& ce : actual) {
+        actualRuleIds.insert(ce.ruleId);
+    }
+    if (actualRuleIds != expectedRuleIds) {
+        qDebug() << "[TEST FAIL]" << testName
+                 << "ruleIds не совпадают:" << actualRuleIds
+                 << "expected:" << expectedRuleIds;
+    }
+    QCOMPARE(actualRuleIds, expectedRuleIds);
+}
+
+void compareConflictZones(const QString& testName,
+                          const QSet<CandidateError>& actual,
+                          const QList<QSet<int>>& expectedZones)
+{
+    QList<QSet<int>> actualZones;
+    for (const auto& ce : actual) {
+        actualZones.append(ce.conflictTokenIds);
+    }
+
+    int matchCount = 0;
+    for (const QSet<int>& expectedZone : expectedZones) {
+        bool found = false;
+        for (const QSet<int>& actualZone : actualZones) {
+            if (actualZone == expectedZone) {
+                found = true;
+                break;
+            }
+        }
+        QVERIFY2(found, qPrintable(QString("[%1] Не найдена зона конфликта %2")
+                                   .arg(testName)
+                                   .arg([](const QSet<int>& s){
+                                       QStringList parts;
+                                       for (int v : s) parts.append(QString::number(v));
+                                       return parts.isEmpty() ? QStringLiteral("∅") : parts.join(',');
+                                   }(expectedZone))));
+        if (found) ++matchCount;
+    }
+
+    QCOMPARE(matchCount, expectedZones.size());
+}
+
+void compareZoneCandidates(const QString& testName,
+                           const ConflictZoneMap& zoneMap,
+                           const QSet<int>& zoneKey,
+                           int expectedCount,
+                           const QSet<QString>& expectedRuleIds)
+{
+    auto it = zoneMap.zones.find(zoneKey);
+    if (it == zoneMap.zones.end()) {
+        qDebug() << "[TEST FAIL]" << testName
+                 << "зона не найдена:" << [](const QSet<int>& s){
+                     QStringList parts;
+                     for (int v : s) parts.append(QString::number(v));
+                     return parts.isEmpty() ? QStringLiteral("∅") : parts.join(',');
+                 }(zoneKey);
+        QVERIFY2(it != zoneMap.zones.end(), qPrintable(QString("[%1] Зона не найдена").arg(testName)));
+        return;
+    }
+
+    const QSet<CandidateError>& candidates = it.value();
+    if (candidates.size() != expectedCount) {
+        qDebug() << "[TEST FAIL]" << testName
+                 << "число кандидатов не совпадает:" << candidates.size()
+                 << "expected:" << expectedCount;
+    }
+    QCOMPARE(candidates.size(), expectedCount);
+
+    QSet<QString> actualRuleIds;
+    for (const auto& ce : candidates) {
+        actualRuleIds.insert(ce.ruleId);
+    }
+    if (actualRuleIds != expectedRuleIds) {
+        qDebug() << "[TEST FAIL]" << testName
+                 << "ruleIds не совпадают:" << actualRuleIds
+                 << "expected:" << expectedRuleIds;
+    }
+    QCOMPARE(actualRuleIds, expectedRuleIds);
 }
