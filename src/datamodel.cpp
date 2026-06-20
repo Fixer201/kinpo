@@ -5,6 +5,32 @@
 
 #include "datamodel.h"
 
+// ------------------------------------------------------------------------
+// TokenNode navigation
+// ------------------------------------------------------------------------
+
+const TokenNode* TokenNode::nextNonPunct() const
+{
+    const TokenNode* current = nextToken;
+    while (current != nullptr) {
+        if (current->upos != Upos::PUNCT && !current->isMwtFragment)
+            return current;
+        current = current->nextToken;
+    }
+    return nullptr;
+}
+
+const TokenNode* TokenNode::previousNonPunct() const
+{
+    const TokenNode* current = previousToken;
+    while (current != nullptr) {
+        if (current->upos != Upos::PUNCT && !current->isMwtFragment)
+            return current;
+        current = current->previousToken;
+    }
+    return nullptr;
+}
+
 QString diagnosticKindToString(DiagnosticKind kind)
 {
     switch (kind) {

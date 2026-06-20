@@ -11,8 +11,10 @@
 #include <QString>
 #include <QList>
 #include <QHash>
+#include <QSet>
 #include <QMetaType>
 #include <optional>
+#include <memory>
 
 /*!
 * \brief Типизированное представление синтаксических отношений (DEPREL).
@@ -271,8 +273,117 @@ struct SentenceModel {
     QList<MwtRecord> mwtRecords;           ///< MWT-записи
 
     SentenceModel() = default;
-    SentenceModel(const SentenceModel&) = delete;
-    SentenceModel& operator=(const SentenceModel&) = delete;
-    SentenceModel(SentenceModel&&) = default;
-    SentenceModel& operator=(SentenceModel&&) = default;
+};
+
+inline uint qHash(Upos key, uint seed = 0) noexcept
+{
+    return qHash(static_cast<int>(key), seed);
+}
+
+// ------------------------------------------------------------------------
+// Типы для системы грамматической проверки (checkersystem)
+// ------------------------------------------------------------------------
+
+/*!
+* \struct CandidateError
+* \brief Один найденный кандидат ошибки от правила.
+*/
+struct CandidateError {
+    QString ruleId;            ///< Идентификатор правила (например "ART-001")
+    QString sentId;            ///< Идентификатор предложения
+    QList<int> displayTokenIds; ///< ID токенов, отображаемых в сообщении
+    QSet<int> conflictTokenIds; ///< ID токенов, определяющих зону конфликта
+
+    bool operator==(const CandidateError& other) const {
+        return ruleId == other.ruleId &&
+               sentId == other.sentId &&
+               displayTokenIds == other.displayTokenIds &&
+               conflictTokenIds == other.conflictTokenIds;
+    }
+};
+
+inline uint qHash(const CandidateError& ce, uint seed = 0) noexcept
+{
+    uint h = qHash(ce.ruleId, seed);
+    for (int id : ce.displayTokenIds)
+        h ^= qHash(id, seed) + 0x9e3779b9;
+    for (int id : ce.conflictTokenIds)
+        h ^= qHash(id, seed) + 0x9e3779b9;
+    return h;
+}
+
+Q_DECLARE_METATYPE(CandidateError)
+
+/*!
+* \enum PriorityConditionKind
+* \brief Условия применения приоритета между правилами.
+*/
+enum class PriorityConditionKind {
+    Always,             ///< Приоритет применяется всегда
+    Art003LanguageCase  ///< Зависит от структуры предложения (ENGLISH + language)
+};
+
+Q_DECLARE_METATYPE(PriorityConditionKind)
+
+/*!
+* \struct PriorityIndex
+* \brief Карта условных приоритетов между правилами.
+*
+* conditionsByHigherRule[higher][lower] = условие.
+*/
+struct PriorityIndex {
+    QHash<QString, QHash<QString, PriorityConditionKind>> conditionsByHigherRule;
+};
+
+Q_DECLARE_METATYPE(PriorityIndex)
+
+/*!
+* \struct DocumentModel
+* \brief Модель всего документа.
+*
+* Хранит предложения через unique_ptr для гарантии отсутствия
+* копирования и стабильности адресов TokenNode*.
+*/
+struct DocumentModel {
+    std::vector<std::unique_ptr<SentenceModel>> sentences; ///< Список предложений
+    QHash<QString, SentenceModel*> sentById; ///< Индекс по sentId
+};
+
+// Forward declarations
+class Rule;
+
+/*!
+* \struct CheckerRuntime
+* \brief Runtime-контекст с индексами и ресурсами.
+*/
+struct CheckerRuntime {
+    QHash<Upos, QSet<const Rule*>> dispatch; ///< Диспетчеризация по UPOS
+    PriorityIndex priorityIndex; ///< Приоритеты между правилами
+};
+
+/*!
+* \class Rule
+* \brief Базовый класс для всех правил грамматической проверки.
+*/
+class Rule {
+public:
+    virtual ~Rule() = default;
+
+    virtual QString ruleId() const = 0;
+    virtual QSet<Upos> anchorUpos() const = 0;
+    virtual bool canConflict() const = 0;
+
+    virtual QSet<CandidateError> check(const TokenNode& anchor,
+                                       int sentenceIndex,
+                                       const DocumentModel& document,
+                                       const CheckerRuntime& runtime) const = 0;
+};
+
+/*!
+* \struct ConflictZoneMap
+* \brief Карта зон конфликтов: каждой группе conflictTokenIds
+*        соответствует набор кандидатов, конкурирующих за одну ошибку.
+*/
+struct ConflictZoneMap {
+    QHash<QSet<int>, QSet<CandidateError>> zones;
 };
