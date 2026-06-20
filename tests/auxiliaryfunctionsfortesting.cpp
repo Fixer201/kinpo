@@ -277,3 +277,31 @@ void compareZoneCandidates(const QString& testName,
     }
     QCOMPARE(actualRuleIds, expectedRuleIds);
 }
+
+void compareSingleCandidate(const QString& testName,
+                            const CandidateError& actual,
+                            const QString& expectedRuleId,
+                            const QList<int>& expectedDisplayIds,
+                            const QSet<int>& expectedConflictIds)
+{
+    if (actual.ruleId != expectedRuleId) {
+        qDebug() << "[TEST FAIL]" << testName
+                 << "ruleId не совпадает:" << actual.ruleId
+                 << "expected:" << expectedRuleId;
+    }
+    QCOMPARE(actual.ruleId, expectedRuleId);
+
+    if (actual.displayTokenIds != expectedDisplayIds) {
+        qDebug() << "[TEST FAIL]" << testName
+                 << "displayTokenIds не совпадают:" << actual.displayTokenIds
+                 << "expected:" << expectedDisplayIds;
+    }
+    QCOMPARE(actual.displayTokenIds, expectedDisplayIds);
+
+    if (actual.conflictTokenIds != expectedConflictIds) {
+        qDebug() << "[TEST FAIL]" << testName
+                 << "conflictTokenIds не совпадают:" << actual.conflictTokenIds
+                 << "expected:" << expectedConflictIds;
+    }
+    QCOMPARE(actual.conflictTokenIds, expectedConflictIds);
+}

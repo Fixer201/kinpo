@@ -13,6 +13,7 @@
 #include <QStringList>
 #include <optional>
 #include "datamodel.h"
+#include "checkersystem.h"
 
 // ========================================================================
 // Хелперы создания строк CoNLL-U
@@ -215,5 +216,21 @@ void compareZoneCandidates(const QString& testName,
                            const QSet<int>& zoneKey,
                            int expectedCount,
                            const QSet<QString>& expectedRuleIds);
+
+/*!
+* \brief Сравнивает поля одного CandidateError с ожидаемыми значениями.
+* \param [in] testName           Имя текущего теста.
+* \param [in] actual             Фактический CandidateError.
+* \param [in] expectedRuleId     Ожидаемый ruleId.
+* \param [in] expectedDisplayIds Ожидаемые displayTokenIds.
+* \param [in] expectedConflictIds Ожидаемые conflictTokenIds.
+*
+* При несовпадении любого поля выводит в лог имя теста и расхождение.
+*/
+void compareSingleCandidate(const QString& testName,
+                            const CandidateError& actual,
+                            const QString& expectedRuleId,
+                            const QList<int>& expectedDisplayIds,
+                            const QSet<int>& expectedConflictIds);
 
 #endif // AUXILIARYFUNCTIONSFORTESTING_H
