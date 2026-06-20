@@ -13,7 +13,8 @@
 
 #include "TEST_CheckSentence.h"
 #include "datamodel.h"
-#include "inputmodule.h"
+#include "modelbuilder.h"
+#include "checkersystem.h"
 #include "auxiliaryfunctionsfortesting.h"
 
 // ========================================================================
@@ -22,8 +23,8 @@
 
 namespace {
 
-// ART-001 — лишний артикль перед PROPN.
-// Срабатывает на DET с формой a/an/the, когда родитель — PROPN.
+// ART-001 — лишний артикль перед PROPN
+// Срабатывает на DET с формой a/an/the, когда родитель — PROPN
 class StubRule_ART001 : public Rule {
 public:
     QString ruleId() const override { return QStringLiteral("ART-001"); }
@@ -52,8 +53,8 @@ public:
     }
 };
 
-// ART-006 — неверный a/an.
-// Срабатывает на "an" перед согласной для проверки конфликтов с DET-001.
+// ART-006 — неверный a/an
+// Срабатывает на "an" перед согласной для проверки конфликтов с DET-001
 class StubRule_ART006 : public Rule {
 public:
     QString ruleId() const override { return QStringLiteral("ART-006"); }
@@ -67,7 +68,7 @@ public:
         QSet<CandidateError> res;
         if (anchor.upos != Upos::DET) return res;
         QString f = anchor.form.toLower();
-        // Только "an" перед согласной — упрощённо для тестов.
+        // Только "an" перед согласной — упрощённо для тестов
         if (f == QStringLiteral("an") && anchor.nextToken) {
             QString next = anchor.nextToken->form.toLower();
             if (!next.isEmpty() && next[0].isLetter() && QStringLiteral("aeiou").indexOf(next[0]) < 0) {
@@ -83,8 +84,8 @@ public:
     }
 };
 
-// DET-001 — несовместимость детерминатива с существительным.
-// Проверяет "an" перед множественным числом и "this" перед неисчисляемым.
+// DET-001 — несовместимость детерминатива с существительным
+// Проверяет "an" перед множественным числом и "this" перед неисчисляемым
 class StubRule_DET001 : public Rule {
 public:
     QString ruleId() const override { return QStringLiteral("DET-001"); }
@@ -98,7 +99,7 @@ public:
         QSet<CandidateError> res;
         if (anchor.upos != Upos::DET || !anchor.parent) return res;
 
-        // "an" перед "books" — множественное число.
+        // "an" перед "books" — множественное число
         if (anchor.form.toLower() == QStringLiteral("an") &&
             anchor.parent->upos == Upos::NOUN &&
             anchor.parent->form.toLower() == QStringLiteral("books"))
@@ -111,7 +112,7 @@ public:
             res.insert(ce);
         }
 
-        // "this" перед "informations" — неисчисляемое.
+        // "this" перед "informations" — неисчисляемое
         if (anchor.form.toLower() == QStringLiteral("this") &&
             anchor.parent->upos == Upos::NOUN &&
             anchor.parent->form.toLower() == QStringLiteral("informations"))
@@ -128,8 +129,8 @@ public:
     }
 };
 
-// PREP-001 — неверный временной предлог.
-// Срабатывает на "at" перед "Monday".
+// PREP-001 — неверный временной предлог
+// Срабатывает на "at" перед "Monday"
 class StubRule_PREP001 : public Rule {
 public:
     QString ruleId() const override { return QStringLiteral("PREP-001"); }
@@ -143,7 +144,7 @@ public:
         QSet<CandidateError> res;
         if (anchor.upos != Upos::ADP) return res;
 
-        // "at Monday" должно быть "on Monday".
+        // "at Monday" должно быть "on Monday"
         if (anchor.form.toLower() == QStringLiteral("at") &&
             anchor.parent && anchor.parent->form.toLower() == QStringLiteral("monday"))
         {
@@ -158,7 +159,7 @@ public:
     }
 };
 
-// Сборка runtime с заглушками и приоритетом DET-001 выше ART-006.
+// Сборка runtime с заглушками и приоритетом DET-001 выше ART-006
 CheckerRuntime makeTestRuntime()
 {
     CheckerRuntime rt;
@@ -178,14 +179,14 @@ CheckerRuntime makeTestRuntime()
     return rt;
 }
 
-// Построение DocumentModel из одного RawSentence для тестов.
 DocumentModel makeDocumentModel(const RawSentence& rawSentence)
 {
     DocumentModel doc;
     SentenceModel sm = buildSentenceModel(rawSentence);
-    doc.sentences.push_back(std::move(sm));
-    for (const auto& s : std::as_const(doc.sentences)) {
-        doc.sentById[s.sentId] = &s;
+    doc.sentences.push_back(std::make_unique<SentenceModel>(std::move(sm)));
+
+    for (auto& s : doc.sentences) {
+        doc.sentById[s->sentId] = s.get();
     }
     return doc;
 }
@@ -207,8 +208,8 @@ void TEST_CheckSentence::TestCheckSentence_data()
     QTest::addColumn<QList<QSet<int>>>("expectedConflictZones");
     QTest::addColumn<QString>("expectedSuppressedRuleId");
 
-    // 4.1 — корректное предложение без ошибок.
-    // Проверяет, что на валидных данных правила не срабатывают.
+    // 4.1 — корректное предложение без ошибок
+    // Проверяет, что на валидных данных правила не срабатывают
     {
         RawSentence s = makeRawSentence(1, "test", "The cat sits.");
         addToken(s, makeRawToken(1, 1, "The",  "DET",  3, "det"));
@@ -232,8 +233,8 @@ void TEST_CheckSentence::TestCheckSentence_data()
             << QString();
     }
 
-    // 4.3 — несколько независимых ошибок ART-001 + ART-006.
-    // Проверяет, что разные зоны конфликтов не мешают друг другу.
+    // 4.3 — несколько независимых ошибок ART-001 + ART-006
+    // Проверяет, что разные зоны конфликтов не мешают друг другу
     {
         RawSentence s = makeRawSentence(1, "test", "a Europe and an cat");
         addToken(s, makeRawToken(1, 1, "a",      "DET",   2, "det"));
@@ -248,8 +249,8 @@ void TEST_CheckSentence::TestCheckSentence_data()
             << QString();
     }
 
-    // 4.4 — ошибки с конфликтом приоритетов: DET-001 выше ART-006.
-    // Проверяет, что resolveCandidate подавляет ART-006, оставляя DET-001.
+    // 4.4 — ошибки с конфликтом приоритетов: DET-001 выше ART-006
+    // Проверяет, что resolveCandidate подавляет ART-006, оставляя DET-001
     {
         RawSentence s = makeRawSentence(1, "test", "an books");
         addToken(s, makeRawToken(1, 1, "an",    "DET",  2, "det"));
@@ -261,8 +262,8 @@ void TEST_CheckSentence::TestCheckSentence_data()
             << QStringLiteral("ART-006");
     }
 
-    // 4.5 — токен с UPOS без правил в dispatch: INTJ.
-    // Проверяет, что INTJ не порождает вызовов check и не падает.
+    // 4.5 — токен с UPOS без правил в dispatch: INTJ
+    // Проверяет, что INTJ не порождает вызовов check и не падает
     {
         RawSentence s = makeRawSentence(1, "test", "Wow! The cat sits.");
         addToken(s, makeRawToken(1, 1, "Wow",  "INTJ",  5, "vocative"));
@@ -275,8 +276,8 @@ void TEST_CheckSentence::TestCheckSentence_data()
             << s << 0 << QSet<QString>() << QList<QSet<int>>() << QString();
     }
 
-    // 4.6 — зависимые и независимые ошибки в одном предложении.
-    // Проверяет одновременную работу разных зон и подавление ART-006 зоной DET-001.
+    // 4.6 — зависимые и независимые ошибки в одном предложении
+    // Проверяет одновременную работу разных зон и подавление ART-006 зоной DET-001
     {
         RawSentence s = makeRawSentence(1, "test", "a Europe and an books and this informations and at Monday");
         addToken(s, makeRawToken(1,  1,  "a",            "DET",   2,  "det"));
@@ -307,6 +308,7 @@ void TEST_CheckSentence::TestCheckSentence_data()
 
 void TEST_CheckSentence::TestCheckSentence()
 {
+    // Получаем входные данные
     QFETCH(RawSentence, rawSentence);
     QFETCH(int, expectedCount);
     QFETCH(QSet<QString>, expectedRuleIds);
@@ -319,7 +321,7 @@ void TEST_CheckSentence::TestCheckSentence()
     DocumentModel document = makeDocumentModel(rawSentence);
     CheckerRuntime runtime = makeTestRuntime();
 
-    const SentenceModel& sentence = document.sentences[0];
+    const SentenceModel& sentence = *document.sentences[0];
 
     // вызываем тестируемую функцию
     QSet<CandidateError> result = checkSentence(sentence, 0, document, runtime);
