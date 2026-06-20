@@ -12,6 +12,7 @@
 #include "TEST_CheckSentence.h"
 #include "TEST_ParseSentenceBlock.h"
 #include "TEST_ResolveCandidate.h"
+#include "TEST_Rule_ART001.h"
 #include "TEST_ValidateSentenceStructure.h"
 
 int main(int argc, char *argv[])
@@ -22,5 +23,6 @@ int main(int argc, char *argv[])
     status |= QTest::qExec(new TEST_ValidateSentenceStructure, argc, argv);
     status |= QTest::qExec(new TEST_CheckSentence, argc, argv);
     status |= QTest::qExec(new TEST_ResolveCandidate, argc, argv);
+    status |= QTest::qExec(new TEST_Rule_ART001, argc, argv);
     return status;
 }
