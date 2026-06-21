@@ -21,6 +21,7 @@ SOURCES += \
     $$PWD/../src/datamodel.cpp \
     $$PWD/../src/inputmodule.cpp \
     $$PWD/../src/modelbuilder.cpp \
+    $$PWD/../src/wordlists.cpp \
     $$PWD/../src/checkersystem.cpp \
     $$PWD/../src/rules/rule_art001.cpp
 
@@ -35,6 +36,7 @@ HEADERS += \
     $$PWD/../src/datamodel.h \
     $$PWD/../src/inputmodule.h \
     $$PWD/../src/modelbuilder.h \
+    $$PWD/../src/wordlists.h \
     $$PWD/../src/checkersystem.h \
     $$PWD/../src/rules/rule_art001.h
 

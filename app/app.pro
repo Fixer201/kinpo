@@ -9,11 +9,13 @@ SOURCES += \
     main.cpp \
     ../src/datamodel.cpp \
     ../src/inputmodule.cpp \
-    ../src/modelbuilder.cpp
+    ../src/modelbuilder.cpp \
+    ../src/wordlists.cpp
 
 HEADERS += \
     ../src/checkersystem.h \
     ../src/datamodel.h \
     ../src/inputmodule.h \
     ../src/modelbuilder.h \
+    ../src/wordlists.h \
     ../src/rules/rule_art001.h
