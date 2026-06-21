@@ -12,7 +12,7 @@
 
 #include "TEST_Buildsentencemodel.h"
 #include "auxiliaryfunctionsfortesting.h"
-#include "inputmodule.h"
+#include "modelbuilder.h"
 #include <QTest>
 
 TEST_BuildSentenceModel::TEST_BuildSentenceModel() {}

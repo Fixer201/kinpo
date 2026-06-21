@@ -21,7 +21,8 @@
 
 #include "TEST_ResolveCandidate.h"
 #include "datamodel.h"
-#include "inputmodule.h"
+#include "modelbuilder.h"
+#include "checkersystem.h"
 #include "auxiliaryfunctionsfortesting.h"
 
 namespace {
@@ -258,6 +259,7 @@ void TEST_ResolveCandidate::TestResolveCandidate_data()
 
 void TEST_ResolveCandidate::TestResolveCandidate()
 {
+    // Получаем входные данные
     QFETCH(CandidateError, candidate);
     QFETCH(QSet<int>, zone);
     QFETCH(QSet<QString>, initialRuleIds);
