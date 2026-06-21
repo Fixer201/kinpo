@@ -1,0 +1,242 @@
+/*!
+* \file wordlists.cpp
+* \brief Реализация модуля загрузки словарей.
+*
+* Содержит функцию loadResources и вспомогательные функции для парсинга
+* простых списков слов и сложных форматов (past_forms, det_compat, verb_prep).
+*/
+
+#include "wordlists.h"
+
+#include <QFile>
+#include <QTextStream>
+#include <QDir>
+#include <QSet>
+#include <QHash>
+#include <QStringList>
+
+namespace {
+
+/*!
+* \brief Загрузить простой список слов из файла в QSet<QString>.
+* \param [in] filePath Путь к файлу словаря.
+* \param [out] target Множество для заполнения.
+* \return true при успехе, false если файл недоступен.
+*
+* Каждая непустая строка, не начинающаяся с '#', добавляется в нижнем
+* регистре. Пробелы в начале и конце строки удаляются.
+*/
+bool loadWordSet(const QString& filePath, QSet<QString>& target)
+{
+    QFile file(filePath);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+        return false;
+
+    QTextStream in(&file);
+    in.setCodec("UTF-8");
+    while (!in.atEnd()) {
+        QString line = in.readLine().trimmed();
+        if (line.isEmpty() || line.startsWith('#'))
+            continue;
+        target.insert(line.toLower());
+    }
+    return true;
+}
+
+/*!
+* \brief Загрузить таблицу неправильных глаголов (past_forms.txt).
+* \param [in] filePath Путь к файлу.
+* \param [out] target Хеш-таблица для заполнения.
+* \return true при успехе, false если файл недоступен.
+*
+* Формат: LEMMA\tPastSimple\tPastParticiple. LEMMA приводится к нижнему
+* регистру.
+*/
+bool loadPastForms(const QString& filePath, QHash<QString, PastForms>& target)
+{
+    QFile file(filePath);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+        return false;
+
+    QTextStream in(&file);
+    in.setCodec("UTF-8");
+    while (!in.atEnd()) {
+        QString line = in.readLine().trimmed();
+        if (line.isEmpty() || line.startsWith('#'))
+            continue;
+        QStringList cols = line.split('\t');
+        if (cols.size() != 3)
+            continue;
+        PastForms pf;
+        pf.pastSimple = cols[1].toLower();
+        pf.pastParticiple = cols[2].toLower();
+        target.insert(cols[0].toLower(), pf);
+    }
+    return true;
+}
+
+/*!
+* \brief Разобрать строку условий det_compat (например, "Plur,not_unc").
+* \param [in] conditions Строка условий.
+* \param [out] number Целевое число.
+* \param [out] countability Целевая исчисляемость.
+* \return true если строка разобрана корректно.
+*/
+bool parseDetCompatConditions(const QString& conditions,
+                              NumberCondition& number,
+                              CountabilityCondition& countability)
+{
+    number = NumberCondition::Any;
+    countability = CountabilityCondition::Any;
+
+    QStringList parts = conditions.split(',');
+    for (const QString& p : parts) {
+        QString token = p.trimmed().toLower();
+        if (token == "sing") {
+            number = NumberCondition::Sing;
+        } else if (token == "plur") {
+            number = NumberCondition::Plur;
+        } else if (token == "unc") {
+            countability = CountabilityCondition::Uncountable;
+        } else if (token == "not_unc") {
+            countability = CountabilityCondition::Countable;
+        } else {
+            return false;
+        }
+    }
+    return true;
+}
+
+/*!
+* \brief Загрузить таблицу совместимости детерминативов (det_compat.txt).
+* \param [in] filePath Путь к файлу.
+* \param [out] target Хеш-таблица для заполнения.
+* \return true при успехе, false если файл недоступен.
+*
+* Формат: D_LEMMA\tCONDITIONS\tCORRECTION. D_LEMMA приводится к нижнему
+* регистру. "-" в колонке CORRECTION означает пустое исправление (удалить).
+*/
+bool loadDetCompat(const QString& filePath, QHash<QString, QList<DetCompatEntry>>& target)
+{
+    QFile file(filePath);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+        return false;
+
+    QTextStream in(&file);
+    in.setCodec("UTF-8");
+    while (!in.atEnd()) {
+        QString line = in.readLine().trimmed();
+        if (line.isEmpty() || line.startsWith('#'))
+            continue;
+        QStringList cols = line.split('\t');
+        if (cols.size() != 3)
+            continue;
+
+        NumberCondition number = NumberCondition::Any;
+        CountabilityCondition countability = CountabilityCondition::Any;
+        if (!parseDetCompatConditions(cols[1], number, countability))
+            continue;
+
+        DetCompatEntry entry;
+        entry.number = number;
+        entry.countability = countability;
+        entry.correction = cols[2];
+        target[cols[0].toLower()].append(entry);
+    }
+    return true;
+}
+
+/*!
+* \brief Загрузить таблицу глагольного управления (verb_prep.txt).
+* \param [in] filePath Путь к файлу.
+* \param [out] target Хеш-таблица для заполнения.
+* \return true при успехе, false если файл недоступен.
+*
+* Формат: VERB\twrong_prep\tcorrect_prep. VERB приводится к нижнему регистру.
+* "-" в wrong_prep означает вставку предлога (InsertPrep).
+* "-to" в correct_prep означает вставку "to" (InsertPrep).
+* "-" в correct_prep означает удаление предлога (DeletePrep).
+* Иначе — замена предлога (ReplacePrep).
+*/
+bool loadVerbPrep(const QString& filePath, QHash<QString, QSet<VerbPrepEntry>>& target)
+{
+    QFile file(filePath);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+        return false;
+
+    QTextStream in(&file);
+    in.setCodec("UTF-8");
+    while (!in.atEnd()) {
+        QString line = in.readLine().trimmed();
+        if (line.isEmpty() || line.startsWith('#'))
+            continue;
+        QStringList cols = line.split('\t');
+        if (cols.size() != 3)
+            continue;
+
+        VerbPrepEntry entry;
+        QString wrongPrep = cols[1].trimmed().toLower();
+        QString correctPrep = cols[2].trimmed().toLower();
+
+        if (wrongPrep == "-") {
+            // Вставка предлога
+            entry.wrongPrep = std::nullopt;
+            entry.action = VerbPrepAction::InsertPrep;
+            if (correctPrep.startsWith('+')) {
+                entry.prep = correctPrep.mid(1);
+            } else {
+                entry.prep = correctPrep;
+            }
+        } else if (correctPrep == "-") {
+            // Удаление предлога
+            entry.wrongPrep = wrongPrep;
+            entry.action = VerbPrepAction::DeletePrep;
+            entry.prep = std::nullopt;
+        } else {
+            // Замена предлога
+            entry.wrongPrep = wrongPrep;
+            entry.action = VerbPrepAction::ReplacePrep;
+            if (correctPrep.startsWith('+')) {
+                entry.prep = correctPrep.mid(1);
+            } else {
+                entry.prep = correctPrep;
+            }
+        }
+
+        target[cols[0].toLower()].insert(entry);
+    }
+    return true;
+}
+
+} // namespace
+
+std::pair<RuleResources, QList<QString>> loadResources(const QString& listsDir)
+{
+    RuleResources res;
+    QList<QString> warnings;
+
+    auto tryLoad = [&](const QString& fileName, auto& target, auto loader) {
+        QString path = QDir(listsDir).filePath(fileName);
+        if (!loader(path, target))
+            warnings.append(QStringLiteral("Не удалось загрузить %1").arg(fileName));
+    };
+
+    tryLoad("geo_the.txt",         res.geoThe,         loadWordSet);
+    tryLoad("adj_requires_the.txt", res.adjRequiresThe, loadWordSet);
+    tryLoad("languages.txt",       res.languages,       loadWordSet);
+    tryLoad("sports.txt",          res.sports,          loadWordSet);
+    tryLoad("meals.txt",           res.meals,           loadWordSet);
+    tryLoad("titles.txt",          res.titles,          loadWordSet);
+    tryLoad("uncountable.txt",     res.uncountable,     loadWordSet);
+    tryLoad("propn_with_the.txt",  res.propnThe,        loadWordSet);
+    tryLoad("classifiers.txt",     res.classifiers,     loadWordSet);
+    tryLoad("time_units.txt",      res.timeUnits,       loadWordSet);
+    tryLoad("activity_verbs.txt",  res.activityVerbs,   loadWordSet);
+    tryLoad("positions.txt",       res.positions,       loadWordSet);
+    tryLoad("durations.txt",       res.durations,       loadWordSet);
+    tryLoad("past_forms.txt",      res.pastForms,       loadPastForms);
+    tryLoad("det_compat.txt",      res.detCompat,       loadDetCompat);
+    tryLoad("verb_prep.txt",       res.verbPrep,        loadVerbPrep);
+
+    return {std::move(res), std::move(warnings)};
+}
