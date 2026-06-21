@@ -14,8 +14,28 @@
 #include <QSet>
 #include <QHash>
 #include <QStringList>
+#if QT_VERSION_MAJOR >= 6
+#include <QStringConverter>
+#endif
 
 namespace {
+
+/*!
+* \brief Установить UTF-8 кодировку для QTextStream.
+* \param [in,out] stream Поток для настройки.
+*
+* В Qt5 и Qt6 установка кодировки выполняется разными функциями:
+* setCodec в Qt5 и setEncoding в Qt6. Вспомогательная функция скрывает
+* это различие, позволяя остальному коду работать одинаково.
+*/
+void setUtf8Encoding(QTextStream& stream)
+{
+#if QT_VERSION_MAJOR >= 6
+    stream.setEncoding(QStringConverter::Utf8);
+#else
+    stream.setCodec("UTF-8");
+#endif
+}
 
 /*!
 * \brief Загрузить простой список слов из файла в QSet<QString>.
@@ -33,7 +53,7 @@ bool loadWordSet(const QString& filePath, QSet<QString>& target)
         return false;
 
     QTextStream in(&file);
-    in.setCodec("UTF-8");
+    setUtf8Encoding(in);
     while (!in.atEnd()) {
         QString line = in.readLine().trimmed();
         if (line.isEmpty() || line.startsWith('#'))
@@ -59,7 +79,7 @@ bool loadPastForms(const QString& filePath, QHash<QString, PastForms>& target)
         return false;
 
     QTextStream in(&file);
-    in.setCodec("UTF-8");
+    setUtf8Encoding(in);
     while (!in.atEnd()) {
         QString line = in.readLine().trimmed();
         if (line.isEmpty() || line.startsWith('#'))
@@ -123,7 +143,7 @@ bool loadDetCompat(const QString& filePath, QHash<QString, QList<DetCompatEntry>
         return false;
 
     QTextStream in(&file);
-    in.setCodec("UTF-8");
+    setUtf8Encoding(in);
     while (!in.atEnd()) {
         QString line = in.readLine().trimmed();
         if (line.isEmpty() || line.startsWith('#'))
@@ -165,7 +185,7 @@ bool loadVerbPrep(const QString& filePath, QHash<QString, QSet<VerbPrepEntry>>& 
         return false;
 
     QTextStream in(&file);
-    in.setCodec("UTF-8");
+    setUtf8Encoding(in);
     while (!in.atEnd()) {
         QString line = in.readLine().trimmed();
         if (line.isEmpty() || line.startsWith('#'))
