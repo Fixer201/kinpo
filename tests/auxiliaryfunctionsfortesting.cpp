@@ -5,6 +5,30 @@
 
 #include "auxiliaryfunctionsfortesting.h"
 #include <QTest>
+#include <QDir>
+#include <QFileInfo>
+
+// =====================================================================
+// Хелперы поиска ресурсов
+// =====================================================================
+
+QString findListsDir()
+{
+    QStringList candidates = {
+        QStringLiteral("../docs/lists"),
+        QStringLiteral("../../docs/lists"),
+        QStringLiteral("docs/lists"),
+    };
+#ifdef PROJECT_SOURCE_ROOT
+    candidates.append(QStringLiteral(PROJECT_SOURCE_ROOT) + QStringLiteral("/docs/lists"));
+#endif
+    for (const QString& path : candidates) {
+        QFileInfo info(path);
+        if (info.exists() && info.isDir())
+            return QDir(path).absolutePath();
+    }
+    return QString();
+}
 
 // =====================================================================
 // Вспомогательные функции создания строк CoNLL-U
