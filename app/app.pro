@@ -8,6 +8,7 @@ SOURCES += \
     ../src/rules/rule_art001.cpp \
     ../src/rules/rule_art002.cpp \
     ../src/rules/rule_art003.cpp \
+    ../src/rules/rule_art004.cpp \
     main.cpp \
     ../src/datamodel.cpp \
     ../src/inputmodule.cpp \
@@ -22,4 +23,5 @@ HEADERS += \
     ../src/wordlists.h \
     ../src/rules/rule_art001.h \
     ../src/rules/rule_art002.h \
-    ../src/rules/rule_art003.h
+    ../src/rules/rule_art003.h \
+    ../src/rules/rule_art004.h
