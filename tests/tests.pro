@@ -14,6 +14,7 @@ SOURCES += \
     TEST_CheckSentence.cpp \
     TEST_ResolveCandidate.cpp \
     TEST_Rule_ART001.cpp \
+    TEST_Rule_ART002.cpp \
     main.cpp \
     auxiliaryfunctionsfortesting.cpp \
     TEST_ParseSentenceBlock.cpp \
@@ -23,13 +24,15 @@ SOURCES += \
     $$PWD/../src/modelbuilder.cpp \
     $$PWD/../src/wordlists.cpp \
     $$PWD/../src/checkersystem.cpp \
-    $$PWD/../src/rules/rule_art001.cpp
+    $$PWD/../src/rules/rule_art001.cpp \
+    $$PWD/../src/rules/rule_art002.cpp
 
 HEADERS += \
     TEST_Buildsentencemodel.h \
     TEST_CheckSentence.h \
     TEST_ResolveCandidate.h \
     TEST_Rule_ART001.h \
+    TEST_Rule_ART002.h \
     TEST_ParseSentenceBlock.h \
     TEST_ValidateSentenceStructure.h \
     auxiliaryfunctionsfortesting.h \
@@ -38,7 +41,8 @@ HEADERS += \
     $$PWD/../src/modelbuilder.h \
     $$PWD/../src/wordlists.h \
     $$PWD/../src/checkersystem.h \
-    $$PWD/../src/rules/rule_art001.h
+    $$PWD/../src/rules/rule_art001.h \
+    $$PWD/../src/rules/rule_art002.h
 
 # gcov
 QMAKE_CXXFLAGS += --coverage -O0 -g
