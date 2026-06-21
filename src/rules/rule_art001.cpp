@@ -1,14 +1,17 @@
 /*!
 * \file rule_art001.cpp
-* \brief Реализация правила ART-001: Лишний артикль перед PROPN
+* \brief Реализация правила ART-001: Лишний артикль перед PROPN.
 *
-* Срабатывает на DET с lemma {a, an, the} перед PROPN
-* Исключения для the: географические названия, фамилии во мн.ч., классификаторы
-* TODO: загрузить geo_the.txt в CheckerRuntime::resources
+* Срабатывает на DET с LEMMA {a, an, the}, DEPREL=det к токену N с UPOS=PROPN.
+* Исключения для the: географические названия (geo_the.txt), титулы (positions.txt),
+* фамилии во мн.ч., классификаторы (classifiers.txt), PROPN из propn_with_the.txt.
+* Для a/an: применяется только исключение geo_the.
 */
 
 #include "rule_art001.h"
 #include <QSet>
+#include <QStringList>
+#include <algorithm>
 
 QString Rule_ART001::ruleId() const
 {
@@ -27,62 +30,147 @@ bool Rule_ART001::canConflict() const
 
 namespace {
 
-// TODO: заменить на lookup в runtime.resources.geoThe когда будет RuleResources
-bool isGeoException(const QString& form)
+/*!
+* \brief Собрать LEMMA группы PROPN конкатенацией через пробел по возрастанию ID.
+* \param [in] head Головной токен группы PROPN.
+* \return Строка с конкатенированными формами зависимых с DEPREL ∈ {flat, flat:name, compound}
+*         и формы самого головного токена, отсортированная по ID.
+*
+* Согласно спецификации Б.13, lookup в geo_the.txt выполняется по LEMMA группы PROPN.
+* Группа включает головной PROPN и его зависимых с DEPREL flat, flat:name, compound.
+*/
+QString buildPropnGroupLemma(const TokenNode& head)
 {
-    static const QSet<QString> names = {
-        QStringLiteral("pacific"),
-        QStringLiteral("ocean"),
-        QStringLiteral("alps"),
-        QStringLiteral("atlantic"),
-        QStringLiteral("mediterranean"),
-        QStringLiteral("sahara"),
-        QStringLiteral("everest"),
-        QStringLiteral("thames")
-    };
-    return names.contains(form.toLower());
+    // Собираем все токены группы: головной + зависимые с flat/flat:name/compound
+    QList<const TokenNode*> group;
+    group.append(&head);
+    for (const TokenNode* child : head.children) {
+        if (child->deprel == Deprel::Flat ||
+            child->deprel == Deprel::FlatName ||
+            child->deprel == Deprel::Compound) {
+            group.append(child);
+        }
+    }
+
+    // Сортируем по ID для детерминированного порядка конкатенации
+    std::sort(group.begin(), group.end(),
+              [](const TokenNode* a, const TokenNode* b) { return a->id < b->id; });
+
+    // Конкатенируем формы через пробел
+    QStringList forms;
+    for (const TokenNode* node : group)
+        forms.append(node->form);
+    return forms.join(' ').toLower();
 }
 
-// true если у propnToken есть child с DEPREL=compound
-bool isClassifier(const TokenNode& propnToken)
+/*!
+* \brief Проверить, есть ли среди прямых зависимых N или соседних токенов
+*        токен с LEMMA из classifiers.txt.
+* \param [in] head Головной токен группы PROPN.
+* \param [in] classifiers Множество классификаторов (нижний регистр).
+* \return true если классификатор найден.
+*
+* Согласно спецификации ART-001 исключение 6: проверяются прямые зависимые N
+* и соседние токены в группе PROPN.
+*/
+bool hasClassifierInGroup(const TokenNode& head, const QSet<QString>& classifiers)
 {
-    for (TokenNode* child : propnToken.children)
-        if (child->deprel == Deprel::Compound)
+    // Проверяем прямых зависимых головного PROPN
+    for (const TokenNode* child : head.children) {
+        if (classifiers.contains(child->form.toLower()))
             return true;
+    }
+
+    // Проверяем соседние токены (previousToken, nextToken)
+    if (head.previousToken && classifiers.contains(head.previousToken->form.toLower()))
+        return true;
+    if (head.nextToken && classifiers.contains(head.nextToken->form.toLower()))
+        return true;
+
     return false;
 }
 
-} // anonymous namespace
+/*!
+* \brief Проверить, является ли форма одной из особых (Reverend, Honorable).
+* \param [in] form Форма токена (приводится к нижнему регистру).
+* \return true если форма — reverend или honorable.
+*/
+bool isSpecialTitle(const QString& form)
+{
+    const QString lower = form.toLower();
+    return lower == QStringLiteral("reverend") || lower == QStringLiteral("honorable");
+}
+
+} // namespace
 
 QSet<CandidateError> Rule_ART001::check(const TokenNode& anchor,
-                                        int /*sentenceIndex*/,
-                                        const DocumentModel& /*document*/,
-                                        const CheckerRuntime& /*runtime*/) const
+                                         int /*sentenceIndex*/,
+                                         const DocumentModel& /*document*/,
+                                         const CheckerRuntime& runtime) const
 {
     QSet<CandidateError> res;
 
-    // Быстрый фильтр: только DET с lemma {a, an, the}, parent = PROPN
+    // Условие срабатывания: DET с form ∈ {a, an, the}, DEPREL=det к PROPN
     if (anchor.upos != Upos::DET)
         return res;
-    QStringList articles = {QStringLiteral("a"), QStringLiteral("an"), QStringLiteral("the")};
-    if (!articles.contains(anchor.form.toLower()))
+
+    const QString formLower = anchor.form.toLower();
+    if (formLower != QStringLiteral("a") &&
+        formLower != QStringLiteral("an") &&
+        formLower != QStringLiteral("the"))
         return res;
+
     if (!anchor.parent)
         return res;
     if (anchor.parent->upos != Upos::PROPN)
         return res;
 
-    // Исключения только для the
-    if (anchor.form.toLower() == QStringLiteral("the")) {
-        if (isGeoException(anchor.parent->form))
-            return res;
-        if (anchor.parent->form.endsWith('s')) // фамилия во мн.ч.
-            return res;
-        if (isClassifier(*anchor.parent))
-            return res;
-    }
+    const TokenNode& propn = *anchor.parent;
+    const QString propnFormLower = propn.form.toLower();
+    const bool isThe = (formLower == QStringLiteral("the"));
+
+    // Исключение 1: N входит в группу PROPN из geo_the.txt (применяется для a/an/the)
+    const QString groupLemma = buildPropnGroupLemma(propn);
+    if (runtime.resources.geoThe.contains(groupLemma))
+        return res;
+    // Также проверяем форму одиночного PROPN (для случая без группы)
+    if (runtime.resources.geoThe.contains(propnFormLower))
+        return res;
+
+    // Для a/an: только исключение 1 (geo_the), остальные исключения не применяются
+    if (!isThe)
+        return produceError(anchor, res);
+
+    // Для the: проверяем исключения 2–7
+
+    // Исключение 3: D.LEMMA=the и N.LEMMA из positions.txt
+    if (runtime.resources.positions.contains(propnFormLower))
+        return res;
+
+    // Исключение 4: D.LEMMA=the и N.LEMMA ∈ {Reverend, Honorable}
+    if (isSpecialTitle(propn.form))
+        return res;
+
+    // Исключение 5: N.Number=Plur и D.LEMMA=the (the Smiths, the Beatles)
+    // Проверяем по форме: заканчивается на 's' (эвристика мн.ч.)
+    if (propn.form.endsWith('s', Qt::CaseInsensitive))
+        return res;
+
+    // Исключение 6: среди прямых зависимых N или соседних токенов в группе PROPN
+    // есть токен с LEMMA из classifiers.txt и D.LEMMA=the
+    if (hasClassifierInGroup(propn, runtime.resources.classifiers))
+        return res;
+
+    // Исключение 7: N.LEMMA из propn_with_the.txt и D.LEMMA=the
+    if (runtime.resources.propnThe.contains(propnFormLower))
+        return res;
 
     // Ошибка подтверждена
+    return produceError(anchor, res);
+}
+
+QSet<CandidateError> Rule_ART001::produceError(const TokenNode& anchor, QSet<CandidateError> res) const
+{
     CandidateError ce;
     ce.ruleId = QStringLiteral("ART-001");
     ce.sentId = QStringLiteral("test");

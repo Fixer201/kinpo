@@ -26,6 +26,9 @@ public:
                                int sentenceIndex,
                                const DocumentModel& document,
                                const CheckerRuntime& runtime) const override;
+
+private:
+    QSet<CandidateError> produceError(const TokenNode& anchor, QSet<CandidateError> res) const;
 };
 
 #endif // RULE_ART001_H
