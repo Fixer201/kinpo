@@ -3,15 +3,14 @@
 * \brief DDT-тесты для resolveCandidate (раздел 5 тестов_v3.md).
 *
 * Проверяет инкрементальное разрешение конфликтов приоритетов:
-*  — пустая зона (сохранение);
-*  — приоритет выше (подавление);
-*  — приоритет ниже (отбрасывание);
-*  — отсутствие отношения (совмещение);
+*  — пустая зона;
+*  — приоритет выше/ниже;
+*  — отсутствие отношения приоритета;
 *  — множественные токены в зоне;
-*  — условный приоритет Art003LanguageCase (true/false);
+*  — условный приоритет Art003LanguageCase;
 *  — независимые зоны;
 *  — дублирование кандидатов;
-*  — многотокеновое подавление.
+*  — частичное пересечение зон с разными ключами.
 */
 
 #include <QtTest>
@@ -66,17 +65,19 @@ TEST_ResolveCandidate::~TEST_ResolveCandidate() {}
 
 void TEST_ResolveCandidate::TestResolveCandidate_data()
 {
-    QTest::addColumn<CandidateError>("candidate");   ///\u003c Новый кандидат
-    QTest::addColumn<QSet<int>>("zone");               ///\u003c Зона для проверки
-    QTest::addColumn<QSet<QString>>("initialRuleIds");///\u003c RuleId уже в зоне (или пусто)
-    QTest::addColumn<PriorityIndex>("priorityIndex");///\u003c Индекс приоритетов
-    QTest::addColumn<RawSentence>("rawSentence");     ///\u003c Предложение для SentenceModel
-    QTest::addColumn<int>("repeatCount");            ///\u003c Сколько раз вызвать resolveCandidate
-    QTest::addColumn<int>("expectedCount");          ///\u003c Ожидаемое число кандидатов в зоне
-    QTest::addColumn<QSet<QString>>("expectedRuleIds");///\u003c Ожидаемые ruleId в зоне
+    QTest::addColumn<CandidateError>("candidate");
+    QTest::addColumn<QSet<int>>("zone");
+    QTest::addColumn<QSet<QString>>("initialRuleIds");
+    QTest::addColumn<PriorityIndex>("priorityIndex");
+    QTest::addColumn<RawSentence>("rawSentence");
+    QTest::addColumn<int>("repeatCount");
+    QTest::addColumn<int>("expectedCount");
+    QTest::addColumn<QSet<QString>>("expectedRuleIds");
+    QTest::addColumn<QSet<int>>("existingZoneKey");
+    QTest::addColumn<QSet<QString>>("existingZoneRuleIds");
 
     // ====================================================================
-    // 5.1 — Пустая зона: простое сохранение
+    // 5.1 — Пустая зона
     // ====================================================================
     {
         QTest::addRow("5.1_empty_zone")
@@ -87,7 +88,9 @@ void TEST_ResolveCandidate::TestResolveCandidate_data()
             << makeRawSentence(1, QStringLiteral("test"), QStringLiteral("x"))
             << 1
             << 1
-            << QSet<QString>{QStringLiteral("ART-001")};
+            << QSet<QString>{QStringLiteral("ART-001")}
+            << QSet<int>()
+            << QSet<QString>();
     }
 
     // ====================================================================
@@ -105,7 +108,9 @@ void TEST_ResolveCandidate::TestResolveCandidate_data()
             << makeRawSentence(1, QStringLiteral("test"), QStringLiteral("x"))
             << 1
             << 1
-            << QSet<QString>{QStringLiteral("DET-001")};
+            << QSet<QString>{QStringLiteral("DET-001")}
+            << QSet<int>()
+            << QSet<QString>();
     }
 
     // ====================================================================
@@ -123,7 +128,9 @@ void TEST_ResolveCandidate::TestResolveCandidate_data()
             << makeRawSentence(1, QStringLiteral("test"), QStringLiteral("x"))
             << 1
             << 1
-            << QSet<QString>{QStringLiteral("DET-001")};
+            << QSet<QString>{QStringLiteral("DET-001")}
+            << QSet<int>()
+            << QSet<QString>();
     }
 
     // ====================================================================
@@ -138,7 +145,9 @@ void TEST_ResolveCandidate::TestResolveCandidate_data()
             << makeRawSentence(1, QStringLiteral("test"), QStringLiteral("x"))
             << 1
             << 2
-            << QSet<QString>{QStringLiteral("ART-001"), QStringLiteral("PREP-001")};
+            << QSet<QString>{QStringLiteral("ART-001"), QStringLiteral("PREP-001")}
+            << QSet<int>()
+            << QSet<QString>();
     }
 
     // ====================================================================
@@ -153,7 +162,29 @@ void TEST_ResolveCandidate::TestResolveCandidate_data()
             << makeRawSentence(1, QStringLiteral("test"), QStringLiteral("x"))
             << 1
             << 1
-            << QSet<QString>{QStringLiteral("CONJ-001")};
+            << QSet<QString>{QStringLiteral("CONJ-001")}
+            << QSet<int>()
+            << QSet<QString>();
+    }
+
+    // ====================================================================
+    // 5.5a — Подавление по приоритету в мульти-токенной зоне
+    // ====================================================================
+    {
+        PriorityIndex pi;
+        pi.conditionsByHigherRule[QStringLiteral("ART-001")]
+            [QStringLiteral("ART-002")] = PriorityConditionKind::Always;
+        QTest::addRow("5.5a_multi_token_suppress")
+            << makeCandidate(QStringLiteral("ART-002"), QSet<int>{2, 3})
+            << QSet<int>{2, 3}
+            << QSet<QString>{QStringLiteral("ART-001")}
+            << pi
+            << makeRawSentence(1, QStringLiteral("test"), QStringLiteral("x"))
+            << 1
+            << 1
+            << QSet<QString>{QStringLiteral("ART-001")}
+            << QSet<int>()
+            << QSet<QString>();
     }
 
     // ====================================================================
@@ -177,7 +208,9 @@ void TEST_ResolveCandidate::TestResolveCandidate_data()
             << s
             << 1
             << 1
-            << QSet<QString>{QStringLiteral("ART-003")};
+            << QSet<QString>{QStringLiteral("ART-003")}
+            << QSet<int>()
+            << QSet<QString>();
     }
 
     // ====================================================================
@@ -202,7 +235,9 @@ void TEST_ResolveCandidate::TestResolveCandidate_data()
             << s
             << 1
             << 2
-            << QSet<QString>{QStringLiteral("ART-001"), QStringLiteral("ART-003")};
+            << QSet<QString>{QStringLiteral("ART-001"), QStringLiteral("ART-003")}
+            << QSet<int>()
+            << QSet<QString>();
     }
 
     // ====================================================================
@@ -220,7 +255,9 @@ void TEST_ResolveCandidate::TestResolveCandidate_data()
             << makeRawSentence(1, QStringLiteral("test"), QStringLiteral("x"))
             << 1
             << 1
-            << QSet<QString>{QStringLiteral("ART-001")};
+            << QSet<QString>{QStringLiteral("ART-001")}
+            << (QSet<int>{2})
+            << QSet<QString>{QStringLiteral("DET-001")};
     }
 
     // ====================================================================
@@ -235,31 +272,82 @@ void TEST_ResolveCandidate::TestResolveCandidate_data()
             << makeRawSentence(1, QStringLiteral("test"), QStringLiteral("x"))
             << 3
             << 1
-            << QSet<QString>{QStringLiteral("CONJ-001")};
+            << QSet<QString>{QStringLiteral("CONJ-001")}
+            << QSet<int>()
+            << QSet<QString>();
     }
 
     // ====================================================================
-    // 5.10 — Множественные токены в ключе зоны, подавление
+    // 5.10 — Частичное пересечение: новый {3,4}, старый {2,3}
     // ====================================================================
     {
-        PriorityIndex pi;
-        pi.conditionsByHigherRule[QStringLiteral("ART-001")]
-            [QStringLiteral("ART-002")] = PriorityConditionKind::Always;
-        QTest::addRow("5.10_multi_token_suppress")
-            << makeCandidate(QStringLiteral("ART-002"), QSet<int>{2, 3})
-            << QSet<int>{2, 3}
-            << QSet<QString>{QStringLiteral("ART-001")}
-            << pi
+        QTest::addRow("5.10_partial_overlap_34_vs_23")
+            << makeCandidate(QStringLiteral("ART-001"), QSet<int>{3, 4})
+            << QSet<int>{3, 4}
+            << QSet<QString>()
+            << PriorityIndex()
             << makeRawSentence(1, QStringLiteral("test"), QStringLiteral("x"))
             << 1
             << 1
-            << QSet<QString>{QStringLiteral("ART-001")};
+            << QSet<QString>{QStringLiteral("ART-001")}
+            << (QSet<int>{2, 3})
+            << QSet<QString>{QStringLiteral("DET-001")};
+    }
+
+    // ====================================================================
+    // 5.11 — Частичное пересечение: новый {3,4}, старый {3}
+    // ====================================================================
+    {
+        QTest::addRow("5.11_partial_overlap_34_vs_3")
+            << makeCandidate(QStringLiteral("ART-001"), QSet<int>{3, 4})
+            << QSet<int>{3, 4}
+            << QSet<QString>()
+            << PriorityIndex()
+            << makeRawSentence(1, QStringLiteral("test"), QStringLiteral("x"))
+            << 1
+            << 1
+            << QSet<QString>{QStringLiteral("ART-001")}
+            << (QSet<int>{3})
+            << QSet<QString>{QStringLiteral("DET-001")};
+    }
+
+    // ====================================================================
+    // 5.12 — Частичное пересечение: новый {4}, старый {3,4}
+    // ====================================================================
+    {
+        QTest::addRow("5.12_partial_overlap_4_vs_34")
+            << makeCandidate(QStringLiteral("ART-001"), QSet<int>{4})
+            << QSet<int>{4}
+            << QSet<QString>()
+            << PriorityIndex()
+            << makeRawSentence(1, QStringLiteral("test"), QStringLiteral("x"))
+            << 1
+            << 1
+            << QSet<QString>{QStringLiteral("ART-001")}
+            << (QSet<int>{3, 4})
+            << QSet<QString>{QStringLiteral("DET-001")};
+    }
+
+    // ====================================================================
+    // 5.13 — Частичное пересечение: новый {3}, старый {3,4}
+    // ====================================================================
+    {
+        QTest::addRow("5.13_partial_overlap_3_vs_34")
+            << makeCandidate(QStringLiteral("ART-001"), QSet<int>{3})
+            << QSet<int>{3}
+            << QSet<QString>()
+            << PriorityIndex()
+            << makeRawSentence(1, QStringLiteral("test"), QStringLiteral("x"))
+            << 1
+            << 1
+            << QSet<QString>{QStringLiteral("ART-001")}
+            << (QSet<int>{3, 4})
+            << QSet<QString>{QStringLiteral("DET-001")};
     }
 }
 
 void TEST_ResolveCandidate::TestResolveCandidate()
 {
-    // Получаем входные данные
     QFETCH(CandidateError, candidate);
     QFETCH(QSet<int>, zone);
     QFETCH(QSet<QString>, initialRuleIds);
@@ -268,38 +356,32 @@ void TEST_ResolveCandidate::TestResolveCandidate()
     QFETCH(int, repeatCount);
     QFETCH(int, expectedCount);
     QFETCH(QSet<QString>, expectedRuleIds);
+    QFETCH(QSet<int>, existingZoneKey);
+    QFETCH(QSet<QString>, existingZoneRuleIds);
 
     const QString tag = QString(QTest::currentDataTag());
 
-    // Строим SentenceModel и CheckerRuntime для вызова resolveCandidate
     SentenceModel sentence = buildSentenceModel(rawSentence);
     CheckerRuntime runtime;
     runtime.priorityIndex = priorityIndex;
 
-    // Инициализируем ConflictZoneMap фиктивными кандидатами
     ConflictZoneMap zoneMap;
     if (!initialRuleIds.isEmpty()) {
         addInitialToZone(zoneMap, zone, initialRuleIds);
     }
 
-    // Для 5.8 создаём дополнительную зону {2}→DET-001 до вызова resolveCandidate
-    if (tag == QStringLiteral("5.8_independent_zones")) {
-        QSet<int> otherZone{2};
-        addInitialToZone(zoneMap, otherZone, QSet<QString>{QStringLiteral("DET-001")});
+    if (!existingZoneKey.isEmpty()) {
+        addInitialToZone(zoneMap, existingZoneKey, existingZoneRuleIds);
     }
 
-    // Вызов resolveCandidate repeatCount раз
     for (int i = 0; i < repeatCount; ++i) {
         resolveCandidate(candidate, zoneMap, sentence, runtime);
     }
 
-    // Проверяем целевую зону через хелпер с подробным логированием
     compareZoneCandidates(tag, zoneMap, zone, expectedCount, expectedRuleIds);
 
-    // Для 5.8 дополнительно проверяем что зона {2} осталась нетронутой
-    if (tag == QStringLiteral("5.8_independent_zones")) {
-        QSet<int> otherZone{2};
-        compareZoneCandidates(tag + QStringLiteral("_other"), zoneMap, otherZone, 1,
-                              QSet<QString>{QStringLiteral("DET-001")});
+    if (!existingZoneKey.isEmpty()) {
+        compareZoneCandidates(tag + QStringLiteral("_existing"), zoneMap,
+                              existingZoneKey, existingZoneRuleIds.size(), existingZoneRuleIds);
     }
 }
