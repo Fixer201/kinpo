@@ -7,6 +7,7 @@ SOURCES += \
     ../src/checkersystem.cpp \
     ../src/rules/rule_art001.cpp \
     ../src/rules/rule_art002.cpp \
+    ../src/rules/rule_art003.cpp \
     main.cpp \
     ../src/datamodel.cpp \
     ../src/inputmodule.cpp \
@@ -20,4 +21,5 @@ HEADERS += \
     ../src/modelbuilder.h \
     ../src/wordlists.h \
     ../src/rules/rule_art001.h \
-    ../src/rules/rule_art002.h
+    ../src/rules/rule_art002.h \
+    ../src/rules/rule_art003.h

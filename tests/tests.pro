@@ -15,6 +15,7 @@ SOURCES += \
     TEST_ResolveCandidate.cpp \
     TEST_Rule_ART001.cpp \
     TEST_Rule_ART002.cpp \
+    TEST_Rule_ART003.cpp \
     main.cpp \
     auxiliaryfunctionsfortesting.cpp \
     TEST_ParseSentenceBlock.cpp \
@@ -25,7 +26,8 @@ SOURCES += \
     $$PWD/../src/wordlists.cpp \
     $$PWD/../src/checkersystem.cpp \
     $$PWD/../src/rules/rule_art001.cpp \
-    $$PWD/../src/rules/rule_art002.cpp
+    $$PWD/../src/rules/rule_art002.cpp \
+    $$PWD/../src/rules/rule_art003.cpp
 
 HEADERS += \
     TEST_Buildsentencemodel.h \
@@ -33,6 +35,7 @@ HEADERS += \
     TEST_ResolveCandidate.h \
     TEST_Rule_ART001.h \
     TEST_Rule_ART002.h \
+    TEST_Rule_ART003.h \
     TEST_ParseSentenceBlock.h \
     TEST_ValidateSentenceStructure.h \
     auxiliaryfunctionsfortesting.h \
@@ -42,7 +45,8 @@ HEADERS += \
     $$PWD/../src/wordlists.h \
     $$PWD/../src/checkersystem.h \
     $$PWD/../src/rules/rule_art001.h \
-    $$PWD/../src/rules/rule_art002.h
+    $$PWD/../src/rules/rule_art002.h \
+    $$PWD/../src/rules/rule_art003.h
 
 # gcov
 QMAKE_CXXFLAGS += --coverage -O0 -g

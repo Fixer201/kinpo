@@ -14,6 +14,7 @@
 #include "TEST_ResolveCandidate.h"
 #include "TEST_Rule_ART001.h"
 #include "TEST_Rule_ART002.h"
+#include "TEST_Rule_ART003.h"
 #include "TEST_ValidateSentenceStructure.h"
 
 int main(int argc, char *argv[])
@@ -26,5 +27,6 @@ int main(int argc, char *argv[])
     status |= QTest::qExec(new TEST_ResolveCandidate, argc, argv);
     status |= QTest::qExec(new TEST_Rule_ART001, argc, argv);
     status |= QTest::qExec(new TEST_Rule_ART002, argc, argv);
+    status |= QTest::qExec(new TEST_Rule_ART003, argc, argv);
     return status;
 }
