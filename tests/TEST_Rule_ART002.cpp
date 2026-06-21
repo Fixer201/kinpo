@@ -189,6 +189,7 @@ void TEST_Rule_ART002::TestRule()
 
     CheckerRuntime runtime = makeRuntimeWithResources();
 
+    // ART-002a вызывается если якорь — ADV, иначе ART-002
     QSet<CandidateError> result;
     if (anchor->upos == Upos::ADV) {
         Rule_ART002a rule;
@@ -198,7 +199,9 @@ void TEST_Rule_ART002::TestRule()
         result = rule.check(*anchor, 0, DocumentModel(), runtime);
     }
 
+    // expectedRuleId пустой — правило не должно сработать
     if (expectedRuleId.isEmpty()) {
+        // Если пришёл неожиданный кандидат — выводим его в qDebug для отладки
         if (result.size() != 0) {
             const CandidateError& ce = *result.begin();
             qDebug() << "[" << tag << "] Неожиданное срабатывание:" << ce.ruleId
@@ -206,6 +209,7 @@ void TEST_Rule_ART002::TestRule()
         }
         QCOMPARE(result.size(), 0);
     } else {
+        // Ожидаем ровно один кандидат
         QCOMPARE(result.size(), 1);
         compareSingleCandidate(tag, *result.begin(), expectedRuleId, expectedDisplayIds, expectedConflictIds);
     }

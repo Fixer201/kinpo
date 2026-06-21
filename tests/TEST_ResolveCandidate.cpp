@@ -366,20 +366,26 @@ void TEST_ResolveCandidate::TestResolveCandidate()
     runtime.priorityIndex = priorityIndex;
 
     ConflictZoneMap zoneMap;
+
+    // Инициализируем целевую зону кандидатами из initialRuleIds
     if (!initialRuleIds.isEmpty()) {
         addInitialToZone(zoneMap, zone, initialRuleIds);
     }
 
+    // Инициализируем существующую зону, если она задана
     if (!existingZoneKey.isEmpty()) {
         addInitialToZone(zoneMap, existingZoneKey, existingZoneRuleIds);
     }
 
+    // Вызываем resolveCandidate repeatCount раз
     for (int i = 0; i < repeatCount; ++i) {
         resolveCandidate(candidate, zoneMap, sentence, runtime);
     }
 
+    // Проверяем целевую зону
     compareZoneCandidates(tag, zoneMap, zone, expectedCount, expectedRuleIds);
 
+    // Проверяем, что существующая зона осталась нетронутой
     if (!existingZoneKey.isEmpty()) {
         compareZoneCandidates(tag + QStringLiteral("_existing"), zoneMap,
                               existingZoneKey, existingZoneRuleIds.size(), existingZoneRuleIds);

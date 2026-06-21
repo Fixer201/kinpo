@@ -180,7 +180,9 @@ void TEST_Rule_ART001::TestRule()
     Rule_ART001 rule;
     QSet<CandidateError> result = rule.check(*anchor, 0, DocumentModel(), runtime);
 
+    // expectedRuleId пустой — правило не должно сработать
     if (expectedRuleId.isEmpty()) {
+        // Если пришёл неожиданный кандидат — выводим его в qDebug для отладки
         if (result.size() != 0) {
             const CandidateError& ce = *result.begin();
             qDebug() << "[" << tag << "] Неожиданное срабатывание:" << ce.ruleId
@@ -188,6 +190,7 @@ void TEST_Rule_ART001::TestRule()
         }
         QCOMPARE(result.size(), 0);
     } else {
+        // Ожидаем ровно один кандидат
         QCOMPARE(result.size(), 1);
         compareSingleCandidate(tag, *result.begin(), expectedRuleId, expectedDisplayIds, expectedConflictIds);
     }

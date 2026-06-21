@@ -228,9 +228,27 @@ void compareZoneCandidates(const QString& testName,
 * При несовпадении любого поля выводит в лог имя теста и расхождение.
 */
 void compareSingleCandidate(const QString& testName,
-                            const CandidateError& actual,
+                             const CandidateError& actual,
+                             const QString& expectedRuleId,
+                             const QList<int>& expectedDisplayIds,
+                             const QSet<int>& expectedConflictIds);
+
+/*!
+* \brief Сравнивает множество кандидатов со списком ожидаемых пар displayIds/conflictIds.
+* \param [in] testName               Имя текущего теста.
+* \param [in] actual                 Фактический набор кандидатов.
+* \param [in] expectedRuleId         Ожидаемый ruleId (одинаковый для всех кандидатов).
+* \param [in] expectedDisplayIdsList Список ожидаемых displayTokenIds.
+* \param [in] expectedConflictIdsList Список ожидаемых conflictTokenIds.
+*
+* Каждый фактический кандидат должен совпасть ровно с одной ожидаемой парой
+* (displayIds, conflictIds). При несовпадении выводит в лог имя теста
+* и расхождение по каждому несовпавшему кандидату.
+*/
+void compareMultiCandidate(const QString& testName,
+                            const QSet<CandidateError>& actual,
                             const QString& expectedRuleId,
-                            const QList<int>& expectedDisplayIds,
-                            const QSet<int>& expectedConflictIds);
+                            const QList<QList<int>>& expectedDisplayIdsList,
+                            const QList<QSet<int>>& expectedConflictIdsList);
 
 #endif // AUXILIARYFUNCTIONSFORTESTING_H

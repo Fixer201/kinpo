@@ -118,6 +118,7 @@ QSet<CandidateError> checkSentence(const SentenceModel& sentence,
     ConflictZoneMap zoneMap;
     QSet<CandidateError> nonConflict;
 
+    // Вызываем все правила, зарегистрированные для UPOS каждого токена
     for (const TokenNode* token : sentence.tokens) {
         const QSet<const Rule*> rules = runtime.dispatch.value(token->upos);
         for (const Rule* rule : rules) {
@@ -125,16 +126,19 @@ QSet<CandidateError> checkSentence(const SentenceModel& sentence,
                 continue;
             QSet<CandidateError> candidates = rule->check(*token, sentenceIndex, document, runtime);
             for (const CandidateError& ce : candidates) {
+                // Кандидаты от правил с canConflict проходят через resolveCandidate
+                // для подавления менее приоритетных в той же зоне
                 if (rule->canConflict()) {
                     resolveCandidate(ce, zoneMap, sentence, runtime);
                 } else {
+                    // Кандидаты от правил без canConflict добавляются напрямую
                     nonConflict.insert(ce);
                 }
             }
         }
     }
 
-    // Собираем все неподавленные кандидаты из зон
+    // Собираем все неподавленные кандидаты из зон конфликтов
     QSet<CandidateError> result = nonConflict;
     for (auto it = zoneMap.zones.begin(); it != zoneMap.zones.end(); ++it) {
         for (const CandidateError& ce : it.value()) {

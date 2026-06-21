@@ -305,3 +305,51 @@ void compareSingleCandidate(const QString& testName,
     }
     QCOMPARE(actual.conflictTokenIds, expectedConflictIds);
 }
+
+void compareMultiCandidate(const QString& testName,
+                            const QSet<CandidateError>& actual,
+                            const QString& expectedRuleId,
+                            const QList<QList<int>>& expectedDisplayIdsList,
+                            const QList<QSet<int>>& expectedConflictIdsList)
+{
+    // Проверяем, что ruleId каждого кандидата совпадает с ожидаемым
+    for (const CandidateError& ce : actual) {
+        if (ce.ruleId != expectedRuleId) {
+            qDebug() << "[TEST FAIL]" << testName
+                     << "ruleId не совпадает:" << ce.ruleId
+                     << "expected:" << expectedRuleId;
+        }
+        QCOMPARE(ce.ruleId, expectedRuleId);
+    }
+
+    // Каждый фактический кандидат должен совпасть с одной из ожидаемых пар
+    QSet<int> matchedIndices;
+    for (const CandidateError& ce : actual) {
+        bool matched = false;
+        for (int i = 0; i < expectedDisplayIdsList.size(); ++i) {
+            if (matchedIndices.contains(i))
+                continue;
+            if (ce.displayTokenIds == expectedDisplayIdsList[i] &&
+                ce.conflictTokenIds == expectedConflictIdsList[i]) {
+                matched = true;
+                matchedIndices.insert(i);
+                break;
+            }
+        }
+        if (!matched) {
+            qDebug() << "[TEST FAIL]" << testName
+                     << "кандидат не совпал ни с одной ожидаемой парой:"
+                     << "display:" << ce.displayTokenIds
+                     << "conflict:" << ce.conflictTokenIds;
+        }
+        QVERIFY2(matched, qPrintable(QString("[%1] Кандидат не совпал").arg(testName)));
+    }
+
+    // Все ожидаемые пары должны быть использованы
+    if (matchedIndices.size() != expectedDisplayIdsList.size()) {
+        qDebug() << "[TEST FAIL]" << testName
+                 << "не все ожидаемые пары использованы: совпало"
+                 << matchedIndices.size() << "из" << expectedDisplayIdsList.size();
+    }
+    QCOMPARE(matchedIndices.size(), expectedDisplayIdsList.size());
+}
