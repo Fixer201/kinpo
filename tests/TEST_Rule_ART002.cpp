@@ -13,7 +13,6 @@
 #include <QtTest>
 #include <QObject>
 #include <QSet>
-#include <QDir>
 
 #include "TEST_Rule_ART002.h"
 #include "datamodel.h"
@@ -27,10 +26,7 @@ namespace {
 CheckerRuntime makeRuntimeWithResources()
 {
     CheckerRuntime runtime;
-    QDir dir(QDir::current());
-    dir.cdUp();
-    dir.cdUp();
-    QString listsDir = dir.filePath("docs/lists");
+    QString listsDir = findListsDir();
     auto [res, warns] = loadResources(listsDir);
     for (const QString& w : warns)
         qDebug() << "[TEST_Rule_ART002]" << w;

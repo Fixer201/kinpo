@@ -14,7 +14,6 @@
 #include <QtTest>
 #include <QObject>
 #include <QSet>
-#include <QDir>
 
 #include "TEST_Rule_ART001.h"
 #include "datamodel.h"
@@ -28,22 +27,10 @@ TEST_Rule_ART001::~TEST_Rule_ART001() {}
 
 namespace {
 
-/*!
-* \brief Создать CheckerRuntime с загруженными словарями из docs/lists.
-* \return CheckerRuntime с заполненными resources.
-*
-* Путь к docs/lists вычисляется относительно исходного файла теста.
-* Если словари не найдены, resources остаются пустыми (тесты продолжают работу).
-*/
 CheckerRuntime makeRuntimeWithResources()
 {
     CheckerRuntime runtime;
-    // Путь к docs/lists относительно корня проекта
-    // Тесты запускаются из build/tests, корень проекта — на 2 уровня выше
-    QDir dir(QDir::current());
-    dir.cdUp(); // build
-    dir.cdUp(); // корень проекта
-    QString listsDir = dir.filePath("docs/lists");
+    QString listsDir = findListsDir();
     auto [res, warns] = loadResources(listsDir);
     for (const QString& w : warns)
         qDebug() << "[TEST_Rule_ART001]" << w;

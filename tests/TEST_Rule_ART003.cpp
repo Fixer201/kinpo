@@ -12,7 +12,6 @@
 #include <QtTest>
 #include <QObject>
 #include <QSet>
-#include <QDir>
 
 #include "TEST_Rule_ART003.h"
 #include "datamodel.h"
@@ -26,10 +25,7 @@ namespace {
 CheckerRuntime makeRuntimeWithResources()
 {
     CheckerRuntime runtime;
-    QDir dir(QDir::current());
-    dir.cdUp();
-    dir.cdUp();
-    QString listsDir = dir.filePath("docs/lists");
+    QString listsDir = findListsDir();
     auto [res, warns] = loadResources(listsDir);
     for (const QString& w : warns)
         qDebug() << "[TEST_Rule_ART003]" << w;
@@ -45,7 +41,6 @@ TEST_Rule_ART003::~TEST_Rule_ART003() {}
 void TEST_Rule_ART003::TestRule_data()
 {
     QTest::addColumn<RawSentence>("rawSentence");
-    QTest::addColumn<int>("anchorTokenId");
     QTest::addColumn<int>("expectedCount");
     QTest::addColumn<QString>("expectedRuleId");
     QTest::addColumn<QList<QList<int>>>("expectedDisplayIdsList");
@@ -61,7 +56,7 @@ void TEST_Rule_ART003::TestRule_data()
         english.lemma = QStringLiteral("English");
         addToken(s, english);
         QTest::addRow("6.13_the_English")
-            << s << 1
+            << s
             << 1
             << QStringLiteral("ART-003")
             << (QList<QList<int>>{QList<int>{1}})
@@ -81,7 +76,7 @@ void TEST_Rule_ART003::TestRule_data()
         language.lemma = QStringLiteral("language");
         addToken(s, language);
         QTest::addRow("6.14_the_English_language")
-            << s << 1
+            << s
             << 0
             << QString()
             << QList<QList<int>>()
@@ -101,7 +96,7 @@ void TEST_Rule_ART003::TestRule_data()
         game.lemma = QStringLiteral("game");
         addToken(s, game);
         QTest::addRow("6.15_a_football_game")
-            << s << 1
+            << s
             << 0
             << QString()
             << QList<QList<int>>()
@@ -126,7 +121,7 @@ void TEST_Rule_ART003::TestRule_data()
         tennis.lemma = QStringLiteral("tennis");
         addToken(s, tennis);
         QTest::addRow("6.16_play_the_football_and_the_tennis")
-            << s << 2
+            << s
             << 2
             << QStringLiteral("ART-003")
             << (QList<QList<int>>{QList<int>{2}, QList<int>{5}})
@@ -137,7 +132,6 @@ void TEST_Rule_ART003::TestRule_data()
 void TEST_Rule_ART003::TestRule()
 {
     QFETCH(RawSentence, rawSentence);
-    QFETCH(int, anchorTokenId);
     QFETCH(int, expectedCount);
     QFETCH(QString, expectedRuleId);
     QFETCH(QList<QList<int>>, expectedDisplayIdsList);
