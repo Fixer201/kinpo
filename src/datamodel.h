@@ -349,6 +349,109 @@ struct DocumentModel {
     QHash<QString, SentenceModel*> sentById; ///< Индекс по sentId
 };
 
+// ------------------------------------------------------------------------
+// Типы для ресурсов правил (RuleResources)
+// ------------------------------------------------------------------------
+
+/*!
+* \enum NumberCondition
+* \brief Требуемое число существительного для записи det_compat.
+*/
+enum class NumberCondition {
+    Any,    ///< Любое число
+    Sing,   ///< Единственное
+    Plur    ///< Множественное
+};
+
+/*!
+* \enum CountabilityCondition
+* \brief Требуемая исчисляемость существительного для записи det_compat.
+*/
+enum class CountabilityCondition {
+    Any,          ///< Любая исчисляемость
+    Uncountable,  ///< Неисчисляемое
+    Countable     ///< Исчисляемое
+};
+
+/*!
+* \enum VerbPrepAction
+* \brief Действие при неверном предлоге для записи verb_prep.
+*/
+enum class VerbPrepAction {
+    ReplacePrep,  ///< Заменить предлог
+    DeletePrep,   ///< Удалить предлог
+    InsertPrep    ///< Добавить предлог
+};
+
+/*!
+* \struct PastForms
+* \brief Неправильные формы одного глагола.
+*/
+struct PastForms {
+    QString pastSimple;      ///< Форма Past Simple
+    QString pastParticiple;  ///< Форма Past Participle
+};
+
+/*!
+* \struct DetCompatEntry
+* \brief Одна запись таблицы совместимости детерминатива с существительным.
+*/
+struct DetCompatEntry {
+    NumberCondition number;               ///< Требуемое число
+    CountabilityCondition countability;   ///< Требуемая исчисляемость
+    QString correction;                   ///< Исправленная форма детерминатива
+};
+
+/*!
+* \struct VerbPrepEntry
+* \brief Одна запись таблицы глагольного управления.
+*/
+struct VerbPrepEntry {
+    std::optional<QString> wrongPrep;     ///< Ошибочный предлог (nullopt для InsertPrep)
+    VerbPrepAction action;                ///< Действие
+    std::optional<QString> prep;          ///< Правильный предлог (nullopt для DeletePrep)
+
+    bool operator==(const VerbPrepEntry& other) const {
+        return wrongPrep == other.wrongPrep &&
+               action == other.action &&
+               prep == other.prep;
+    }
+};
+
+inline uint qHash(const VerbPrepEntry& vpe, uint seed = 0) noexcept
+{
+    uint h = qHash(static_cast<int>(vpe.action), seed);
+    if (vpe.wrongPrep) h ^= qHash(*vpe.wrongPrep, seed) + 0x9e3779b9;
+    if (vpe.prep) h ^= qHash(*vpe.prep, seed) + 0x9e3779b9;
+    return h;
+}
+
+/*!
+* \struct RuleResources
+* \brief Словари и таблицы, загружаемые один раз при инициализации.
+*
+* Простые списки слов хранятся в нижнем регистре для case-insensitive
+* сравнения. Lookup выполняется через contains(form.toLower()).
+*/
+struct RuleResources {
+    QSet<QString> geoThe;          ///< Географические названия, требующие "the" (geo_the.txt)
+    QSet<QString> adjRequiresThe;  ///< ADJ, требующие "the" (adj_requires_the.txt)
+    QSet<QString> languages;       ///< Названия языков (languages.txt)
+    QSet<QString> sports;          ///< Виды спорта (sports.txt)
+    QSet<QString> meals;           ///< Приёмы пищи (meals.txt)
+    QSet<QString> titles;          ///< Титулы (titles.txt)
+    QSet<QString> uncountable;     ///< Неисчисляемые существительные (uncountable.txt)
+    QSet<QString> propnThe;        ///< PROPN, требующие "the" (propn_with_the.txt)
+    QSet<QString> classifiers;     ///< Слова-классификаторы (classifiers.txt)
+    QSet<QString> timeUnits;       ///< Единицы времени (time_units.txt)
+    QSet<QString> activityVerbs;   ///< Глаголы активности (activity_verbs.txt)
+    QSet<QString> positions;       ///< Названия должностей (positions.txt)
+    QSet<QString> durations;       ///< Единицы длительности (durations.txt)
+    QHash<QString, PastForms> pastForms;          ///< Неправильные глаголы (past_forms.txt)
+    QHash<QString, QList<DetCompatEntry>> detCompat;  ///< Совместимость det+noun (det_compat.txt)
+    QHash<QString, QSet<VerbPrepEntry>> verbPrep;     ///< Глагольное управление (verb_prep.txt)
+};
+
 // Forward declarations
 class Rule;
 
@@ -359,6 +462,7 @@ class Rule;
 struct CheckerRuntime {
     QHash<Upos, QSet<const Rule*>> dispatch; ///< Диспетчеризация по UPOS
     PriorityIndex priorityIndex; ///< Приоритеты между правилами
+    RuleResources resources; ///< Словари и таблицы для правил
 };
 
 /*!
