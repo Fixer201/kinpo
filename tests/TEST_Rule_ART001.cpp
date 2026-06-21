@@ -4,7 +4,7 @@
 *
 * Проверяет срабатывание и исключения правила "Лишний артикль перед PROPN":
 *  — срабатывание на a, an, the перед PROPN
-*  — исключение: географические названия
+*  — исключение: географические названия (geo_the.txt)
 *  — исключение: фамилии во мн.ч.
 *  — неисключение: фамилии в ед.ч.
 *  — исключение: географические названия во мн.ч.
@@ -14,15 +14,44 @@
 #include <QtTest>
 #include <QObject>
 #include <QSet>
+#include <QDir>
 
 #include "TEST_Rule_ART001.h"
 #include "datamodel.h"
 #include "modelbuilder.h"
+#include "wordlists.h"
 #include "auxiliaryfunctionsfortesting.h"
 #include "rule_art001.h"
 
 TEST_Rule_ART001::TEST_Rule_ART001() {}
 TEST_Rule_ART001::~TEST_Rule_ART001() {}
+
+namespace {
+
+/*!
+* \brief Создать CheckerRuntime с загруженными словарями из docs/lists.
+* \return CheckerRuntime с заполненными resources.
+*
+* Путь к docs/lists вычисляется относительно исходного файла теста.
+* Если словари не найдены, resources остаются пустыми (тесты продолжают работу).
+*/
+CheckerRuntime makeRuntimeWithResources()
+{
+    CheckerRuntime runtime;
+    // Путь к docs/lists относительно корня проекта
+    // Тесты запускаются из build/tests, корень проекта — на 2 уровня выше
+    QDir dir(QDir::current());
+    dir.cdUp(); // build
+    dir.cdUp(); // корень проекта
+    QString listsDir = dir.filePath("docs/lists");
+    auto [res, warns] = loadResources(listsDir);
+    for (const QString& w : warns)
+        qDebug() << "[TEST_Rule_ART001]" << w;
+    runtime.resources = std::move(res);
+    return runtime;
+}
+
+} // namespace
 
 void TEST_Rule_ART001::TestRule_data()
 {
@@ -133,43 +162,33 @@ void TEST_Rule_ART001::TestRule_data()
 
 void TEST_Rule_ART001::TestRule()
 {
-    // Получаем входные данные
     QFETCH(RawSentence, rawSentence);
     QFETCH(int, anchorTokenId);
     QFETCH(QString, expectedRuleId);
     QFETCH(QList<int>, expectedDisplayIds);
     QFETCH(QSet<int>, expectedConflictIds);
 
-    // Текущая метка row (например, "6.1_a_Europe")
     const QString tag = QString(QTest::currentDataTag());
 
-    // Превращаем сырое предложение в аналитическую модель
-    // с деревом зависимостей, линейными связями и типизированными полями
     SentenceModel sentence = buildSentenceModel(rawSentence);
 
-    // Ищем токен-якорь по ID.
     TokenNode* anchor = sentence.tokensById.value(anchorTokenId, nullptr);
     QVERIFY2(anchor != nullptr, qPrintable(QString("[%1] Якорный токен %2 не найден").arg(tag).arg(anchorTokenId)));
 
-    // DocumentModel и CheckerRuntime пустые, т.к. ART-001 не использует
-    // навигацию по документу и runtime-ресурсы
+    // CheckerRuntime с загруженными словарями из docs/lists
+    CheckerRuntime runtime = makeRuntimeWithResources();
     Rule_ART001 rule;
-    QSet<CandidateError> result = rule.check(*anchor, 0, DocumentModel(), CheckerRuntime());
+    QSet<CandidateError> result = rule.check(*anchor, 0, DocumentModel(), runtime);
 
-    // Проверяем результат.
-    // expectedRuleId.isEmpty() означает, что ожидается NO ERRORS (правило не срабатывает)
     if (expectedRuleId.isEmpty()) {
-        // Никаких ошибок не ожидается кандидатов быть не должно
+        if (result.size() != 0) {
+            const CandidateError& ce = *result.begin();
+            qDebug() << "[" << tag << "] Неожиданное срабатывание:" << ce.ruleId
+                     << "display:" << ce.displayTokenIds << "conflict:" << ce.conflictTokenIds;
+        }
         QCOMPARE(result.size(), 0);
     } else {
-        // тест одного правила на одном якорном токене
-        // каждый row в _data() содержит ровно 1 якорь DET;
-        // ART-001 либо срабатывает на нём 1 раз (если parent PROPN и нет исключений),
-        // либо не срабатывает вообще. Других якорей в предложении нет,
-        // поэтому result.size() может быть только 0 или 1
         QCOMPARE(result.size(), 1);
-        // Сравниваем ruleId, displayTokenIds и conflictTokenIds через хелпер
-        // При несовпадении хелпер выдаст подробное сообщение с tag
         compareSingleCandidate(tag, *result.begin(), expectedRuleId, expectedDisplayIds, expectedConflictIds);
     }
 }
