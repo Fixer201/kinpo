@@ -2,9 +2,10 @@
 * \file inputmodule.h
 * \brief Интерфейс модуля ввода для чтения CoNLL-U блоков.
 *
-* Определяет функцию parseSentenceBlock, выполняющую разбор одного блока строк
-* (одного предложения в формате CoNLL-U) в структуру RawSentence с локальной
-* валидацией каждой строки.
+* Определяет функции парсинга CoNLL-U: parseSentenceBlock — разбор одного
+* блока строк (одного предложения) в структуру RawSentence с локальной
+* валидацией каждой строки; validateSentenceStructure — проверка
+* структурных ограничений, требующих знания всех токенов сразу.
 */
 
 #pragma once
@@ -12,24 +13,6 @@
 #include "datamodel.h"
 #include <QStringList>
 #include <variant>
-
-/*!
-* \brief Преобразует строковый UPOS-тег в enum.
-* \param [in] upos Строка из входного файла (например, "NOUN").
-* \return Соответствующее значение Upos.
-* \note Вызывается после валидации parseTokenLine — строка гарантированно
-*       содержится в справочнике validUpos.
-*/
-Upos parseUpos(const QString& upos);
-
-/*!
-* \brief Преобразует строковый DEPREL-тег в enum.
-* \param [in] deprel Строка из входного файла (например, "nsubj").
-* \return Соответствующее значение Deprel; Deprel::Other для тегов,
-*         не используемых правилами.
-* \note Вызывается в buildSentenceModel после парсинга токена.
-*/
-Deprel parseDeprel(const QString& deprel);
 
 /*!
 * \brief Разобрать один блок строк CoNLL-U в RawSentence.
@@ -43,7 +26,7 @@ Deprel parseDeprel(const QString& deprel);
 *  - количество колонок (ровно 10);
 *  - корректность ID, HEAD, UPOS, FORM;
 *  - строгий порядок ID (1, 2, 3...);
-*  - формат MWT (N-M) и проверка непустых колонок.
+*  - формат MWT (N-M) и проверку непустых колонок.
 */
 std::variant<RawSentence, Diagnostic> parseSentenceBlock(
     const QStringList& block, int firstLineNumber);
@@ -61,10 +44,3 @@ std::variant<RawSentence, Diagnostic> parseSentenceBlock(
 *  - нет циклов в дереве зависимостей (обход цепочки HEAD с маркировкой "в пути" / "завершён").
 */
 std::optional<Diagnostic> validateSentenceStructure(const RawSentence& sentence);
-
-/*!
-* \brief Построить SentenceModel из валидированного RawSentence.
-* \param [in] rawSentence Сырое предложение после validateSentenceStructure.
-* \return Внутреннее представление предложения с деревом, линейными связями и типизированными полями.
-*/
-SentenceModel buildSentenceModel(const RawSentence& rawSentence);
