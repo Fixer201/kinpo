@@ -228,6 +228,37 @@ bool loadVerbPrep(const QString& filePath, QHash<QString, QSet<VerbPrepEntry>>& 
     return true;
 }
 
+/*!
+* \brief Загрузить фонетический словарь CMUdict (cmudict.txt).
+* \param [in] filePath Путь к файлу.
+* \param [out] target Хеш-таблица для заполнения.
+* \return true при успехе, false если файл недоступен.
+*
+* Формат: слово и фонемы разделены пробелами, фонемы — латинские буквы
+* с цифрой ударения (0/1/2). Слово приводится к нижнему регистру.
+* Фонемы сохраняются без изменений.
+*/
+bool loadCmuDict(const QString& filePath, QHash<QString, QStringList>& target)
+{
+    QFile file(filePath);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+        return false;
+
+    QTextStream in(&file);
+    setUtf8Encoding(in);
+    while (!in.atEnd()) {
+        QString line = in.readLine().trimmed();
+        if (line.isEmpty() || line.startsWith(';') || line.startsWith('#'))
+            continue;
+        QStringList parts = line.split(' ', Qt::SkipEmptyParts);
+        if (parts.size() < 2)
+            continue;
+        const QString word = parts.takeFirst().toLower();
+        target.insert(word, parts);
+    }
+    return true;
+}
+
 } // namespace
 
 std::pair<RuleResources, QList<QString>> loadResources(const QString& listsDir)
@@ -257,6 +288,7 @@ std::pair<RuleResources, QList<QString>> loadResources(const QString& listsDir)
     tryLoad("past_forms.txt",      res.pastForms,       loadPastForms);
     tryLoad("det_compat.txt",      res.detCompat,       loadDetCompat);
     tryLoad("verb_prep.txt",       res.verbPrep,        loadVerbPrep);
+    tryLoad("cmudict.txt",         res.cmudict,         loadCmuDict);
 
     return {std::move(res), std::move(warnings)};
 }

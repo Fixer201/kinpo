@@ -450,6 +450,7 @@ struct RuleResources {
     QHash<QString, PastForms> pastForms;          ///< Неправильные глаголы (past_forms.txt)
     QHash<QString, QList<DetCompatEntry>> detCompat;  ///< Совместимость det+noun (det_compat.txt)
     QHash<QString, QSet<VerbPrepEntry>> verbPrep;     ///< Глагольное управление (verb_prep.txt)
+    QHash<QString, QStringList> cmudict;              ///< Фонетический словарь CMUdict (cmudict.txt)
 };
 
 // Forward declarations
