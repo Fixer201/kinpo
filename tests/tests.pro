@@ -23,6 +23,7 @@ SOURCES += \
     TEST_Rule_ART006.cpp \
     TEST_Rule_DET001.cpp \
     TEST_Rule_DET002.cpp \
+    TEST_Rule_DET003.cpp \
     main.cpp \
     auxiliaryfunctionsfortesting.cpp \
     TEST_ParseSentenceBlock.cpp \
@@ -39,7 +40,8 @@ SOURCES += \
     $$PWD/../src/rules/rule_art005a.cpp \
     $$PWD/../src/rules/rule_art006.cpp \
     $$PWD/../src/rules/rule_det001.cpp \
-    $$PWD/../src/rules/rule_det002.cpp
+    $$PWD/../src/rules/rule_det002.cpp \
+    $$PWD/../src/rules/rule_det003.cpp
 
 HEADERS += \
     TEST_Buildsentencemodel.h \
@@ -53,6 +55,7 @@ HEADERS += \
     TEST_Rule_ART006.h \
     TEST_Rule_DET001.h \
     TEST_Rule_DET002.h \
+    TEST_Rule_DET003.h \
     TEST_ParseSentenceBlock.h \
     TEST_ValidateSentenceStructure.h \
     auxiliaryfunctionsfortesting.h \
@@ -68,7 +71,8 @@ HEADERS += \
     $$PWD/../src/rules/rule_art005a.h \
     $$PWD/../src/rules/rule_art006.h \
     $$PWD/../src/rules/rule_det001.h \
-    $$PWD/../src/rules/rule_det002.h
+    $$PWD/../src/rules/rule_det002.h \
+    $$PWD/../src/rules/rule_det003.h
 
 # gcov
 QMAKE_CXXFLAGS += --coverage -O0 -g
