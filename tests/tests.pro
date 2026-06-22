@@ -32,6 +32,11 @@ SOURCES += \
     TEST_Rule_PREP004.cpp \
     TEST_Rule_PREP005.cpp \
     TEST_Rule_CONJ001.cpp \
+    TEST_Rule_CONJ002.cpp \
+    TEST_Rule_CONJ003.cpp \
+    TEST_Rule_CONJ004.cpp \
+    TEST_Rule_CONJ005.cpp \
+    TEST_Rule_CONJ006.cpp \
     main.cpp \
     auxiliaryfunctionsfortesting.cpp \
     TEST_ParseSentenceBlock.cpp \
@@ -57,7 +62,12 @@ SOURCES += \
     $$PWD/../src/rules/rule_prep003.cpp \
     $$PWD/../src/rules/rule_prep004.cpp \
     $$PWD/../src/rules/rule_prep005.cpp \
-    $$PWD/../src/rules/rule_conj001.cpp
+    $$PWD/../src/rules/rule_conj001.cpp \
+    $$PWD/../src/rules/rule_conj002.cpp \
+    $$PWD/../src/rules/rule_conj003.cpp \
+    $$PWD/../src/rules/rule_conj004.cpp \
+    $$PWD/../src/rules/rule_conj005.cpp \
+    $$PWD/../src/rules/rule_conj006.cpp
 
 HEADERS += \
     TEST_Buildsentencemodel.h \
@@ -80,6 +90,11 @@ HEADERS += \
     TEST_Rule_PREP004.h \
     TEST_Rule_PREP005.h \
     TEST_Rule_CONJ001.h \
+    TEST_Rule_CONJ002.h \
+    TEST_Rule_CONJ003.h \
+    TEST_Rule_CONJ004.h \
+    TEST_Rule_CONJ005.h \
+    TEST_Rule_CONJ006.h \
     TEST_ParseSentenceBlock.h \
     TEST_ValidateSentenceStructure.h \
     auxiliaryfunctionsfortesting.h \
@@ -104,7 +119,12 @@ HEADERS += \
     $$PWD/../src/rules/rule_prep003.h \
     $$PWD/../src/rules/rule_prep004.h \
     $$PWD/../src/rules/rule_prep005.h \
-    $$PWD/../src/rules/rule_conj001.h
+    $$PWD/../src/rules/rule_conj001.h \
+    $$PWD/../src/rules/rule_conj002.h \
+    $$PWD/../src/rules/rule_conj003.h \
+    $$PWD/../src/rules/rule_conj004.h \
+    $$PWD/../src/rules/rule_conj005.h \
+    $$PWD/../src/rules/rule_conj006.h
 
 # gcov
 QMAKE_CXXFLAGS += --coverage -O0 -g
