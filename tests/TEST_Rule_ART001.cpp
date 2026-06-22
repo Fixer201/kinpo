@@ -162,7 +162,7 @@ void TEST_Rule_ART001::TestRule()
     TokenNode* anchor = sentence.tokensById.value(anchorTokenId, nullptr);
     QVERIFY2(anchor != nullptr, qPrintable(QString("[%1] Якорный токен %2 не найден").arg(tag).arg(anchorTokenId)));
 
-    // CheckerRuntime с загруженными словарями из docs/lists
+    // CheckerRuntime с загруженными словарями из lists
     CheckerRuntime runtime = makeRuntimeWithResources();
     Rule_ART001 rule;
     QSet<CandidateError> result = rule.check(*anchor, 0, DocumentModel(), runtime);

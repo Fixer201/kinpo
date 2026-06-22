@@ -1,0 +1,25 @@
+a	Plur,unc	-
+an	Plur,unc	-
+this	Plur	these
+that	Plur	those
+these	Sing	this
+those	Sing	that
+every	Plur	-
+every	unc	all
+each	Plur	-
+each	unc	all
+another	Plur	other
+another	unc	more
+much	Plur,not_unc	many
+many	unc	much
+few	unc	little
+a few	unc	a little
+little	Plur,not_unc	few
+a little	Plur,not_unc	a few
+less	Plur,not_unc	fewer
+fewer	unc	less
+several	unc	some
+both	unc	-
+either	Plur	-
+neither	Plur	-
+enough	Sing,not_unc	-

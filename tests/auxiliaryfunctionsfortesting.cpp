@@ -15,12 +15,12 @@
 QString findListsDir()
 {
     QStringList candidates = {
-        QStringLiteral("../docs/lists"),
-        QStringLiteral("../../docs/lists"),
-        QStringLiteral("docs/lists"),
+        QStringLiteral("../lists"),
+        QStringLiteral("../../lists"),
+        QStringLiteral("lists"),
     };
 #ifdef PROJECT_SOURCE_ROOT
-    candidates.append(QStringLiteral(PROJECT_SOURCE_ROOT) + QStringLiteral("/docs/lists"));
+    candidates.append(QStringLiteral(PROJECT_SOURCE_ROOT) + QStringLiteral("/lists"));
 #endif
     for (const QString& path : candidates) {
         QFileInfo info(path);
