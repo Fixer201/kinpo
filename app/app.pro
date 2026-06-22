@@ -33,6 +33,10 @@ SOURCES += \
     ../src/rules/rule_aux004.cpp \
     ../src/rules/rule_aux005.cpp \
     ../src/rules/rule_aux006.cpp \
+    ../src/rules/rule_other001.cpp \
+    ../src/rules/rule_other002.cpp \
+    ../src/rules/rule_other003.cpp \
+    ../src/rules/rule_other004.cpp \
     main.cpp \
     ../src/datamodel.cpp \
     ../src/inputmodule.cpp \
@@ -72,4 +76,8 @@ HEADERS += \
     ../src/rules/rule_aux003.h \
     ../src/rules/rule_aux004.h \
     ../src/rules/rule_aux005.h \
-    ../src/rules/rule_aux006.h
+    ../src/rules/rule_aux006.h \
+    ../src/rules/rule_other001.h \
+    ../src/rules/rule_other002.h \
+    ../src/rules/rule_other003.h \
+    ../src/rules/rule_other004.h
