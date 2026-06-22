@@ -19,6 +19,7 @@
 #include "TEST_Rule_ART005a.h"
 #include "TEST_Rule_ART006.h"
 #include "TEST_Rule_DET001.h"
+#include "TEST_Rule_DET002.h"
 #include "TEST_ValidateSentenceStructure.h"
 
 int main(int argc, char *argv[])
@@ -36,5 +37,6 @@ int main(int argc, char *argv[])
     status |= QTest::qExec(new TEST_Rule_ART005a, argc, argv);
     status |= QTest::qExec(new TEST_Rule_ART006, argc, argv);
     status |= QTest::qExec(new TEST_Rule_DET001, argc, argv);
+    status |= QTest::qExec(new TEST_Rule_DET002, argc, argv);
     return status;
 }
