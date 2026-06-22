@@ -27,6 +27,12 @@ SOURCES += \
     ../src/rules/rule_conj004.cpp \
     ../src/rules/rule_conj005.cpp \
     ../src/rules/rule_conj006.cpp \
+    ../src/rules/rule_aux001.cpp \
+    ../src/rules/rule_aux002.cpp \
+    ../src/rules/rule_aux003.cpp \
+    ../src/rules/rule_aux004.cpp \
+    ../src/rules/rule_aux005.cpp \
+    ../src/rules/rule_aux006.cpp \
     main.cpp \
     ../src/datamodel.cpp \
     ../src/inputmodule.cpp \
@@ -60,4 +66,10 @@ HEADERS += \
     ../src/rules/rule_conj003.h \
     ../src/rules/rule_conj004.h \
     ../src/rules/rule_conj005.h \
-    ../src/rules/rule_conj006.h
+    ../src/rules/rule_conj006.h \
+    ../src/rules/rule_aux001.h \
+    ../src/rules/rule_aux002.h \
+    ../src/rules/rule_aux003.h \
+    ../src/rules/rule_aux004.h \
+    ../src/rules/rule_aux005.h \
+    ../src/rules/rule_aux006.h

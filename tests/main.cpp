@@ -34,6 +34,12 @@
 #include "TEST_Rule_CONJ004.h"
 #include "TEST_Rule_CONJ005.h"
 #include "TEST_Rule_CONJ006.h"
+#include "TEST_Rule_AUX001.h"
+#include "TEST_Rule_AUX002.h"
+#include "TEST_Rule_AUX003.h"
+#include "TEST_Rule_AUX004.h"
+#include "TEST_Rule_AUX005.h"
+#include "TEST_Rule_AUX006.h"
 #include "TEST_ValidateSentenceStructure.h"
 
 int main(int argc, char *argv[])
@@ -66,5 +72,11 @@ int main(int argc, char *argv[])
     status |= QTest::qExec(new TEST_Rule_CONJ004, argc, argv);
     status |= QTest::qExec(new TEST_Rule_CONJ005, argc, argv);
     status |= QTest::qExec(new TEST_Rule_CONJ006, argc, argv);
+    status |= QTest::qExec(new TEST_Rule_AUX001, argc, argv);
+    status |= QTest::qExec(new TEST_Rule_AUX002, argc, argv);
+    status |= QTest::qExec(new TEST_Rule_AUX003, argc, argv);
+    status |= QTest::qExec(new TEST_Rule_AUX004, argc, argv);
+    status |= QTest::qExec(new TEST_Rule_AUX005, argc, argv);
+    status |= QTest::qExec(new TEST_Rule_AUX006, argc, argv);
     return status;
 }
