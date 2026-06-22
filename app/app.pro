@@ -15,6 +15,7 @@ SOURCES += \
     ../src/rules/rule_det002.cpp \
     ../src/rules/rule_det003.cpp \
     ../src/rules/rule_det004.cpp \
+    ../src/rules/rule_det005.cpp \
     main.cpp \
     ../src/datamodel.cpp \
     ../src/inputmodule.cpp \
@@ -36,4 +37,5 @@ HEADERS += \
     ../src/rules/rule_det001.h \
     ../src/rules/rule_det002.h \
     ../src/rules/rule_det003.h \
-    ../src/rules/rule_det004.h
+    ../src/rules/rule_det004.h \
+    ../src/rules/rule_det005.h
