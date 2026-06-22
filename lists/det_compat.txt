@@ -1,5 +1,7 @@
-a	Plur,unc	-
-an	Plur,unc	-
+a	Plur	-
+a	unc	-
+an	Plur	-
+an	unc	-
 this	Plur	these
 that	Plur	those
 these	Sing	this
