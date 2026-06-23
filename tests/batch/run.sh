@@ -6,7 +6,7 @@
 # с эталоном из Expected/ и выводит статистику.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-EXE="${SCRIPT_DIR}/../../build_test_app/app"
+EXE="${SCRIPT_DIR}/../../build/Desktop-Debug/app/app"
 IN_DIR="${SCRIPT_DIR}/Input"
 EXP_DIR="${SCRIPT_DIR}/Expected"
 OUT_DIR="${SCRIPT_DIR}/Output"

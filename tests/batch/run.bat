@@ -8,7 +8,7 @@ REM с эталоном из Expected/ и выводит статистику.
 
 setlocal enabledelayedexpansion
 
-set EXE=..\..\build_test_app\Release\app.exe
+set EXE=..\..\Executable\checker.exe
 set LISTS_DIR=..\..\lists
 if not exist "%EXE%" (
     echo [ОШИБКА] Не найден исполняемый файл: %EXE%
