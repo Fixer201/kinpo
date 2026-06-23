@@ -12,6 +12,7 @@
 #include <QFile>
 #include <QTextStream>
 #include <algorithm>
+#include <climits>
 
 /*!
 * \brief Элемент при построении строки исправления.
