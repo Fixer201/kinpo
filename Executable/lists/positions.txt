@@ -1,0 +1,20 @@
+president
+prime minister
+king
+queen
+prince
+princess
+chancellor
+governor
+mayor
+ambassador
+minister
+secretary
+director
+chairman
+head
+chief
+dean
+archbishop
+pope
+commander

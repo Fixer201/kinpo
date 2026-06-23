@@ -1,0 +1,53 @@
+Guardian
+Times
+Telegraph
+Post
+Sun
+Mirror
+Herald
+Tribune
+Chronicle
+Observer
+Economist
+Atlantic
+New Yorker
+Washington Post
+New York Times
+Wall Street Journal
+Financial Times
+Daily Mail
+Independent
+Spectator
+Ritz
+Hilton
+Savoy
+Waldorf
+Plaza
+Marriott
+Pentagon
+Kremlin
+White House
+Capitol
+Shard
+Gherkin
+Colosseum
+Parthenon
+Louvre
+Acropolis
+Alamo
+Bible
+Quran
+Torah
+Talmud
+Iliad
+Odyssey
+Titanic
+Mayflower
+Hague
+Bronx
+Riviera
+Arctic
+Antarctic
+Midwest
+Levant
+Caucasus
