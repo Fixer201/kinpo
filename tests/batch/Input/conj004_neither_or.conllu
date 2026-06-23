@@ -1,0 +1,6 @@
+# sent_id = conj004
+# text = neither A or B
+1	neither	neither	CCONJ	CC	_	2	cc:preconj	2:cc:preconj	_
+2	A	A	NOUN	NN	Number=Sing	0	root	0:root	_
+3	or	or	CCONJ	CC	_	4	cc	4:cc	_
+4	B	B	NOUN	NN	Number=Sing	2	conj	2:conj:or	_

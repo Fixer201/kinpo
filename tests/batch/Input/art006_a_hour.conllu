@@ -1,0 +1,4 @@
+# sent_id = art006
+# text = a hour
+1	a	a	DET	DT	_	2	det	2:det	_
+2	hour	hour	NOUN	NN	Number=Sing	0	root	0:root	_

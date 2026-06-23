@@ -1,0 +1,4 @@
+# sent_id = det001
+# text = many water
+1	many	many	DET	DT	_	2	det	2:det	_
+2	water	water	NOUN	NN	Number=Sing	0	root	0:root	_

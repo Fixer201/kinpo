@@ -1,0 +1,4 @@
+# sent_id = other001
+# text = more bigger
+1	more	more	ADV	RBR	Degree=Cmp	2	advmod	2:advmod	_
+2	bigger	big	ADJ	JJR	Degree=Cmp	0	root	0:root	_

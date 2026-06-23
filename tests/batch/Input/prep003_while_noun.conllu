@@ -1,0 +1,6 @@
+# sent_id = prep003
+# text = while the meeting
+1	while	while	SCONJ	IN	_	3	mark	3:mark	_
+2	the	the	DET	DT	_	3	det	3:det	_
+3	meeting	meeting	NOUN	NN	Number=Sing	0	root	0:root	_
+4	is	be	AUX	VBZ	_	3	cop	3:cop	_

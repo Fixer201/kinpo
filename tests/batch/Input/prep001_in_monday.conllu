@@ -1,0 +1,5 @@
+# sent_id = prep001
+# text = meeting in Monday
+1	meeting	meeting	NOUN	NN	Number=Sing	0	root	0:root	_
+2	in	in	ADP	IN	_	3	case	3:case	_
+3	Monday	Monday	PROPN	NNP	Number=Sing	1	nmod	1:nmod:in	_

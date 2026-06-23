@@ -1,0 +1,9 @@
+# sent_id = 2
+# text = The United Nations is an international organization
+1	The	the	DET	DT	Definite=Def|PronType=Art	2	det	2:det	_
+2	United	United	PROPN	NNP	Number=Sing	3	compound	3:compound	_
+3	Nations	Nations	PROPN	NNP	Number=Plur	4	nsubj	4:nsubj	_
+4	is	be	AUX	VBZ	Mood=Ind|Number=Sing|Person=3|Tense=Pres|VerbForm=Fin	0	root	0:root	_
+5	an	a	DET	DT	Definite=Ind|PronType=Art	6	det	6:det	_
+6	international	international	ADJ	JJ	Degree=Pos	7	amod	7:amod	_
+7	organization	organization	NOUN	NN	Number=Sing	4	attr	4:attr	_

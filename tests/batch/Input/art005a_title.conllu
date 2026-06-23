@@ -1,0 +1,5 @@
+# sent_id = art005a
+# text = the President Biden
+1	the	the	DET	DT	_	2	det	2:det	_
+2	President	President	PROPN	NNP	Number=Sing	3	nmod:desc	3:nmod:desc	_
+3	Biden	Biden	PROPN	NNP	Number=Sing	0	root	0:root	_

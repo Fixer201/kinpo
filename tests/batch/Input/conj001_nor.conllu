@@ -1,0 +1,5 @@
+# sent_id = conj001
+# text = apples nor oranges
+1	apples	apple	NOUN	NNS	Number=Plur	0	root	0:root	_
+2	nor	nor	CCONJ	CC	_	3	cc	3:cc	_
+3	oranges	orange	NOUN	NNS	Number=Plur	1	conj	1:conj:nor	_

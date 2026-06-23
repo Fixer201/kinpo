@@ -1,0 +1,4 @@
+# sent_id = det003
+# text = their working
+1	their	their	PRON	PRP$	Poss=Yes	2	nsubj	2:nsubj	_
+2	working	work	VERB	VBG	VerbForm=Ger	0	root	0:root	_

@@ -1,0 +1,5 @@
+# sent_id = other006
+# text = better then ever
+1	better	good	ADJ	JJR	Degree=Cmp	0	root	0:root	_
+2	then	then	ADV	RB	_	3	advmod	3:advmod	_
+3	ever	ever	ADV	RB	_	1	advmod	1:advmod	_

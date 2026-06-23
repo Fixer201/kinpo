@@ -1,0 +1,5 @@
+# sent_id = det004
+# text = their is important
+1	their	their	PRON	PRP$	Poss=Yes	3	nsubj	3:nsubj	_
+2	is	be	AUX	VBZ	Mood=Ind|Number=Sing|Person=3|Tense=Pres|VerbForm=Fin	3	cop	3:cop	_
+3	important	important	ADJ	JJ	Degree=Pos	0	root	0:root	_

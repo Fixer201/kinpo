@@ -1,0 +1,5 @@
+# sent_id = det002
+# text = the my book
+1	the	the	DET	DT	_	3	det	3:det	_
+2	my	my	DET	PRP$	Poss=Yes	3	det	3:det	_
+3	book	book	NOUN	NN	Number=Sing	0	root	0:root	_

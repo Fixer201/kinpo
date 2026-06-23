@@ -1,0 +1,4 @@
+# sent_id = aux005
+# text = can gone
+1	can	can	AUX	MD	VerbForm=Fin	2	aux	2:aux	_
+2	gone	go	VERB	VBN	VerbForm=Part|Tense=Past	0	root	0:root	_

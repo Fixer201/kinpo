@@ -1,0 +1,7 @@
+# sent_id = multi
+# text = a London and the Europe
+1	a	a	DET	DT	_	2	det	2:det	_
+2	London	London	PROPN	NNP	Number=Sing	0	root	0:root	_
+3	and	and	CCONJ	CC	_	2	cc	2:cc	_
+4	the	the	DET	DT	_	5	det	5:det	_
+5	Europe	Europe	PROPN	NNP	Number=Sing	2	conj	2:conj:and	_

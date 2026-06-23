@@ -1,0 +1,5 @@
+# sent_id = prep001
+# text = at the morning
+1	at	at	ADP	IN	_	3	case	3:case	_
+2	the	the	DET	DT	_	3	det	3:det	_
+3	morning	morning	NOUN	NN	Number=Sing	0	root	0:root	_
