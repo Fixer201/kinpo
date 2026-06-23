@@ -47,6 +47,8 @@ SOURCES += \
     TEST_Rule_OTHER002.cpp \
     TEST_Rule_OTHER003.cpp \
     TEST_Rule_OTHER004.cpp \
+    TEST_Rule_OTHER005.cpp \
+    TEST_Rule_OTHER006.cpp \
     main.cpp \
     auxiliaryfunctionsfortesting.cpp \
     TEST_ParseSentenceBlock.cpp \
@@ -87,7 +89,9 @@ SOURCES += \
     $$PWD/../src/rules/rule_other001.cpp \
     $$PWD/../src/rules/rule_other002.cpp \
     $$PWD/../src/rules/rule_other003.cpp \
-    $$PWD/../src/rules/rule_other004.cpp
+    $$PWD/../src/rules/rule_other004.cpp \
+    $$PWD/../src/rules/rule_other005.cpp \
+    $$PWD/../src/rules/rule_other006.cpp
 
 HEADERS += \
     TEST_Buildsentencemodel.h \
@@ -125,6 +129,8 @@ HEADERS += \
     TEST_Rule_OTHER002.h \
     TEST_Rule_OTHER003.h \
     TEST_Rule_OTHER004.h \
+    TEST_Rule_OTHER005.h \
+    TEST_Rule_OTHER006.h \
     TEST_ParseSentenceBlock.h \
     TEST_ValidateSentenceStructure.h \
     auxiliaryfunctionsfortesting.h \
@@ -164,7 +170,9 @@ HEADERS += \
     $$PWD/../src/rules/rule_other001.h \
     $$PWD/../src/rules/rule_other002.h \
     $$PWD/../src/rules/rule_other003.h \
-    $$PWD/../src/rules/rule_other004.h
+    $$PWD/../src/rules/rule_other004.h \
+    $$PWD/../src/rules/rule_other005.h \
+    $$PWD/../src/rules/rule_other006.h
 
 # gcov
 QMAKE_CXXFLAGS += --coverage -O0 -g

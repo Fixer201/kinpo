@@ -37,6 +37,8 @@ SOURCES += \
     ../src/rules/rule_other002.cpp \
     ../src/rules/rule_other003.cpp \
     ../src/rules/rule_other004.cpp \
+    ../src/rules/rule_other005.cpp \
+    ../src/rules/rule_other006.cpp \
     main.cpp \
     ../src/datamodel.cpp \
     ../src/inputmodule.cpp \
@@ -80,4 +82,6 @@ HEADERS += \
     ../src/rules/rule_other001.h \
     ../src/rules/rule_other002.h \
     ../src/rules/rule_other003.h \
-    ../src/rules/rule_other004.h
+    ../src/rules/rule_other004.h \
+    ../src/rules/rule_other005.h \
+    ../src/rules/rule_other006.h
