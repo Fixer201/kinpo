@@ -63,6 +63,7 @@ SOURCES += \
     $$PWD/../src/climodule.cpp \
     $$PWD/../src/runtimemodule.cpp \
     $$PWD/../src/inputpipeline.cpp \
+    $$PWD/../src/outputmodule.cpp \
     $$PWD/../src/rules/rule_art001.cpp \
     $$PWD/../src/rules/rule_art002.cpp \
     $$PWD/../src/rules/rule_art003.cpp \
@@ -149,6 +150,7 @@ HEADERS += \
     $$PWD/../src/climodule.h \
     $$PWD/../src/runtimemodule.h \
     $$PWD/../src/inputpipeline.h \
+    $$PWD/../src/outputmodule.h \
     $$PWD/../src/rules/rule_art001.h \
     $$PWD/../src/rules/rule_art002.h \
     $$PWD/../src/rules/rule_art003.h \

@@ -292,15 +292,51 @@ inline uint qHash(Upos key, uint seed = 0) noexcept
 // Типы для системы грамматической проверки (checkersystem)
 // ------------------------------------------------------------------------
 
+// Тип правки для AtomicEdit
+enum class AtomicEditType {
+    ReplaceTokens,
+    DeleteTokens,
+    InsertBefore,
+    InsertAfter
+};
+
+// Одна элементарная операция исправления
+struct AtomicEdit {
+    AtomicEditType type;
+    QList<int> targetTokenIds;
+    int referenceTokenId = 0;
+    QStringList newTokens;
+
+    bool operator==(const AtomicEdit& other) const {
+        return type == other.type &&
+               targetTokenIds == other.targetTokenIds &&
+               referenceTokenId == other.referenceTokenId &&
+               newTokens == other.newTokens;
+    }
+};
+
+inline uint qHash(const AtomicEdit& e, uint seed = 0) noexcept
+{
+    uint h = qHash(static_cast<int>(e.type), seed);
+    for (int id : e.targetTokenIds)
+        h ^= qHash(id, seed) + 0x9e3779b9;
+    h ^= qHash(e.referenceTokenId, seed) + 0x9e3779b9;
+    for (const QString& s : e.newTokens)
+        h ^= qHash(s, seed) + 0x9e3779b9;
+    return h;
+}
+
 /*!
 * \struct CandidateError
 * \brief Один найденный кандидат ошибки от правила.
 */
 struct CandidateError {
-    QString ruleId;            ///< Идентификатор правила (например "ART-001")
+    QString ruleId;            ///< Идентификатор правила
     QString sentId;            ///< Идентификатор предложения
-    QList<int> displayTokenIds; ///< ID токенов, отображаемых в сообщении
-    QSet<int> conflictTokenIds; ///< ID токенов, определяющих зону конфликта
+    QList<int> displayTokenIds; ///< ID токенов для отображения
+    QSet<int> conflictTokenIds; ///< ID токенов зоны конфликта
+    QList<AtomicEdit> edits;    ///< Операции исправления
+    QHash<QString, QString> messageParams; ///< Значения для шаблона описания
 
     bool operator==(const CandidateError& other) const {
         return ruleId == other.ruleId &&
@@ -496,6 +532,12 @@ public:
     virtual QString ruleId() const = 0;
     virtual QSet<Upos> anchorUpos() const = 0;
     virtual bool canConflict() const = 0;
+
+    // Шаблон человекочитаемого описания ошибки с плейсхолдерами {KEY}.
+    // Базовая реализация возвращает пустую строку. Подклассы переопределяют
+    // для формирования описания по спецификации (раздел 2.4.3 внешн. спеки).
+    virtual QString descriptionTemplate() const { return QString(); }
+    virtual QSet<QString> messageParamKeys() const { return {}; }
 
     virtual QSet<CandidateError> check(const TokenNode& anchor,
                                        int sentenceIndex,

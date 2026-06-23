@@ -1,5 +1,6 @@
 .qtcreator/
 build/
+build_test_*/
 docs/
 *.o
 *.gcda

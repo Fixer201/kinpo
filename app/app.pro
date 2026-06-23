@@ -47,7 +47,8 @@ SOURCES += \
     ../src/datamodel.cpp \
     ../src/inputmodule.cpp \
     ../src/modelbuilder.cpp \
-    ../src/wordlists.cpp
+    ../src/wordlists.cpp \
+    ../src/outputmodule.cpp
 
 HEADERS += \
     ../src/checkersystem.h \
@@ -58,6 +59,7 @@ HEADERS += \
     ../src/inputmodule.h \
     ../src/modelbuilder.h \
     ../src/wordlists.h \
+    ../src/outputmodule.h \
     ../src/rules/rule_art001.h \
     ../src/rules/rule_art002.h \
     ../src/rules/rule_art003.h \
