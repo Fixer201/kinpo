@@ -106,9 +106,17 @@ std::variant<CheckerRuntime, Diagnostic> initializeRuntime(const RunConfig& conf
 
     QString listsDir = config.listsDir.value_or(QString());
     auto [res, warns] = loadResources(listsDir);
-    for (const QString& w : warns)
-        qWarning() << "[initializeRuntime]" << w;
-    runtime.resources = std::move(res);
 
+    if (!warns.isEmpty()) {
+        // Если ни один словарь не загрузился — это фатальная ошибка
+        Diagnostic d;
+        d.kind = DiagnosticKind::ResourceLoadError;
+        d.message = QStringLiteral("Не удалось загрузить словари. Укажите путь через --lists.")
+                    + QStringLiteral("\n  ") + warns.join(QStringLiteral("\n  "));
+        d.code = -1;
+        return d;
+    }
+
+    runtime.resources = std::move(res);
     return runtime;
 }
