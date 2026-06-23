@@ -23,3 +23,5 @@
 * и путь к выходному файлу.
 */
 std::variant<RunConfig, Diagnostic> parseCommandLine(const QStringList& args);
+
+std::variant<CheckerRuntime, Diagnostic> runSetup(const QStringList& args);

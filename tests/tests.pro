@@ -62,6 +62,7 @@ SOURCES += \
     $$PWD/../src/checkersystem.cpp \
     $$PWD/../src/climodule.cpp \
     $$PWD/../src/runtimemodule.cpp \
+    $$PWD/../src/inputpipeline.cpp \
     $$PWD/../src/rules/rule_art001.cpp \
     $$PWD/../src/rules/rule_art002.cpp \
     $$PWD/../src/rules/rule_art003.cpp \
@@ -147,6 +148,7 @@ HEADERS += \
     $$PWD/../src/checkersystem.h \
     $$PWD/../src/climodule.h \
     $$PWD/../src/runtimemodule.h \
+    $$PWD/../src/inputpipeline.h \
     $$PWD/../src/rules/rule_art001.h \
     $$PWD/../src/rules/rule_art002.h \
     $$PWD/../src/rules/rule_art003.h \

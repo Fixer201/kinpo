@@ -18,8 +18,6 @@
 #include <QStringConverter>
 #endif
 
-namespace {
-
 /*!
 * \brief Установить UTF-8 кодировку для QTextStream.
 * \param [in,out] stream Поток для настройки.
@@ -36,6 +34,8 @@ void setUtf8Encoding(QTextStream& stream)
     stream.setCodec("UTF-8");
 #endif
 }
+
+namespace {
 
 /*!
 * \brief Загрузить простой список слов из файла в QSet<QString>.

@@ -11,7 +11,10 @@
 #include "datamodel.h"
 #include <QString>
 #include <QList>
+#include <QTextStream>
 #include <utility>
+
+void setUtf8Encoding(QTextStream& stream);
 
 /*!
 * \brief Загрузить все словари из указанной директории.

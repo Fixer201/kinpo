@@ -8,6 +8,7 @@
 */
 
 #include "climodule.h"
+#include "runtimemodule.h"
 
 namespace {
 
@@ -60,4 +61,17 @@ std::variant<RunConfig, Diagnostic> parseCommandLine(const QStringList& args)
     config.listsDir = listsDir;
 
     return config;
+}
+
+// Оркестратор слоя настройки: разбирает аргументы и инициализирует runtime.
+// При ошибке разбора аргументов возвращает Diagnostic, иначе строит CheckerRuntime
+// через initializeRuntime с загруженными словарями и таблицей диспетчеризации.
+std::variant<CheckerRuntime, Diagnostic> runSetup(const QStringList& args)
+{
+    auto cliResult = parseCommandLine(args);
+    if (std::holds_alternative<Diagnostic>(cliResult))
+        return std::get<Diagnostic>(cliResult);
+
+    const RunConfig& config = std::get<RunConfig>(cliResult);
+    return initializeRuntime(config);
 }
