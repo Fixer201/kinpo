@@ -147,3 +147,18 @@ QSet<CandidateError> checkSentence(const SentenceModel& sentence,
     }
     return result;
 }
+
+// Цикл проверки всех предложений документа. Для каждого предложения
+// вызывает checkSentence и накапливает найденные ошибки в общий набор.
+QSet<CandidateError> runAnalysis(const DocumentModel& document,
+                                 const CheckerRuntime& runtime)
+{
+    QSet<CandidateError> allErrors;
+    for (size_t i = 0; i < document.sentences.size(); ++i) {
+        const SentenceModel& sentence = *document.sentences[i];
+        QSet<CandidateError> sentenceErrors = checkSentence(sentence, i, document, runtime);
+        for (const CandidateError& ce : sentenceErrors)
+            allErrors.insert(ce);
+    }
+    return allErrors;
+}

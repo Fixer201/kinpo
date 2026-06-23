@@ -41,4 +41,9 @@ QSet<CandidateError> checkSentence(const SentenceModel& sentence,
                                    const DocumentModel& document,
                                    const CheckerRuntime& runtime);
 
+// Цикл проверки всех предложений документа. Для каждого предложения
+// вызывает checkSentence и накапливает найденные ошибки в общий набор.
+QSet<CandidateError> runAnalysis(const DocumentModel& document,
+                                 const CheckerRuntime& runtime);
+
 #endif // CHECKERSYSTEM_H
