@@ -13,6 +13,12 @@
 #include <QSet>
 #include <QHash>
 
+const Rule_OTHER004& Rule_OTHER004::instance()
+{
+    static Rule_OTHER004 inst;
+    return inst;
+}
+
 namespace {
 
 /*! \brief Объектная форма в позиции подлежащего: заменяется на именительную. */

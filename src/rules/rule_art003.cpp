@@ -7,6 +7,12 @@
 #include <QSet>
 #include <QStringList>
 
+const Rule_ART003& Rule_ART003::instance()
+{
+    static Rule_ART003 inst;
+    return inst;
+}
+
 QString Rule_ART003::ruleId() const
 {
     return QStringLiteral("ART-003");

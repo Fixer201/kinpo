@@ -15,6 +15,8 @@ SOURCES += \
     TEST_Buildsentencemodel.cpp \
     TEST_CheckSentence.cpp \
     TEST_ResolveCandidate.cpp \
+    TEST_ParseCommandLine.cpp \
+    TEST_InitializeRuntime.cpp \
     TEST_Rule_ART001.cpp \
     TEST_Rule_ART002.cpp \
     TEST_Rule_ART003.cpp \
@@ -58,6 +60,8 @@ SOURCES += \
     $$PWD/../src/modelbuilder.cpp \
     $$PWD/../src/wordlists.cpp \
     $$PWD/../src/checkersystem.cpp \
+    $$PWD/../src/climodule.cpp \
+    $$PWD/../src/runtimemodule.cpp \
     $$PWD/../src/rules/rule_art001.cpp \
     $$PWD/../src/rules/rule_art002.cpp \
     $$PWD/../src/rules/rule_art003.cpp \
@@ -97,6 +101,8 @@ HEADERS += \
     TEST_Buildsentencemodel.h \
     TEST_CheckSentence.h \
     TEST_ResolveCandidate.h \
+    TEST_ParseCommandLine.h \
+    TEST_InitializeRuntime.h \
     TEST_Rule_ART001.h \
     TEST_Rule_ART002.h \
     TEST_Rule_ART003.h \
@@ -139,6 +145,8 @@ HEADERS += \
     $$PWD/../src/modelbuilder.h \
     $$PWD/../src/wordlists.h \
     $$PWD/../src/checkersystem.h \
+    $$PWD/../src/climodule.h \
+    $$PWD/../src/runtimemodule.h \
     $$PWD/../src/rules/rule_art001.h \
     $$PWD/../src/rules/rule_art002.h \
     $$PWD/../src/rules/rule_art003.h \

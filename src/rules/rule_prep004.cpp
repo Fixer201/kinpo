@@ -11,6 +11,12 @@
 #include "rule_prep004.h"
 #include <QSet>
 
+const Rule_PREP004& Rule_PREP004::instance()
+{
+    static Rule_PREP004 inst;
+    return inst;
+}
+
 QString Rule_PREP004::ruleId() const
 {
     return QStringLiteral("PREP-004");

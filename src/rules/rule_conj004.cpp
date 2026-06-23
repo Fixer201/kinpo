@@ -12,6 +12,12 @@
 #include "rule_conj004.h"
 #include <QSet>
 
+const Rule_CONJ004& Rule_CONJ004::instance()
+{
+    static Rule_CONJ004 inst;
+    return inst;
+}
+
 QString Rule_CONJ004::ruleId() const
 {
     return QStringLiteral("CONJ-004");

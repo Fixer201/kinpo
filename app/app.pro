@@ -2,9 +2,12 @@ QT = core
 CONFIG += c++17 cmdline
 
 INCLUDEPATH += $$PWD/../src
+INCLUDEPATH += $$PWD/../src/rules
 
 SOURCES += \
     ../src/checkersystem.cpp \
+    ../src/climodule.cpp \
+    ../src/runtimemodule.cpp \
     ../src/rules/rule_art001.cpp \
     ../src/rules/rule_art002.cpp \
     ../src/rules/rule_art003.cpp \
@@ -47,6 +50,8 @@ SOURCES += \
 
 HEADERS += \
     ../src/checkersystem.h \
+    ../src/climodule.h \
+    ../src/runtimemodule.h \
     ../src/datamodel.h \
     ../src/inputmodule.h \
     ../src/modelbuilder.h \

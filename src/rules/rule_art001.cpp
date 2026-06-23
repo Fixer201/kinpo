@@ -13,6 +13,12 @@
 #include <QStringList>
 #include <algorithm>
 
+const Rule_ART001& Rule_ART001::instance()
+{
+    static Rule_ART001 inst;
+    return inst;
+}
+
 QString Rule_ART001::ruleId() const
 {
     return QStringLiteral("ART-001");

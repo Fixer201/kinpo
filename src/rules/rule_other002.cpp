@@ -11,6 +11,12 @@
 #include "rule_other002.h"
 #include <QSet>
 
+const Rule_OTHER002& Rule_OTHER002::instance()
+{
+    static Rule_OTHER002 inst;
+    return inst;
+}
+
 QString Rule_OTHER002::ruleId() const
 {
     return QStringLiteral("OTHER-002");

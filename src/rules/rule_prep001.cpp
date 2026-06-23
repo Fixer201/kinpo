@@ -22,6 +22,12 @@
 #include <QSet>
 #include <QRegularExpression>
 
+const Rule_PREP001& Rule_PREP001::instance()
+{
+    static Rule_PREP001 inst;
+    return inst;
+}
+
 QString Rule_PREP001::ruleId() const
 {
     return QStringLiteral("PREP-001");

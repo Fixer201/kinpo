@@ -13,6 +13,12 @@
 #include "rule_prep003.h"
 #include <QSet>
 
+const Rule_PREP003& Rule_PREP003::instance()
+{
+    static Rule_PREP003 inst;
+    return inst;
+}
+
 QString Rule_PREP003::ruleId() const
 {
     return QStringLiteral("PREP-003");

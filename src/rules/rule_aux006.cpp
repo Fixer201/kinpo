@@ -13,6 +13,12 @@
 #include "rule_aux006.h"
 #include <QSet>
 
+const Rule_AUX006& Rule_AUX006::instance()
+{
+    static Rule_AUX006 inst;
+    return inst;
+}
+
 QString Rule_AUX006::ruleId() const
 {
     return QStringLiteral("AUX-006");

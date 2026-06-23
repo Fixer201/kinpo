@@ -11,6 +11,12 @@
 #include <QHash>
 #include <QSet>
 
+const Rule_DET004& Rule_DET004::instance()
+{
+    static Rule_DET004 inst;
+    return inst;
+}
+
 QString Rule_DET004::ruleId() const
 {
     return QStringLiteral("DET-004");

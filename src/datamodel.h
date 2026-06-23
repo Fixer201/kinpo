@@ -457,10 +457,21 @@ struct RuleResources {
 class Rule;
 
 /*!
+* \struct RunConfig
+* \brief Параметры одного запуска программы.
+*/
+struct RunConfig {
+    QString inputPath;   ///< Путь ко входному файлу CoNLL-U
+    QString outputPath;   ///< Путь к выходному файлу
+    std::optional<QString> listsDir; ///< Путь к каталогу пользовательских ресурсов (через --lists), если задан
+};
+
+/*!
 * \struct CheckerRuntime
 * \brief Runtime-контекст с индексами и ресурсами.
 */
 struct CheckerRuntime {
+    RunConfig config;   ///< Параметры запуска
     QHash<Upos, QSet<const Rule*>> dispatch; ///< Диспетчеризация по UPOS
     PriorityIndex priorityIndex; ///< Приоритеты между правилами
     RuleResources resources; ///< Словари и таблицы для правил

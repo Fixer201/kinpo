@@ -13,6 +13,8 @@
 
 class Rule_CONJ005 : public Rule {
 public:
+    static const Rule_CONJ005& instance();
+
     QString ruleId() const override;
     QSet<Upos> anchorUpos() const override;
     bool canConflict() const override;

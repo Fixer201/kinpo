@@ -10,6 +10,12 @@
 #include "rule_det001.h"
 #include <QSet>
 
+const Rule_DET001& Rule_DET001::instance()
+{
+    static Rule_DET001 inst;
+    return inst;
+}
+
 QString Rule_DET001::ruleId() const
 {
     return QStringLiteral("DET-001");

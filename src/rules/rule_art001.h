@@ -18,6 +18,8 @@
 */
 class Rule_ART001 : public Rule {
 public:
+    static const Rule_ART001& instance();
+
     QString ruleId() const override;
     QSet<Upos> anchorUpos() const override;
     bool canConflict() const override;

@@ -13,6 +13,8 @@
 
 class Rule_AUX005 : public Rule {
 public:
+    static const Rule_AUX005& instance();
+
     QString ruleId() const override;
     QSet<Upos> anchorUpos() const override;
     bool canConflict() const override;

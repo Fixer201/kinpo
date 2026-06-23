@@ -16,6 +16,12 @@
 #include "rule_prep005.h"
 #include <QSet>
 
+const Rule_PREP005& Rule_PREP005::instance()
+{
+    static Rule_PREP005 inst;
+    return inst;
+}
+
 QString Rule_PREP005::ruleId() const
 {
     return QStringLiteral("PREP-005");

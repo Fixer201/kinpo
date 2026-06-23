@@ -11,6 +11,8 @@
 #include "TEST_Buildsentencemodel.h"
 #include "TEST_CheckSentence.h"
 #include "TEST_ParseSentenceBlock.h"
+#include "TEST_ParseCommandLine.h"
+#include "TEST_InitializeRuntime.h"
 #include "TEST_ResolveCandidate.h"
 #include "TEST_Rule_ART001.h"
 #include "TEST_Rule_ART002.h"
@@ -53,6 +55,8 @@ int main(int argc, char *argv[])
     int status = 0;
     status |= QTest::qExec(new TEST_BuildSentenceModel, argc, argv);
     status |= QTest::qExec(new TEST_ParseSentenceBlock, argc, argv);
+    status |= QTest::qExec(new TEST_ParseCommandLine, argc, argv);
+    status |= QTest::qExec(new TEST_InitializeRuntime, argc, argv);
     status |= QTest::qExec(new TEST_ValidateSentenceStructure, argc, argv);
     status |= QTest::qExec(new TEST_CheckSentence, argc, argv);
     status |= QTest::qExec(new TEST_ResolveCandidate, argc, argv);

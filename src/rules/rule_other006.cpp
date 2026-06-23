@@ -2,6 +2,12 @@
 #include <QSet>
 #include <QString>
 
+const Rule_OTHER006& Rule_OTHER006::instance()
+{
+    static Rule_OTHER006 inst;
+    return inst;
+}
+
 namespace {
 
 const QSet<QString>& comparativeLemmaAnchors()

@@ -18,6 +18,12 @@
 #include <QHash>
 #include <QSet>
 
+const Rule_OTHER005& Rule_OTHER005::instance()
+{
+    static Rule_OTHER005 inst;
+    return inst;
+}
+
 namespace {
 
 /*! \brief Таблица замен отрицательных форм на не-отрицательные (по LEMMA). */

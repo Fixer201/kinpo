@@ -5,6 +5,8 @@
 
 class Rule_OTHER006 : public Rule {
 public:
+    static const Rule_OTHER006& instance();
+
     QString ruleId() const override;
     QSet<Upos> anchorUpos() const override;
     bool canConflict() const override;

@@ -13,6 +13,8 @@
 
 class Rule_PREP004 : public Rule {
 public:
+    static const Rule_PREP004& instance();
+
     QString ruleId() const override;
     QSet<Upos> anchorUpos() const override;
     bool canConflict() const override;
