@@ -125,7 +125,8 @@ QSet<CandidateError> checkSentence(const SentenceModel& sentence,
             if (!rule)
                 continue;
             QSet<CandidateError> candidates = rule->check(*token, sentenceIndex, document, runtime);
-            for (const CandidateError& ce : candidates) {
+            for (CandidateError ce : candidates) {
+                ce.sentId = sentence.sentId; // заполняем sentId для writeOutput
                 // Кандидаты от правил с canConflict проходят через resolveCandidate
                 // для подавления менее приоритетных в той же зоне
                 if (rule->canConflict()) {
