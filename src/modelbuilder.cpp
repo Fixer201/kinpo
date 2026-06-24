@@ -107,10 +107,9 @@ namespace {
 * \param [in] featsRaw Строка FEATS из CoNLL-U (например, "Number=Sing|Person=3").
 * \return TokenFeatures с заполненными полями.
 *
-* Поддерживаемые признаки: Number, Tense, VerbForm, Degree, Case,
-* Poss=Yes, Polarity=Neg, NumType=Ord, Voice=Pass.
-* Неподдерживаемые признаки (например, Person) игнорируются.
-* Если featsRaw == "_" или пустая — возвращает структуру по умолчанию.
+ * Поддерживаемые признаки: Number, Tense, VerbForm, Degree, Case, Person,
+ * Poss=Yes, Polarity=Neg, NumType=Ord, Voice=Pass.
+ * Если featsRaw == "_" или пустая — возвращает структуру по умолчанию.
 */
 TokenFeatures parseFeats(const QString& featsRaw)
 {
@@ -142,6 +141,8 @@ TokenFeatures parseFeats(const QString& featsRaw)
         } else if (key == QStringLiteral("Case")) {
             if (value == QStringLiteral("Nom"))       f.caseValue = CaseValue::Nom;
             else if (value == QStringLiteral("Acc"))   f.caseValue = CaseValue::Acc;
+        } else if (key == QStringLiteral("Person")) {
+            f.person = value;
         } else if (key == QStringLiteral("Poss") && value == QStringLiteral("Yes")) {
             f.poss = true;
         } else if (key == QStringLiteral("Polarity") && value == QStringLiteral("Neg")) {

@@ -280,23 +280,51 @@ std::optional<Diagnostic> writeOutput(const QSet<CandidateError>& errors,
 {
     QStringList lines = formatErrors(errors, document, runtime);
 
-    QFile file(runtime.config.outputPath);
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
-    {
+    // Атомарная запись: пишем во временный файл, затем переименовываем.
+    const QString& outputPath = runtime.config.outputPath;
+    QString tmpPath = outputPath + QStringLiteral(".tmp");
+
+    QFile tmpFile(tmpPath);
+    if (!tmpFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
         Diagnostic d;
         d.kind = DiagnosticKind::OutputWriteError;
-        d.message = QStringLiteral("Не удалось открыть выходной файл: %1")
-                     .arg(runtime.config.outputPath);
+        d.message = QStringLiteral("Невозможно создать выходной файл: %1")
+                     .arg(outputPath);
         d.code = -1;
         return d;
     }
 
-    QTextStream out(&file);
+    QTextStream out(&tmpFile);
     setUtf8Encoding(out);
 
     for (const QString& line : lines)
         out << line << Qt::endl;
 
-    file.close();
+    out.flush();
+    tmpFile.close();
+
+    // Удаляем существующий целевой файл, если он есть, иначе rename может провалиться на некоторых платформах.
+    if (QFile::exists(outputPath)) {
+        if (!QFile::remove(outputPath)) {
+            QFile::remove(tmpPath);
+            Diagnostic d;
+            d.kind = DiagnosticKind::OutputWriteError;
+            d.message = QStringLiteral("Невозможно заменить выходной файл: %1")
+                         .arg(outputPath);
+            d.code = -1;
+            return d;
+        }
+    }
+
+    if (!QFile::rename(tmpPath, outputPath)) {
+        QFile::remove(tmpPath);
+        Diagnostic d;
+        d.kind = DiagnosticKind::OutputWriteError;
+        d.message = QStringLiteral("Невозможно завершить запись выходного файла: %1")
+                     .arg(outputPath);
+        d.code = -1;
+        return d;
+    }
+
     return std::nullopt;
 }

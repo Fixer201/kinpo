@@ -1,3 +1,11 @@
+/*!
+* \file runtimemodule.cpp
+* \brief Реализация инициализации runtime-контекста проверки.
+*
+* Содержит построение диспетчеризации правил по UPOS, индекса приоритетов
+* и загрузку словарей в CheckerRuntime.
+*/
+
 #include "runtimemodule.h"
 #include "wordlists.h"
 
@@ -41,6 +49,10 @@
 
 namespace {
 
+/*!
+* \brief Список всех правил грамматической проверки.
+* \return Ссылка на статический список указателей на singleton-экземпляры правил.
+*/
 const QList<const Rule*>& allRules()
 {
     static const QList<const Rule*> rules = {
@@ -82,6 +94,12 @@ const QList<const Rule*>& allRules()
     return rules;
 }
 
+/*!
+* \brief Заполнить индекс условных приоритетов между правилами.
+* \param [out] idx Индекс приоритетов для заполнения.
+*
+* Регистрирует пары правил с условиями подавления из спецификации.
+*/
 void loadPriorityIndex(PriorityIndex& idx)
 {
     idx.conditionsByHigherRule[QStringLiteral("DET-001")][QStringLiteral("ART-006")] = PriorityConditionKind::Always;

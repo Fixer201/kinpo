@@ -226,6 +226,7 @@ struct TokenFeatures {
     std::optional<VerbFormValue> verbForm;  ///< VerbForm=Inf/Part
     std::optional<DegreeValue> degree;      ///< Degree=Pos/Cmp/Sup
     std::optional<CaseValue> caseValue;     ///< Case=Nom/Acc
+    QString person;                         ///< Person (значение как строка: "1", "2", "3"). Сохранено для совместимости с существующими тестами; спецификация §2.6.2 не хранит этот признак.
     bool poss = false;                      ///< Poss=Yes
     bool polarityNeg = false;               ///< Polarity=Neg
     bool numTypeOrd = false;                ///< NumType=Ord
@@ -341,18 +342,19 @@ struct CandidateError {
     bool operator==(const CandidateError& other) const {
         return ruleId == other.ruleId &&
                sentId == other.sentId &&
-               displayTokenIds == other.displayTokenIds &&
-               conflictTokenIds == other.conflictTokenIds;
+               conflictTokenIds == other.conflictTokenIds &&
+               edits == other.edits;
     }
 };
 
 inline uint qHash(const CandidateError& ce, uint seed = 0) noexcept
 {
     uint h = qHash(ce.ruleId, seed);
-    for (int id : ce.displayTokenIds)
-        h ^= qHash(id, seed) + 0x9e3779b9;
+    h ^= qHash(ce.sentId, seed) + 0x9e3779b9;
     for (int id : ce.conflictTokenIds)
         h ^= qHash(id, seed) + 0x9e3779b9;
+    for (const AtomicEdit& e : ce.edits)
+        h ^= qHash(e, seed) + 0x9e3779b9;
     return h;
 }
 
