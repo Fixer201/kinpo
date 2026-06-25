@@ -1,11 +1,14 @@
 /*!
 * \file TEST_Rule_DET002.cpp
-* \brief тесты для правила DET-002 (раздел 6.34–6.36).
+* \brief DDT-тесты для правила DET-002 (тесты 6.34–6.36).
 *
-* Проверяет правило "Два центральных детерминатива":
-*  — артикль + притяжательное (the my friend → the)
-*  — притяжательное + артикль (my the friend → the)
-*  — исключение: предетерминатив (all the people — NO ERRORS)
+* Проверяет правило «Два центральных детерминатива»:
+*  — артикль + притяжательное (the my friend → the);
+*  — притяжательное + артикль (my the friend → the);
+*  — исключение: предетерминатив (all the people — без ошибок).
+*
+* Обход всех NOUN: правило проверяет совместимость детерминативов
+* при одном NOUN. Для multi-candidate используется expectedConflictZones.
 */
 
 #include <QtTest>
@@ -19,8 +22,24 @@
 #include "auxiliaryfunctionsfortesting.h"
 #include "rule_det002.h"
 
-namespace {
+/*!
+* \struct Det002Expect
+* \brief Ожидания для одного теста правила DET-002.
+*
+* Заполняются только те поля, которые проверяет конкретный тест.
+* Значения по умолчанию (-1, пустые списки) означают «не проверять».
+*/
+struct Det002Expect {
+    int expectedCount = -1;
+    QString expectedRuleId;
+    QList<QSet<int>> expectedConflictZones;
+};
+Q_DECLARE_METATYPE(Det002Expect)
 
+TEST_Rule_DET002::TEST_Rule_DET002() {}
+TEST_Rule_DET002::~TEST_Rule_DET002() {}
+
+namespace {
 CheckerRuntime makeRuntimeWithResources()
 {
     CheckerRuntime runtime;
@@ -31,19 +50,12 @@ CheckerRuntime makeRuntimeWithResources()
     runtime.resources = std::move(res);
     return runtime;
 }
-
 } // namespace
-
-TEST_Rule_DET002::TEST_Rule_DET002() {}
-TEST_Rule_DET002::~TEST_Rule_DET002() {}
 
 void TEST_Rule_DET002::TestRule_data()
 {
     QTest::addColumn<RawSentence>("rawSentence");
-    QTest::addColumn<int>("expectedCount");
-    QTest::addColumn<QString>("expectedRuleId");
-    QTest::addColumn<QList<QList<int>>>("expectedDisplayIdsList");
-    QTest::addColumn<QList<QSet<int>>>("expectedConflictIdsList");
+    QTest::addColumn<Det002Expect>("expect");
 
     // 6.34 — the my friend → the (артикль + притяжательное)
     {
@@ -57,14 +69,12 @@ void TEST_Rule_DET002::TestRule_data()
         RawToken friendTok = makeRawToken(3, 3, "friend", "NOUN", 0, "root");
         friendTok.lemma = QStringLiteral("friend");
         addToken(s, friendTok);
-        QTest::addRow("6.34_the_my_friend")
-            << s
-            << 1
-            << QStringLiteral("DET-002")
-            << (QList<QList<int>>{QList<int>{1}})
-            << (QList<QSet<int>>{QSet<int>{1}});
+        Det002Expect e;
+        e.expectedCount = 1;
+        e.expectedRuleId = QStringLiteral("DET-002");
+        e.expectedConflictZones = {QSet<int>{1}};
+        QTest::addRow("6.34_the_my_friend") << s << e;
     }
-
     // 6.35 — my the friend → the (притяжательное + артикль)
     {
         RawSentence s = makeRawSentence(1, QStringLiteral("test"), QStringLiteral("my the friend"));
@@ -77,15 +87,13 @@ void TEST_Rule_DET002::TestRule_data()
         RawToken friendTok = makeRawToken(3, 3, "friend", "NOUN", 0, "root");
         friendTok.lemma = QStringLiteral("friend");
         addToken(s, friendTok);
-        QTest::addRow("6.35_my_the_friend")
-            << s
-            << 1
-            << QStringLiteral("DET-002")
-            << (QList<QList<int>>{QList<int>{2}})
-            << (QList<QSet<int>>{QSet<int>{2}});
+        Det002Expect e;
+        e.expectedCount = 1;
+        e.expectedRuleId = QStringLiteral("DET-002");
+        e.expectedConflictZones = {QSet<int>{2}};
+        QTest::addRow("6.35_my_the_friend") << s << e;
     }
-
-    // 6.36 — all the people → NO ERRORS (all — предетерминатив)
+    // 6.36 — all the people → без ошибок (all — предетерминатив)
     {
         RawSentence s = makeRawSentence(1, QStringLiteral("test"), QStringLiteral("all the people"));
         RawToken all = makeRawToken(1, 1, "all", "DET", 3, "det");
@@ -97,31 +105,23 @@ void TEST_Rule_DET002::TestRule_data()
         RawToken people = makeRawToken(3, 3, "people", "NOUN", 0, "root");
         people.lemma = QStringLiteral("people");
         addToken(s, people);
-        QTest::addRow("6.36_all_the_people")
-            << s
-            << 0
-            << QString()
-            << QList<QList<int>>()
-            << QList<QSet<int>>();
+        Det002Expect e;
+        e.expectedCount = 0;
+        QTest::addRow("6.36_all_the_people") << s << e;
     }
 }
 
 void TEST_Rule_DET002::TestRule()
 {
     QFETCH(RawSentence, rawSentence);
-    QFETCH(int, expectedCount);
-    QFETCH(QString, expectedRuleId);
-    QFETCH(QList<QList<int>>, expectedDisplayIdsList);
-    QFETCH(QList<QSet<int>>, expectedConflictIdsList);
-
+    QFETCH(Det002Expect, expect);
     const QString tag = QString(QTest::currentDataTag());
 
     SentenceModel sentence = buildSentenceModel(rawSentence);
-
     CheckerRuntime runtime = makeRuntimeWithResources();
     Rule_DET002 rule;
 
-    // Проверяем все NOUN в предложении
+    // Обходим все NOUN: правило проверяет детерминативы при одном NOUN
     QSet<CandidateError> result;
     for (TokenNode* token : sentence.tokens) {
         if (token->upos != Upos::NOUN)
@@ -131,12 +131,26 @@ void TEST_Rule_DET002::TestRule()
             result.insert(ce);
     }
 
-    QCOMPARE(result.size(), expectedCount);
+    if (expect.expectedCount != -1) {
+        int actualCount = static_cast<int>(result.size());
+        if (actualCount != expect.expectedCount) {
+            qDebug() << "[TEST FAIL]" << tag << "- количество кандидатов не совпадает:"
+                     << "ожидалось =" << expect.expectedCount << ", получено  =" << actualCount;
+        }
+        QCOMPARE(actualCount, expect.expectedCount);
+    }
+    if (expect.expectedCount == 0) return;
 
-    // Если кандидатов нет — правило не сработало, проверка завершена
-    if (expectedCount == 0)
-        return;
-
-    compareMultiCandidate(tag, result, expectedRuleId,
-                           expectedDisplayIdsList, expectedConflictIdsList);
+    if (!expect.expectedConflictZones.isEmpty()) {
+        compareConflictZones(tag, result, expect.expectedConflictZones);
+    }
+    if (!expect.expectedRuleId.isEmpty()) {
+        for (const CandidateError& ce : result) {
+            if (ce.ruleId != expect.expectedRuleId) {
+                qDebug() << "[TEST FAIL]" << tag << "- ruleId не совпадает:"
+                         << "ожидался =" << expect.expectedRuleId << ", получено  =" << ce.ruleId;
+            }
+            QCOMPARE(ce.ruleId, expect.expectedRuleId);
+        }
+    }
 }

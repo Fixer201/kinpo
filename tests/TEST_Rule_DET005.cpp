@@ -1,9 +1,9 @@
 /*!
 * \file TEST_Rule_DET005.cpp
-* \brief Тесты для правила DET-005 (раздел 6.42).
+* \brief DDT-тесты для правила DET-005 (раздел 6.42 тесты_v3.md).
 *
-* Проверяет правило "Множественное число неисчисляемого":
-*  — informations → information (NOUN, Number=Plur, LEMMA=information ∈ uncountable.txt)
+* Проверяет правило «Множественное число неисчисляемого»:
+*  — informations → information (NOUN, Number=Plur, LEMMA ∈ uncountable.txt).
 */
 
 #include <QtTest>
@@ -17,86 +17,125 @@
 #include "auxiliaryfunctionsfortesting.h"
 #include "rule_det005.h"
 
+// ------------------------------------------------------------------------
+// Структура ожиданий
+// ------------------------------------------------------------------------
+
+/*!
+* \struct Det005Expect
+* \brief Точечные ожидания для тестов правила DET-005.
+*/
+struct Det005Expect {
+    int anchorTokenId = -1;        ///< ID токена-якоря (NOUN). -1: не проверять.
+    int expectedCount = -1;        ///< Ожидаемое число кандидатов. -1: не проверять.
+    QString expectedRuleId;        ///< Ожидаемый ruleId. Пусто: не проверять.
+    QList<int> expectedDisplayIds; ///< Ожидаемые displayTokenIds.
+    QSet<int> expectedConflictIds;  ///< Ожидаемые conflictTokenIds.
+};
+
+Q_DECLARE_METATYPE(Det005Expect)
+
+// ------------------------------------------------------------------------
+// Конструктор / деструктор
+// ------------------------------------------------------------------------
+
+TEST_Rule_DET005::TEST_Rule_DET005() {}
+TEST_Rule_DET005::~TEST_Rule_DET005() {}
+
+// ------------------------------------------------------------------------
+// Вспомогательная функция создания runtime с ресурсами
+// ------------------------------------------------------------------------
+
 namespace {
 
 /*!
-* \brief Создать runtime с загруженными словарями.
-* \return CheckerRuntime с заполненными resources.
-*
-* Словарь uncountable.txt нужен для проверки LEMMA. Остальные словари
-* загружаются для совместимости с остальными правилами.
+* \brief Создаёт CheckerRuntime с загруженными словарями.
 */
 CheckerRuntime makeRuntimeWithResources()
 {
     CheckerRuntime runtime;
     QString listsDir = findListsDir();
     auto [res, warns] = loadResources(listsDir);
-    for (const QString& w : warns)
+    for (const QString& w : warns) {
         qDebug() << "[TEST_Rule_DET005]" << w;
+    }
     runtime.resources = std::move(res);
     return runtime;
 }
 
 } // namespace
 
-TEST_Rule_DET005::TEST_Rule_DET005() {}
-TEST_Rule_DET005::~TEST_Rule_DET005() {}
+// ------------------------------------------------------------------------
+// Данные тестов (6.42)
+// ------------------------------------------------------------------------
 
 void TEST_Rule_DET005::TestRule_data()
 {
     QTest::addColumn<RawSentence>("rawSentence");
-    QTest::addColumn<int>("anchorTokenId");
-    QTest::addColumn<int>("expectedCount");
-    QTest::addColumn<QString>("expectedRuleId");
-    QTest::addColumn<QList<QList<int>>>("expectedDisplayIdsList");
-    QTest::addColumn<QList<QSet<int>>>("expectedConflictIdsList");
+    QTest::addColumn<Det005Expect>("expect");
 
-    // 6.42 — informations → information
-    // NOUN во множественном числе, LEMMA=information есть в uncountable.txt
+    // === 6.42 DET-005: informations → information =================
+    // NOUN во мн. числе, LEMMA=information есть в uncountable.txt.
     {
-        RawSentence s = makeRawSentence(1, QStringLiteral("test"), QStringLiteral("informations"));
+        RawSentence s = makeRawSentence(1, QStringLiteral("test"),
+                                        QStringLiteral("informations"));
         RawToken informations = makeRawToken(1, 1, "informations", "NOUN", 0, "root",
-                                               QStringLiteral("Number=Plur"));
-        // LEMMA — словарная форма единственного числа
+                                             QStringLiteral("Number=Plur"));
         informations.lemma = QStringLiteral("information");
         addToken(s, informations);
-        QTest::addRow("6.42_informations")
-            << s << 1
-            << 1
-            << QStringLiteral("DET-005")
-            << (QList<QList<int>>{QList<int>{1}})
-            << (QList<QSet<int>>{QSet<int>{1}});
+
+        Det005Expect e;
+        e.anchorTokenId = 1;
+        e.expectedCount = 1;
+        e.expectedRuleId = QStringLiteral("DET-005");
+        e.expectedDisplayIds = {1};
+        e.expectedConflictIds = {1};
+
+        QTest::addRow("6.42_informations") << s << e;
     }
 }
+
+// ------------------------------------------------------------------------
+// Универсальная функция проверки
+// ------------------------------------------------------------------------
 
 void TEST_Rule_DET005::TestRule()
 {
     QFETCH(RawSentence, rawSentence);
-    QFETCH(int, anchorTokenId);
-    QFETCH(int, expectedCount);
-    QFETCH(QString, expectedRuleId);
-    QFETCH(QList<QList<int>>, expectedDisplayIdsList);
-    QFETCH(QList<QSet<int>>, expectedConflictIdsList);
+    QFETCH(Det005Expect, expect);
 
     const QString tag = QString(QTest::currentDataTag());
 
     SentenceModel sentence = buildSentenceModel(rawSentence);
 
-    TokenNode* anchor = sentence.tokensById.value(anchorTokenId, nullptr);
-    QVERIFY2(anchor != nullptr, qPrintable(QString("[%1] Якорный токен %2 не найден").arg(tag).arg(anchorTokenId)));
+    TokenNode* anchor = sentence.tokensById.value(expect.anchorTokenId, nullptr);
+    QVERIFY2(anchor != nullptr,
+             qPrintable(QStringLiteral("[%1] anchor %2 не найден")
+                        .arg(tag).arg(expect.anchorTokenId)));
 
     CheckerRuntime runtime = makeRuntimeWithResources();
     Rule_DET005 rule;
 
-    // Якорь — сам NOUN, проверяем его напрямую
     QSet<CandidateError> result = rule.check(*anchor, 0, DocumentModel(), runtime);
 
-    QCOMPARE(result.size(), expectedCount);
+    if (expect.expectedCount != -1) {
+        int actualCount = static_cast<int>(result.size());
+        if (actualCount != expect.expectedCount) {
+            qDebug() << "[TEST FAIL]" << tag
+                     << "Количество кандидатов: ожидалось =" << expect.expectedCount
+                     << "получено =" << actualCount;
+        }
+        QCOMPARE(actualCount, expect.expectedCount);
+    }
 
-    // Если кандидатов нет, правило не сработало, проверка завершена
-    if (expectedCount == 0)
+    if (expect.expectedCount == 0) {
         return;
+    }
 
-    compareMultiCandidate(tag, result, expectedRuleId,
-                           expectedDisplayIdsList, expectedConflictIdsList);
+    if (!result.isEmpty()) {
+        compareSingleCandidate(tag, *result.begin(),
+                               expect.expectedRuleId,
+                               expect.expectedDisplayIds,
+                               expect.expectedConflictIds);
+    }
 }
