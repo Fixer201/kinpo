@@ -81,8 +81,9 @@ QSet<CandidateError> Rule_CONJ004::check(const TokenNode& anchor,
 
     const QString lemma = anchor.lemma.toLower();
 
-    // neither в предложении → or ошибочен (ожидается nor)
-    if (lemma == QStringLiteral("or") &&
+    // neither в предложении: or заменяется на nor, nor заменяется на or.
+    // В смешанных конструкциях (neither...or...nor) оба союза ошибочны.
+    if ((lemma == QStringLiteral("or") || lemma == QStringLiteral("nor")) &&
         hasCorrelate(document, sentenceIndex, QStringLiteral("neither"))) {
         CandidateError ce;
         ce.ruleId = QStringLiteral("CONJ-004");
@@ -93,8 +94,9 @@ QSet<CandidateError> Rule_CONJ004::check(const TokenNode& anchor,
         return res;
     }
 
-    // either в предложении → nor ошибочен (ожидается or)
-    if (lemma == QStringLiteral("nor") &&
+    // either в предложении: nor заменяется на or, or заменяется на nor.
+    // В смешанных конструкциях (either...nor...or) оба союза ошибочны.
+    if ((lemma == QStringLiteral("nor") || lemma == QStringLiteral("or")) &&
         hasCorrelate(document, sentenceIndex, QStringLiteral("either"))) {
         CandidateError ce;
         ce.ruleId = QStringLiteral("CONJ-004");
