@@ -24,7 +24,7 @@ QString Rule_DET004::ruleId() const
 
 QSet<Upos> Rule_DET004::anchorUpos() const
 {
-    return {Upos::PRON, Upos::ADV};
+    return {Upos::PRON, Upos::DET, Upos::ADV};
 }
 
 bool Rule_DET004::canConflict() const
@@ -52,6 +52,10 @@ QSet<CandidateError> Rule_DET004::check(const TokenNode& anchor,
 
     // DEPREL ∈ {nmod:poss, det}
     if (anchor.deprel != Deprel::NmodPoss && anchor.deprel != Deprel::Det)
+        return res;
+
+    // MWT-формы исключаются: it's, you're как составные токены отсутствуют
+    if (anchor.isMwtFragment)
         return res;
 
     // HEAD должен быть NOUN

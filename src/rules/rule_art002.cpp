@@ -44,6 +44,46 @@ bool nounHasDet(const TokenNode& noun)
     return false;
 }
 
+/*!
+* \brief Проверить, удовлетворяет ли ADJ условию срабатывания ART-002.
+* \param [in] adj Токен ADJ.
+* \param [in] runtime Среда выполнения со словарём adjRequiresThe.
+* \return true если Degree=Sup, NumType=Ord или LEMMA в adjRequiresThe.
+*/
+bool adjSatisfiesCondition(const TokenNode& adj, const CheckerRuntime& runtime)
+{
+    const QString adjLemma = adj.lemma.toLower();
+    return (adj.features.degree == DegreeValue::Sup) ||
+           adj.features.numTypeOrd ||
+           runtime.resources.adjRequiresThe.contains(adjLemma);
+}
+
+/*!
+* \brief Проверить, есть ли у NOUN другой ADJ-ребёнок с меньшим id, удовлетворяющий условию.
+* \param [in] anchor Текущий ADJ (якорь).
+* \param [in] noun Головной NOUN.
+* \param [in] runtime Среда выполнения.
+* \return true если найден ADJ с меньшим id, удовлетворяющий условию срабатывания.
+*
+* Реализует правило дедупликации: если у NOUN несколько подходящих ADJ,
+* срабатывает только ADJ с минимальным id.
+*/
+bool hasSmallerQualifyingAdj(const TokenNode& anchor, const TokenNode& noun,
+                             const CheckerRuntime& runtime)
+{
+    for (const TokenNode* child : noun.children) {
+        if (child->id >= anchor.id)
+            continue;
+        if (child->upos != Upos::ADJ)
+            continue;
+        if (child->deprel != Deprel::Amod)
+            continue;
+        if (adjSatisfiesCondition(*child, runtime))
+            return true;
+    }
+    return false;
+}
+
 bool isTimeException(const TokenNode& adj, const TokenNode& noun,
                      const CheckerRuntime& runtime)
 {
@@ -102,6 +142,11 @@ QSet<CandidateError> Rule_ART002::check(const TokenNode& anchor,
     const bool isAdjRequiresThe = runtime.resources.adjRequiresThe.contains(adjLemma);
 
     if (!isSup && !isOrd && !isAdjRequiresThe)
+        return res;
+
+    // Дедупликация: если у NOUN есть другой подходящий ADJ с меньшим id,
+    // срабатывает только ADJ с минимальным id
+    if (hasSmallerQualifyingAdj(anchor, noun, runtime))
         return res;
 
     if (nounHasDet(noun))
@@ -170,6 +215,23 @@ QSet<CandidateError> Rule_ART002a::check(const TokenNode& anchor,
     const TokenNode& noun = *adj.parent;
     if (noun.upos != Upos::NOUN)
         return res;
+
+    // Дедупликация: если у NOUN есть другой ADV (most/least) с меньшим id,
+    // прикреплённый к подходящему ADJ-amod, срабатывает только ADV с минимальным id
+    for (const TokenNode* siblingAdv : noun.children) {
+        if (siblingAdv->id >= anchor.id)
+            continue;
+        if (siblingAdv->upos != Upos::ADV || siblingAdv->deprel != Deprel::Advmod)
+            continue;
+        const QString sibLemma = siblingAdv->lemma.toLower();
+        if (sibLemma != QStringLiteral("most") && sibLemma != QStringLiteral("least"))
+            continue;
+        if (!siblingAdv->parent || siblingAdv->parent->upos != Upos::ADJ ||
+            siblingAdv->parent->deprel != Deprel::Amod)
+            continue;
+        // Найден ADV с меньшим id, удовлетворяющий условию
+        return res;
+    }
 
     if (nounHasDet(noun))
         return res;

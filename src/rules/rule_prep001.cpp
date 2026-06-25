@@ -227,9 +227,20 @@ QSet<CandidateError> Rule_PREP001::check(const TokenNode& anchor,
     const TokenNode& n = *anchor.parent;
     const QString expected = expectedPreposition(n);
 
-    // Нет ожидаемого предлога (N не распознано или weekend с on/at)
-    if (expected.isEmpty())
+    // Weekend: ошибка только для in, on и at допустимы.
+    // expectedPreposition возвращает пустую строку, обрабатываем отдельно.
+    if (expected.isEmpty()) {
+        if (n.lemma.toLower() == QStringLiteral("weekend") &&
+            formLower == QStringLiteral("in")) {
+            CandidateError ce;
+            ce.ruleId = QStringLiteral("PREP-001");
+            ce.sentId = QStringLiteral("test");
+            ce.displayTokenIds = {anchor.id};
+            ce.conflictTokenIds = {anchor.id};
+            res.insert(ce);
+        }
         return res;
+    }
 
     // Форма совпадает с ожидаемой — ошибки нет
     if (formLower == expected)
@@ -242,5 +253,23 @@ QSet<CandidateError> Rule_PREP001::check(const TokenNode& anchor,
     ce.displayTokenIds = {anchor.id};
     ce.conflictTokenIds = {anchor.id};
     res.insert(ce);
+
+    // Night: добавить кандидата удаления det=the, если у HEAD(night) есть
+    // зависимый det с lemma=the
+    if (n.lemma.toLower() == QStringLiteral("night")) {
+        for (const TokenNode* child : n.children) {
+            if (child->deprel == Deprel::Det &&
+                child->lemma.toLower() == QStringLiteral("the")) {
+                CandidateError detCe;
+                detCe.ruleId = QStringLiteral("PREP-001");
+                detCe.sentId = QStringLiteral("test");
+                detCe.displayTokenIds = {child->id};
+                detCe.conflictTokenIds = {child->id};
+                res.insert(detCe);
+                break;
+            }
+        }
+    }
+
     return res;
 }

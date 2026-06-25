@@ -24,7 +24,7 @@ QString Rule_DET003::ruleId() const
 
 QSet<Upos> Rule_DET003::anchorUpos() const
 {
-    return {Upos::PRON};
+    return {Upos::PRON, Upos::DET};
 }
 
 bool Rule_DET003::canConflict() const
@@ -50,7 +50,11 @@ QSet<CandidateError> Rule_DET003::check(const TokenNode& anchor,
 {
     QSet<CandidateError> res;
 
-    if (anchor.upos != Upos::PRON)
+    if (anchor.upos != Upos::PRON && anchor.upos != Upos::DET)
+        return res;
+
+    // MWT-формы исключаются: токен с такой FORM отсутствует как единый токен
+    if (anchor.isMwtFragment)
         return res;
 
     // Признак притяжательности: XPOS=PRP$ или Poss=Yes в FEATS

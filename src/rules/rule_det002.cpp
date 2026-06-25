@@ -93,23 +93,41 @@ QSet<CandidateError> Rule_DET002::check(const TokenNode& anchor,
     if (dets.size() < 2)
         return res;
 
-    // Удаляется артикль (приоритет 2.2: всегда артикль)
-    const TokenNode* article = nullptr;
+    // Собираем все артикли среди центральных детерминативов
+    QList<const TokenNode*> articleDets;
     for (const TokenNode* det : dets) {
-        if (articles.contains(det->lemma.toLower())) {
-            article = det;
-            break;
-        }
+        if (articles.contains(det->lemma.toLower()))
+            articleDets.append(det);
     }
 
-    if (!article)
+    if (!articleDets.isEmpty()) {
+        // Есть артикль: создать кандидат удаления для каждого артикля
+        for (const TokenNode* art : articleDets) {
+            CandidateError ce;
+            ce.ruleId = QStringLiteral("DET-002");
+            ce.sentId = QStringLiteral("test");
+            ce.displayTokenIds = {art->id};
+            ce.conflictTokenIds = {art->id};
+            res.insert(ce);
+        }
         return res;
+    }
 
-    CandidateError ce;
-    ce.ruleId = QStringLiteral("DET-002");
-    ce.sentId = QStringLiteral("test");
-    ce.displayTokenIds = {article->id};
-    ce.conflictTokenIds = {article->id};
-    res.insert(ce);
+    // Артикля нет: сохранить первого по id, остальных удалить
+    const TokenNode* minDet = dets.first();
+    for (const TokenNode* det : dets) {
+        if (det->id < minDet->id)
+            minDet = det;
+    }
+    for (const TokenNode* det : dets) {
+        if (det == minDet)
+            continue;
+        CandidateError ce;
+        ce.ruleId = QStringLiteral("DET-002");
+        ce.sentId = QStringLiteral("test");
+        ce.displayTokenIds = {det->id};
+        ce.conflictTokenIds = {det->id};
+        res.insert(ce);
+    }
     return res;
 }

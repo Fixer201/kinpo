@@ -26,7 +26,12 @@ const Rule_OTHER005& Rule_OTHER005::instance()
 
 namespace {
 
-/*! \brief Таблица замен отрицательных форм на не-отрицательные (по LEMMA). */
+/*! \brief Таблица замен отрицательных форм на не-отрицательные (по LEMMA).
+*
+* neither и no one добавлены в список триггеров OTHER-005, но не имеют
+* не-отрицательного соответствия в таблице внешней спецификации, поэтому
+* replacement для них пуст.
+*/
 const QHash<QString, QString>& negReplacementMap()
 {
     static const QHash<QString, QString> m = {
@@ -35,8 +40,18 @@ const QHash<QString, QString>& negReplacementMap()
         {QStringLiteral("nowhere"),  QStringLiteral("anywhere")},
         {QStringLiteral("never"),    QStringLiteral("ever")},
         {QStringLiteral("none"),     QStringLiteral("any")},
+        {QStringLiteral("neither"),  QString()},
     };
     return m;
+}
+
+/*! \brief Проверить, является ли форма составной "no one" (два слова).
+* \param [in] form Форма токена.
+* \return true если форма в нижнем регистре равна "no one".
+*/
+bool isNoOneForm(const QString& form)
+{
+    return form.toLower() == QStringLiteral("no one");
 }
 
 } // namespace
@@ -84,7 +99,8 @@ QSet<CandidateError> Rule_OTHER005::check(const TokenNode& anchor,
             continue;
         // LEMMA сравнивается без учёта регистра (по спецификации списков)
         const QString lemma = child->lemma.toLower();
-        if (!negReplacementMap().contains(lemma))
+        // no one проверяется по форме, остальные — по LEMMA
+        if (!negReplacementMap().contains(lemma) && !isNoOneForm(child->form))
             continue;
 
         CandidateError ce;
