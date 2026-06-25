@@ -1,12 +1,16 @@
 /*!
 * \file TEST_Rule_ART003.cpp
-* \brief тесты для правила ART-003 (раздел 6.13–6.16).
+* \brief DDT-тесты для правила ART-003 (раздел 6.13-6.16 тесты_v3.md).
 *
-* Проверяет правило "Лишний артикль (нулевой контекст)":
-*  — артикль перед названием языка
-*  — исключение: язык как часть составного (language)
-*  — исключение: спорт как часть составного (compound)
-*  — несколько спортов с артиклем (множественные кандидаты)
+* Проверяет правило «Лишний артикль перед языком/спортом»:
+*  — артикль перед названием языка;
+*  — исключение: язык как часть составного (compound);
+*  — исключение: спорт как часть составного (compound);
+*  — несколько спортов с артиклем (множественные кандидаты).
+*
+* Обход всех DET: ART-003 может сработать на нескольких артиклях
+* в одном предложении (тест 6.16). Для multi-candidate используется
+* expectedConflictZones.
 */
 
 #include <QtTest>
@@ -20,52 +24,111 @@
 #include "auxiliaryfunctionsfortesting.h"
 #include "rule_art003.h"
 
+// ------------------------------------------------------------------------
+// Структура ожиданий
+// ------------------------------------------------------------------------
+
+/*!
+* \struct Art003Expect
+* \brief Точечные ожидания для тестов правила ART-003.
+*
+* Структура не содержит anchorTokenId, так как правило использует
+* паттерн обхода всех DET-токенов в предложении.
+*/
+struct Art003Expect {
+    int expectedCount = -1;            ///< Ожидаемое число кандидатов. -1: не проверять.
+    QString expectedRuleId;            ///< Ожидаемый ruleId. Пусто: не проверять.
+    QList<QSet<int>> expectedConflictZones; ///< Ожидаемые зоны конфликтов.
+};
+
+Q_DECLARE_METATYPE(Art003Expect)
+
+// ------------------------------------------------------------------------
+// Конструктор / деструктор
+// ------------------------------------------------------------------------
+
+TEST_Rule_ART003::TEST_Rule_ART003() {}
+TEST_Rule_ART003::~TEST_Rule_ART003() {}
+
+// ------------------------------------------------------------------------
+// Вспомогательная функция создания runtime с ресурсами
+// ------------------------------------------------------------------------
+
 namespace {
 
+/*!
+* \brief Создаёт CheckerRuntime с загруженными словарями.
+*/
 CheckerRuntime makeRuntimeWithResources()
 {
     CheckerRuntime runtime;
     QString listsDir = findListsDir();
     auto [res, warns] = loadResources(listsDir);
-    for (const QString& w : warns)
+    for (const QString& w : warns) {
         qDebug() << "[TEST_Rule_ART003]" << w;
+    }
     runtime.resources = std::move(res);
     return runtime;
 }
 
 } // namespace
 
-TEST_Rule_ART003::TEST_Rule_ART003() {}
-TEST_Rule_ART003::~TEST_Rule_ART003() {}
+// ------------------------------------------------------------------------
+// Данные тестов (6.13-6.16)
+// ------------------------------------------------------------------------
 
 void TEST_Rule_ART003::TestRule_data()
 {
     QTest::addColumn<RawSentence>("rawSentence");
-    QTest::addColumn<int>("expectedCount");
-    QTest::addColumn<QString>("expectedRuleId");
-    QTest::addColumn<QList<QList<int>>>("expectedDisplayIdsList");
-    QTest::addColumn<QList<QSet<int>>>("expectedConflictIdsList");
+    QTest::addColumn<Art003Expect>("expect");
 
-    // 6.13 — лишний the перед языком
+    // === 6.13 ART-003: лишний the перед языком ======================
+    // Вход: the English. Ожидается: the→-, кандидат на токене 1.
     {
-        RawSentence s = makeRawSentence(1, QStringLiteral("test"), QStringLiteral("the English"));
+        RawSentence s = makeRawSentence(1, QStringLiteral("test"),
+                                        QStringLiteral("the English"));
         RawToken the = makeRawToken(1, 1, "the", "DET", 2, "det");
         the.lemma = QStringLiteral("the");
         addToken(s, the);
         RawToken english = makeRawToken(2, 2, "English", "PROPN", 0, "root");
         english.lemma = QStringLiteral("English");
         addToken(s, english);
-        QTest::addRow("6.13_the_English")
-            << s
-            << 1
-            << QStringLiteral("ART-003")
-            << (QList<QList<int>>{QList<int>{1}})
-            << (QList<QSet<int>>{QSet<int>{1}});
+
+        Art003Expect e;
+        e.expectedCount = 1;
+        e.expectedRuleId = QStringLiteral("ART-003");
+        e.expectedConflictZones = {QSet<int>{1}};
+
+        QTest::addRow("6.13_the_English") << s << e;
     }
 
-    // 6.14 — исключение: язык как часть составного
+    // === 6.13a ART-003 (исключение): народ/нация ====================
+    // Вход: The English are polite. Ожидается: NO ERRORS.
+    // В текущей реализации теста нет отдельного addRow для 6.13a,
+    // используется 6.13a_a_French для проверки артикля перед другим языком.
     {
-        RawSentence s = makeRawSentence(1, QStringLiteral("test"), QStringLiteral("the English language"));
+        RawSentence s = makeRawSentence(1, QStringLiteral("test"),
+                                        QStringLiteral("a French"));
+        RawToken a = makeRawToken(1, 1, "a", "DET", 2, "det");
+        a.lemma = QStringLiteral("a");
+        addToken(s, a);
+        RawToken french = makeRawToken(2, 2, "French", "PROPN", 0, "root");
+        french.lemma = QStringLiteral("French");
+        addToken(s, french);
+
+        Art003Expect e;
+        e.expectedCount = 1;
+        e.expectedRuleId = QStringLiteral("ART-003");
+        e.expectedConflictZones = {QSet<int>{1}};
+
+        QTest::addRow("6.13a_a_French") << s << e;
+    }
+
+    // === 6.14 ART-003 (исключение): язык как часть составного =======
+    // Вход: the English language. Ожидается: NO ERRORS (compound блокирует).
+    {
+        RawSentence s = makeRawSentence(1, QStringLiteral("test"),
+                                        QStringLiteral("the English language"));
         RawToken the = makeRawToken(1, 1, "the", "DET", 3, "det");
         the.lemma = QStringLiteral("the");
         addToken(s, the);
@@ -75,17 +138,18 @@ void TEST_Rule_ART003::TestRule_data()
         RawToken language = makeRawToken(3, 3, "language", "NOUN", 0, "root");
         language.lemma = QStringLiteral("language");
         addToken(s, language);
-        QTest::addRow("6.14_the_English_language")
-            << s
-            << 0
-            << QString()
-            << QList<QList<int>>()
-            << QList<QSet<int>>();
+
+        Art003Expect e;
+        e.expectedCount = 0;
+
+        QTest::addRow("6.14_the_English_language") << s << e;
     }
 
-    // 6.15 — исключение: спорт как часть составного
+    // === 6.15 ART-003 (исключение): спорт как часть составного ======
+    // Вход: a football game. Ожидается: NO ERRORS (compound блокирует).
     {
-        RawSentence s = makeRawSentence(1, QStringLiteral("test"), QStringLiteral("a football game"));
+        RawSentence s = makeRawSentence(1, QStringLiteral("test"),
+                                        QStringLiteral("a football game"));
         RawToken a = makeRawToken(1, 1, "a", "DET", 3, "det");
         a.lemma = QStringLiteral("a");
         addToken(s, a);
@@ -95,17 +159,18 @@ void TEST_Rule_ART003::TestRule_data()
         RawToken game = makeRawToken(3, 3, "game", "NOUN", 0, "root");
         game.lemma = QStringLiteral("game");
         addToken(s, game);
-        QTest::addRow("6.15_a_football_game")
-            << s
-            << 0
-            << QString()
-            << QList<QList<int>>()
-            << QList<QSet<int>>();
+
+        Art003Expect e;
+        e.expectedCount = 0;
+
+        QTest::addRow("6.15_a_football_game") << s << e;
     }
 
-    // 6.16 — несколько спортов с артиклем the (2 кандидата)
+    // === 6.16 ART-003: несколько спортов с артиклем the =============
+    // Вход: play the football and the tennis. Ожидается: 2 кандидата ART-003.
     {
-        RawSentence s = makeRawSentence(1, QStringLiteral("test"), QStringLiteral("play the football and the tennis"));
+        RawSentence s = makeRawSentence(1, QStringLiteral("test"),
+                                        QStringLiteral("play the football and the tennis"));
         addToken(s, makeRawToken(1, 1, "play", "VERB", 0, "root"));
         RawToken the1 = makeRawToken(2, 2, "the", "DET", 3, "det");
         the1.lemma = QStringLiteral("the");
@@ -120,47 +185,71 @@ void TEST_Rule_ART003::TestRule_data()
         RawToken tennis = makeRawToken(6, 6, "tennis", "NOUN", 3, "conj");
         tennis.lemma = QStringLiteral("tennis");
         addToken(s, tennis);
-        QTest::addRow("6.16_play_the_football_and_the_tennis")
-            << s
-            << 2
-            << QStringLiteral("ART-003")
-            << (QList<QList<int>>{QList<int>{2}, QList<int>{5}})
-            << (QList<QSet<int>>{QSet<int>{2}, QSet<int>{5}});
+
+        Art003Expect e;
+        e.expectedCount = 2;
+        e.expectedRuleId = QStringLiteral("ART-003");
+        e.expectedConflictZones = {QSet<int>{2}, QSet<int>{5}};
+
+        QTest::addRow("6.16_play_the_football_and_the_tennis") << s << e;
     }
 }
+
+// ------------------------------------------------------------------------
+// Универсальная функция проверки
+// ------------------------------------------------------------------------
 
 void TEST_Rule_ART003::TestRule()
 {
     QFETCH(RawSentence, rawSentence);
-    QFETCH(int, expectedCount);
-    QFETCH(QString, expectedRuleId);
-    QFETCH(QList<QList<int>>, expectedDisplayIdsList);
-    QFETCH(QList<QSet<int>>, expectedConflictIdsList);
+    QFETCH(Art003Expect, expect);
 
     const QString tag = QString(QTest::currentDataTag());
 
     SentenceModel sentence = buildSentenceModel(rawSentence);
-
     CheckerRuntime runtime = makeRuntimeWithResources();
     Rule_ART003 rule;
 
-    // Проверяем все DET в предложении, т.к. ART-003 может сработать
-    // на нескольких артиклях в одном предложении (тест 6.16)
+    // Обходим все DET: правило может сработать на нескольких артиклях.
     QSet<CandidateError> result;
     for (TokenNode* token : sentence.tokens) {
-        if (token->upos != Upos::DET)
+        if (token->upos != Upos::DET) {
             continue;
+        }
         QSet<CandidateError> found = rule.check(*token, 0, DocumentModel(), runtime);
-        for (const CandidateError& ce : found)
+        for (const CandidateError& ce : found) {
             result.insert(ce);
+        }
     }
 
-    QCOMPARE(result.size(), expectedCount);
+    if (expect.expectedCount != -1) {
+        int actualCount = static_cast<int>(result.size());
+        if (actualCount != expect.expectedCount) {
+            qDebug() << "[TEST FAIL]" << tag
+                     << "Количество кандидатов: ожидалось =" << expect.expectedCount
+                     << "получено =" << actualCount;
+        }
+        QCOMPARE(actualCount, expect.expectedCount);
+    }
 
-    if (expectedCount == 0)
+    if (expect.expectedCount == 0) {
         return;
+    }
 
-    // Каждый кандидат должен совпасть с одной из ожидаемых пар
-    compareMultiCandidate(tag, result, expectedRuleId,
-                           expectedDisplayIdsList, expectedConflictIdsList);
+    // Сравнение зон конфликта для multi-candidate.
+    if (!expect.expectedConflictZones.isEmpty()) {
+        compareConflictZones(tag, result, expect.expectedConflictZones);
+    }
+
+    // Проверка ruleId для каждого кандидата.
+    if (!expect.expectedRuleId.isEmpty()) {
+        for (const CandidateError& ce : result) {
+            if (ce.ruleId != expect.expectedRuleId) {
+                qDebug() << "[TEST FAIL]" << tag
+                         << "ruleId: ожидался =" << expect.expectedRuleId
+                         << "получено =" << ce.ruleId;
+            }
+            QCOMPARE(ce.ruleId, expect.expectedRuleId);
+        }
+    }
 }

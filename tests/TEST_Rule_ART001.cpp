@@ -1,14 +1,14 @@
 /*!
 * \file TEST_Rule_ART001.cpp
-* \brief тесты для правила ART-001.
+* \brief DDT-тесты для правила ART-001 (раздел 6.1-6.6 тесты_v3.md).
 *
-* Проверяет срабатывание и исключения правила "Лишний артикль перед PROPN":
-*  — срабатывание на a, an, the перед PROPN
-*  — исключение: географические названия (geo_the.txt)
-*  — исключение: фамилии во мн.ч.
-*  — неисключение: фамилии в ед.ч.
-*  — исключение: географические названия во мн.ч.
-*  — исключение: классификаторы (compound)
+* Проверяет срабатывание и исключения правила «Лишний артикль перед PROPN»:
+*  — срабатывание на a, an, the перед PROPN;
+*  — исключение: географические названия (geo_the.txt);
+*  — исключение: фамилии во мн.ч.;
+*  — неисключение: фамилии в ед.ч.;
+*  — исключение: географические названия во мн.ч.;
+*  — исключение: классификаторы (compound).
 */
 
 #include <QtTest>
@@ -22,163 +22,239 @@
 #include "auxiliaryfunctionsfortesting.h"
 #include "rule_art001.h"
 
+// ------------------------------------------------------------------------
+// Структура ожиданий
+// ------------------------------------------------------------------------
+
+/*!
+* \struct Art001Expect
+* \brief Точечные ожидания для тестов правила ART-001.
+*/
+struct Art001Expect {
+    int anchorTokenId = -1;        ///< ID токена-якоря (DET). -1: не проверять.
+    int expectedCount = -1;        ///< Ожидаемое число кандидатов. -1: не проверять.
+    QString expectedRuleId;        ///< Ожидаемый ruleId. Пусто: не проверять.
+    QList<int> expectedDisplayIds; ///< Ожидаемые displayTokenIds.
+    QSet<int> expectedConflictIds;  ///< Ожидаемые conflictTokenIds.
+};
+
+Q_DECLARE_METATYPE(Art001Expect)
+
+// ------------------------------------------------------------------------
+// Конструктор / деструктор
+// ------------------------------------------------------------------------
+
 TEST_Rule_ART001::TEST_Rule_ART001() {}
 TEST_Rule_ART001::~TEST_Rule_ART001() {}
 
+// ------------------------------------------------------------------------
+// Вспомогательная функция создания runtime с ресурсами
+// ------------------------------------------------------------------------
+
 namespace {
 
+/*!
+* \brief Создаёт CheckerRuntime с загруженными словарями.
+*/
 CheckerRuntime makeRuntimeWithResources()
 {
     CheckerRuntime runtime;
     QString listsDir = findListsDir();
     auto [res, warns] = loadResources(listsDir);
-    for (const QString& w : warns)
+    for (const QString& w : warns) {
         qDebug() << "[TEST_Rule_ART001]" << w;
+    }
     runtime.resources = std::move(res);
     return runtime;
 }
 
 } // namespace
 
+// ------------------------------------------------------------------------
+// Данные тестов (6.1-6.6)
+// ------------------------------------------------------------------------
+
 void TEST_Rule_ART001::TestRule_data()
 {
     QTest::addColumn<RawSentence>("rawSentence");
-    QTest::addColumn<int>("anchorTokenId");
-    QTest::addColumn<QString>("expectedRuleId");
-    QTest::addColumn<QList<int>>("expectedDisplayIds");
-    QTest::addColumn<QSet<int>>("expectedConflictIds");
+    QTest::addColumn<Art001Expect>("expect");
 
-    // 6.1 — лишний a перед PROPN
+    // === 6.1 ART-001: лишний артикль a перед PROPN ==================
+    // Вход: a Europe. Ожидается: a→-, кандидат на токене 1.
     {
-        RawSentence s = makeRawSentence(1, QStringLiteral("test"), QStringLiteral("a Europe"));
+        RawSentence s = makeRawSentence(1, QStringLiteral("test"),
+                                        QStringLiteral("a Europe"));
         addToken(s, makeRawToken(1, 1, "a", "DET", 2, "det"));
         addToken(s, makeRawToken(2, 2, "Europe", "PROPN", 0, "root"));
-        QTest::addRow("6.1_a_Europe")
-            << s << 1
-            << QStringLiteral("ART-001")
-            << (QList<int>{1})
-            << (QSet<int>{1});
+
+        Art001Expect e;
+        e.anchorTokenId = 1;
+        e.expectedCount = 1;
+        e.expectedRuleId = QStringLiteral("ART-001");
+        e.expectedDisplayIds = {1};
+        e.expectedConflictIds = {1};
+
+        QTest::addRow("6.1_a_Europe") << s << e;
     }
 
-    // 6.2 — лишний the перед PROPN
+    // === 6.2 ART-001: лишний артикль the перед PROPN ================
+    // Вход: the London. Ожидается: the→-, кандидат на токене 1.
     {
-        RawSentence s = makeRawSentence(1, QStringLiteral("test"), QStringLiteral("the London"));
+        RawSentence s = makeRawSentence(1, QStringLiteral("test"),
+                                        QStringLiteral("the London"));
         addToken(s, makeRawToken(1, 1, "the", "DET", 2, "det"));
         addToken(s, makeRawToken(2, 2, "London", "PROPN", 0, "root"));
-        QTest::addRow("6.2_the_London")
-            << s << 1
-            << QStringLiteral("ART-001")
-            << (QList<int>{1})
-            << (QSet<int>{1});
+
+        Art001Expect e;
+        e.anchorTokenId = 1;
+        e.expectedCount = 1;
+        e.expectedRuleId = QStringLiteral("ART-001");
+        e.expectedDisplayIds = {1};
+        e.expectedConflictIds = {1};
+
+        QTest::addRow("6.2_the_London") << s << e;
     }
 
-    // 6.3 — лишний an перед PROPN
+    // === 6.3 ART-001: лишний артикль an перед PROPN =================
+    // Вход: an Oxford. Ожидается: an→-, кандидат на токене 1.
     {
-        RawSentence s = makeRawSentence(1, QStringLiteral("test"), QStringLiteral("an Oxford"));
+        RawSentence s = makeRawSentence(1, QStringLiteral("test"),
+                                        QStringLiteral("an Oxford"));
         addToken(s, makeRawToken(1, 1, "an", "DET", 2, "det"));
         addToken(s, makeRawToken(2, 2, "Oxford", "PROPN", 0, "root"));
-        QTest::addRow("6.3_an_Oxford")
-            << s << 1
-            << QStringLiteral("ART-001")
-            << (QList<int>{1})
-            << (QSet<int>{1});
+
+        Art001Expect e;
+        e.anchorTokenId = 1;
+        e.expectedCount = 1;
+        e.expectedRuleId = QStringLiteral("ART-001");
+        e.expectedDisplayIds = {1};
+        e.expectedConflictIds = {1};
+
+        QTest::addRow("6.3_an_Oxford") << s << e;
     }
 
-    // 6.4 — исключение: географическое название (the Pacific Ocean)
+    // === 6.4 ART-001 (исключение): географическое название =========
+    // Вход: the Pacific Ocean. Ожидается: NO ERRORS (geo_the.txt).
     {
-        RawSentence s = makeRawSentence(1, QStringLiteral("test"), QStringLiteral("the Pacific Ocean"));
+        RawSentence s = makeRawSentence(1, QStringLiteral("test"),
+                                        QStringLiteral("the Pacific Ocean"));
         addToken(s, makeRawToken(1, 1, "the", "DET", 3, "det"));
         addToken(s, makeRawToken(2, 2, "Pacific", "PROPN", 3, "compound"));
         addToken(s, makeRawToken(3, 3, "Ocean", "PROPN", 0, "root"));
-        QTest::addRow("6.4_geo_the_Pacific_Ocean")
-            << s << 1
-            << QString()
-            << QList<int>()
-            << QSet<int>();
+
+        Art001Expect e;
+        e.anchorTokenId = 1;
+        e.expectedCount = 0;
+
+        QTest::addRow("6.4_geo_the_Pacific_Ocean") << s << e;
     }
 
-    // 6.5 — исключение: фамилия во мн.ч. (the Smiths)
+    // === 6.5 ART-001 (исключение): фамилия во мн.ч. =================
+    // Вход: the Smiths. Ожидается: NO ERRORS (фамилия во мн.ч.).
     {
-        RawSentence s = makeRawSentence(1, QStringLiteral("test"), QStringLiteral("the Smiths"));
+        RawSentence s = makeRawSentence(1, QStringLiteral("test"),
+                                        QStringLiteral("the Smiths"));
         addToken(s, makeRawToken(1, 1, "the", "DET", 2, "det"));
         addToken(s, makeRawToken(2, 2, "Smiths", "PROPN", 0, "root"));
-        QTest::addRow("6.5_family_plural_Smiths")
-            << s << 1
-            << QString()
-            << QList<int>()
-            << QSet<int>();
+
+        Art001Expect e;
+        e.anchorTokenId = 1;
+        e.expectedCount = 0;
+
+        QTest::addRow("6.5_family_plural_Smiths") << s << e;
     }
 
-    // 6.5a — фамилия в ед.ч. (the Smith) → ошибка
+    // === 6.5a ART-001: фамилия в ед.ч. (ошибка) ====================
+    // Вход: the Smith. Ожидается: the→-, кандидат на токене 1.
     {
-        RawSentence s = makeRawSentence(1, QStringLiteral("test"), QStringLiteral("the Smith"));
+        RawSentence s = makeRawSentence(1, QStringLiteral("test"),
+                                        QStringLiteral("the Smith"));
         addToken(s, makeRawToken(1, 1, "the", "DET", 2, "det"));
         addToken(s, makeRawToken(2, 2, "Smith", "PROPN", 0, "root"));
-        QTest::addRow("6.5a_family_singular_Smith")
-            << s << 1
-            << QStringLiteral("ART-001")
-            << (QList<int>{1})
-            << (QSet<int>{1});
+
+        Art001Expect e;
+        e.anchorTokenId = 1;
+        e.expectedCount = 1;
+        e.expectedRuleId = QStringLiteral("ART-001");
+        e.expectedDisplayIds = {1};
+        e.expectedConflictIds = {1};
+
+        QTest::addRow("6.5a_family_singular_Smith") << s << e;
     }
 
-    // 6.5b — исключение: географическое название во мн.ч. (the Alps)
+    // === 6.5b ART-001 (исключение): географическое во мн.ч. =========
+    // Вход: the Alps. Ожидается: NO ERRORS (geo_the.txt).
     {
-        RawSentence s = makeRawSentence(1, QStringLiteral("test"), QStringLiteral("the Alps"));
+        RawSentence s = makeRawSentence(1, QStringLiteral("test"),
+                                        QStringLiteral("the Alps"));
         addToken(s, makeRawToken(1, 1, "the", "DET", 2, "det"));
         addToken(s, makeRawToken(2, 2, "Alps", "PROPN", 0, "root"));
-        QTest::addRow("6.5b_geo_the_Alps")
-            << s << 1
-            << QString()
-            << QList<int>()
-            << QSet<int>();
+
+        Art001Expect e;
+        e.anchorTokenId = 1;
+        e.expectedCount = 0;
+
+        QTest::addRow("6.5b_geo_the_Alps") << s << e;
     }
 
-    // 6.6 — исключение: классификатор (the Sahara desert)
+    // === 6.6 ART-001 (исключение): классификатор ====================
+    // Вход: the Sahara desert. Ожидается: NO ERRORS (классификатор).
     {
-        RawSentence s = makeRawSentence(1, QStringLiteral("test"), QStringLiteral("the Sahara desert"));
+        RawSentence s = makeRawSentence(1, QStringLiteral("test"),
+                                        QStringLiteral("the Sahara desert"));
         addToken(s, makeRawToken(1, 1, "the", "DET", 3, "det"));
         addToken(s, makeRawToken(2, 2, "Sahara", "PROPN", 3, "compound"));
         addToken(s, makeRawToken(3, 3, "desert", "NOUN", 0, "root"));
-        QTest::addRow("6.6_classifier_Sahara_desert")
-            << s << 1
-            << QString()
-            << QList<int>()
-            << QSet<int>();
+
+        Art001Expect e;
+        e.anchorTokenId = 1;
+        e.expectedCount = 0;
+
+        QTest::addRow("6.6_classifier_Sahara_desert") << s << e;
     }
 }
+
+// ------------------------------------------------------------------------
+// Универсальная функция проверки
+// ------------------------------------------------------------------------
 
 void TEST_Rule_ART001::TestRule()
 {
     QFETCH(RawSentence, rawSentence);
-    QFETCH(int, anchorTokenId);
-    QFETCH(QString, expectedRuleId);
-    QFETCH(QList<int>, expectedDisplayIds);
-    QFETCH(QSet<int>, expectedConflictIds);
+    QFETCH(Art001Expect, expect);
 
     const QString tag = QString(QTest::currentDataTag());
 
     SentenceModel sentence = buildSentenceModel(rawSentence);
 
-    TokenNode* anchor = sentence.tokensById.value(anchorTokenId, nullptr);
-    QVERIFY2(anchor != nullptr, qPrintable(QString("[%1] Якорный токен %2 не найден").arg(tag).arg(anchorTokenId)));
+    TokenNode* anchor = sentence.tokensById.value(expect.anchorTokenId, nullptr);
+    QVERIFY2(anchor != nullptr,
+             qPrintable(QStringLiteral("[%1] anchor %2 не найден")
+                        .arg(tag).arg(expect.anchorTokenId)));
 
-    // CheckerRuntime с загруженными словарями из lists
     CheckerRuntime runtime = makeRuntimeWithResources();
     Rule_ART001 rule;
+
     QSet<CandidateError> result = rule.check(*anchor, 0, DocumentModel(), runtime);
 
-    // expectedRuleId пустой — правило не должно сработать
-    if (expectedRuleId.isEmpty()) {
-        // Если пришёл неожиданный кандидат — выводим его в qDebug для отладки
-        if (result.size() != 0) {
-            const CandidateError& ce = *result.begin();
-            qDebug() << "[" << tag << "] Неожиданное срабатывание:" << ce.ruleId
-                     << "display:" << ce.displayTokenIds << "conflict:" << ce.conflictTokenIds;
+    if (expect.expectedCount != -1) {
+        int actualCount = static_cast<int>(result.size());
+        if (actualCount != expect.expectedCount) {
+            qDebug() << "[TEST FAIL]" << tag
+                     << "Количество кандидатов: ожидалось =" << expect.expectedCount
+                     << "получено =" << actualCount;
         }
-        QCOMPARE(result.size(), 0);
-    } else {
-        // Ожидаем ровно один кандидат
-        QCOMPARE(result.size(), 1);
-        compareSingleCandidate(tag, *result.begin(), expectedRuleId, expectedDisplayIds, expectedConflictIds);
+        QCOMPARE(actualCount, expect.expectedCount);
+    }
+
+    if (expect.expectedCount == 0) {
+        return;
+    }
+
+    if (!result.isEmpty()) {
+        compareSingleCandidate(tag, *result.begin(),
+                               expect.expectedRuleId,
+                               expect.expectedDisplayIds,
+                               expect.expectedConflictIds);
     }
 }
