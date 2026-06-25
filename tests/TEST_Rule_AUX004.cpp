@@ -1,8 +1,9 @@
 /*!
 * \file TEST_Rule_AUX004.cpp
-* \brief Тесты для правила AUX-004 (раздел 6.82).
+* \brief DDT-тесты для правила AUX-004 (раздел 6.82 тесты_v3.md).
 *
-* 6.82: can will go. Два модальных у одного VERB, второй (will) удаляется.
+* Проверяет срабатывание правила при наличии двух модальных глаголов.
+* Ожидается удаление второго модального. Паттерн: обход всех AUX.
 */
 
 #include <QtTest>
@@ -16,91 +17,137 @@
 #include "auxiliaryfunctionsfortesting.h"
 #include "rule_aux004.h"
 
+// ------------------------------------------------------------------------
+// Структура ожиданий
+// ------------------------------------------------------------------------
+
+/*!
+* \struct Aux004Expect
+* \brief Точечные ожидания для тестов правила AUX-004.
+*
+* Структура не содержит anchorTokenId, так как правило использует
+* паттерн обхода всех AUX-токенов в предложении.
+*/
+struct Aux004Expect {
+    int expectedCount = -1;        ///< Ожидаемое число кандидатов. -1: не проверять.
+    QString expectedRuleId;        ///< Ожидаемый ruleId. Пусто: не проверять.
+    QList<int> expectedDisplayIds; ///< Ожидаемые displayTokenIds.
+    QSet<int> expectedConflictIds;  ///< Ожидаемые conflictTokenIds.
+};
+
+Q_DECLARE_METATYPE(Aux004Expect)
+
+// ------------------------------------------------------------------------
+// Конструктор / деструктор
+// ------------------------------------------------------------------------
+
+TEST_Rule_AUX004::TEST_Rule_AUX004() {}
+TEST_Rule_AUX004::~TEST_Rule_AUX004() {}
+
+// ------------------------------------------------------------------------
+// Вспомогательная функция создания runtime с ресурсами
+// ------------------------------------------------------------------------
+
 namespace {
 
 /*!
-* \brief Создать runtime с загруженными словарями.
-* \return CheckerRuntime с заполненными resources.
-*
-* AUX-004 не использует словари, но загрузка сохраняет совместимость
-* с другими тестами правил.
+* \brief Создаёт CheckerRuntime с загруженными словарями.
 */
 CheckerRuntime makeRuntimeWithResources()
 {
     CheckerRuntime runtime;
     QString listsDir = findListsDir();
     auto [res, warns] = loadResources(listsDir);
-    for (const QString& w : warns)
+    for (const QString& w : warns) {
         qDebug() << "[TEST_Rule_AUX004]" << w;
+    }
     runtime.resources = std::move(res);
     return runtime;
 }
 
 } // namespace
 
-TEST_Rule_AUX004::TEST_Rule_AUX004() {}
-TEST_Rule_AUX004::~TEST_Rule_AUX004() {}
+// ------------------------------------------------------------------------
+// Данные тестов (6.82)
+// ------------------------------------------------------------------------
 
 void TEST_Rule_AUX004::TestRule_data()
 {
     QTest::addColumn<RawSentence>("rawSentence");
-    QTest::addColumn<int>("expectedCount");
-    QTest::addColumn<QString>("expectedRuleId");
-    QTest::addColumn<QList<QList<int>>>("expectedDisplayIdsList");
-    QTest::addColumn<QList<QSet<int>>>("expectedConflictIdsList");
+    QTest::addColumn<Aux004Expect>("expect");
 
-    // 6.82: can will go. Два модальных у одного VERB.
-    // can/AUX[aux→go], will/AUX[aux→go], go/VERB[HEAD=0]
-    // Первый модальный can (id=1) остаётся, второй will (id=2) удаляется.
+    // === 6.82 AUX-004: два модальных =================================
+    // Вход: can will go. Ожидается: will→-, кандидат на токене 2.
     {
-        RawSentence s = makeRawSentence(1, QStringLiteral("test"), QStringLiteral("can will go"));
-        RawToken can = makeRawToken(1, 1, "can", "AUX", 3, "aux");
-        can.lemma = QStringLiteral("can");
-        addToken(s, can);
-        RawToken will = makeRawToken(2, 2, "will", "AUX", 3, "aux");
-        will.lemma = QStringLiteral("will");
-        addToken(s, will);
-        RawToken go = makeRawToken(3, 3, "go", "VERB", 0, "root");
-        go.lemma = QStringLiteral("go");
-        addToken(s, go);
-        QTest::addRow("6.82_can_will_go")
-            << s << 1
-            << QStringLiteral("AUX-004")
-            << (QList<QList<int>>{QList<int>{2}})
-            << (QList<QSet<int>>{QSet<int>{2}});
+        RawSentence s = makeRawSentence(1, QStringLiteral("test"),
+                                        QStringLiteral("can will go"));
+        RawToken c = makeRawToken(1, 1, "can", "AUX", 3, "aux");
+        c.lemma = QStringLiteral("can");
+        addToken(s, c);
+
+        RawToken w = makeRawToken(2, 2, "will", "AUX", 3, "aux");
+        w.lemma = QStringLiteral("will");
+        addToken(s, w);
+
+        RawToken g = makeRawToken(3, 3, "go", "VERB", 0, "root");
+        g.lemma = QStringLiteral("go");
+        addToken(s, g);
+
+        Aux004Expect e;
+        e.expectedCount = 1;
+        e.expectedRuleId = QStringLiteral("AUX-004");
+        e.expectedDisplayIds = {2};
+        e.expectedConflictIds = {2};
+
+        QTest::addRow("6.82_can_will_go") << s << e;
     }
 }
+
+// ------------------------------------------------------------------------
+// Универсальная функция проверки
+// ------------------------------------------------------------------------
 
 void TEST_Rule_AUX004::TestRule()
 {
     QFETCH(RawSentence, rawSentence);
-    QFETCH(int, expectedCount);
-    QFETCH(QString, expectedRuleId);
-    QFETCH(QList<QList<int>>, expectedDisplayIdsList);
-    QFETCH(QList<QSet<int>>, expectedConflictIdsList);
+    QFETCH(Aux004Expect, expect);
 
     const QString tag = QString(QTest::currentDataTag());
 
     SentenceModel sentence = buildSentenceModel(rawSentence);
-
     CheckerRuntime runtime = makeRuntimeWithResources();
     Rule_AUX004 rule;
 
-    // Обходим все AUX. Правило срабатывает только на втором модальном.
+    // Обходим все AUX-токены: правило проверяет пары модальных.
     QSet<CandidateError> result;
     for (TokenNode* token : sentence.tokens) {
-        if (token->upos != Upos::AUX)
+        if (token->upos != Upos::AUX) {
             continue;
+        }
         QSet<CandidateError> found = rule.check(*token, 0, DocumentModel(), runtime);
-        for (const CandidateError& ce : found)
+        for (const CandidateError& ce : found) {
             result.insert(ce);
+        }
     }
 
-    QCOMPARE(result.size(), expectedCount);
+    if (expect.expectedCount != -1) {
+        int actualCount = static_cast<int>(result.size());
+        if (actualCount != expect.expectedCount) {
+            qDebug() << "[TEST FAIL]" << tag
+                     << "Количество кандидатов: ожидалось =" << expect.expectedCount
+                     << "получено =" << actualCount;
+        }
+        QCOMPARE(actualCount, expect.expectedCount);
+    }
 
-    if (expectedCount == 0)
+    if (expect.expectedCount == 0) {
         return;
+    }
 
-    compareMultiCandidate(tag, result, expectedRuleId,
-                           expectedDisplayIdsList, expectedConflictIdsList);
+    if (!result.isEmpty()) {
+        compareSingleCandidate(tag, *result.begin(),
+                               expect.expectedRuleId,
+                               expect.expectedDisplayIds,
+                               expect.expectedConflictIds);
+    }
 }

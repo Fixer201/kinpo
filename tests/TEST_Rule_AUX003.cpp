@@ -1,8 +1,9 @@
 /*!
 * \file TEST_Rule_AUX003.cpp
-* \brief Тесты для правила AUX-003 (раздел 6.81).
+* \brief DDT-тесты для правила AUX-003 (раздел 6.81 тесты_v3.md).
 *
-* 6.81: must to go. Избыточная частица to после модального must.
+* Проверяет срабатывание правила при наличии частицы to после
+* модального глагола. Ожидается удаление лишнего to.
 */
 
 #include <QtTest>
@@ -16,90 +17,132 @@
 #include "auxiliaryfunctionsfortesting.h"
 #include "rule_aux003.h"
 
+// ------------------------------------------------------------------------
+// Структура ожиданий
+// ------------------------------------------------------------------------
+
+/*!
+* \struct Aux003Expect
+* \brief Точечные ожидания для тестов правила AUX-003.
+*/
+struct Aux003Expect {
+    int anchorTokenId = -1;        ///< ID токена-якоря (PART). -1: не проверять.
+    int expectedCount = -1;        ///< Ожидаемое число кандидатов. -1: не проверять.
+    QString expectedRuleId;        ///< Ожидаемый ruleId. Пусто: не проверять.
+    QList<int> expectedDisplayIds; ///< Ожидаемые displayTokenIds.
+    QSet<int> expectedConflictIds;  ///< Ожидаемые conflictTokenIds.
+};
+
+Q_DECLARE_METATYPE(Aux003Expect)
+
+// ------------------------------------------------------------------------
+// Конструктор / деструктор
+// ------------------------------------------------------------------------
+
+TEST_Rule_AUX003::TEST_Rule_AUX003() {}
+TEST_Rule_AUX003::~TEST_Rule_AUX003() {}
+
+// ------------------------------------------------------------------------
+// Вспомогательная функция создания runtime с ресурсами
+// ------------------------------------------------------------------------
+
 namespace {
 
 /*!
-* \brief Создать runtime с загруженными словарями.
-* \return CheckerRuntime с заполненными resources.
-*
-* AUX-003 не использует словари, но загрузка сохраняет совместимость
-* с другими тестами правил.
+* \brief Создаёт CheckerRuntime с загруженными словарями.
 */
 CheckerRuntime makeRuntimeWithResources()
 {
     CheckerRuntime runtime;
     QString listsDir = findListsDir();
     auto [res, warns] = loadResources(listsDir);
-    for (const QString& w : warns)
+    for (const QString& w : warns) {
         qDebug() << "[TEST_Rule_AUX003]" << w;
+    }
     runtime.resources = std::move(res);
     return runtime;
 }
 
 } // namespace
 
-TEST_Rule_AUX003::TEST_Rule_AUX003() {}
-TEST_Rule_AUX003::~TEST_Rule_AUX003() {}
+// ------------------------------------------------------------------------
+// Данные тестов (6.81)
+// ------------------------------------------------------------------------
 
 void TEST_Rule_AUX003::TestRule_data()
 {
     QTest::addColumn<RawSentence>("rawSentence");
-    QTest::addColumn<int>("anchorTokenId");
-    QTest::addColumn<int>("expectedCount");
-    QTest::addColumn<QString>("expectedRuleId");
-    QTest::addColumn<QList<QList<int>>>("expectedDisplayIdsList");
-    QTest::addColumn<QList<QSet<int>>>("expectedConflictIdsList");
+    QTest::addColumn<Aux003Expect>("expect");
 
-    // 6.81: must to go. to удаляется, так как после модального
-    // частица to не нужна.
-    // must/AUX[aux→go], to/PART[mark→go], go/VERB[HEAD=0]
-    // T=to (id=2), V=go (id=3), M=must (id=1) — aux-зависимый V, модальный
+    // === 6.81 AUX-003: to после модального ============================
+    // Вход: must to go. Ожидается: to→-, кандидат на токене 2.
     {
-        RawSentence s = makeRawSentence(1, QStringLiteral("test"), QStringLiteral("must to go"));
-        RawToken must = makeRawToken(1, 1, "must", "AUX", 3, "aux");
-        must.lemma = QStringLiteral("must");
-        addToken(s, must);
-        RawToken to = makeRawToken(2, 2, "to", "PART", 3, "mark");
-        to.lemma = QStringLiteral("to");
-        addToken(s, to);
-        RawToken go = makeRawToken(3, 3, "go", "VERB", 0, "root");
-        go.lemma = QStringLiteral("go");
-        addToken(s, go);
-        QTest::addRow("6.81_must_to_go")
-            << s << 2
-            << 1
-            << QStringLiteral("AUX-003")
-            << (QList<QList<int>>{QList<int>{2}})
-            << (QList<QSet<int>>{QSet<int>{2}});
+        RawSentence s = makeRawSentence(1, QStringLiteral("test"),
+                                        QStringLiteral("must to go"));
+        RawToken m = makeRawToken(1, 1, "must", "AUX", 3, "aux");
+        m.lemma = QStringLiteral("must");
+        addToken(s, m);
+
+        RawToken t = makeRawToken(2, 2, "to", "PART", 3, "mark");
+        t.lemma = QStringLiteral("to");
+        addToken(s, t);
+
+        RawToken g = makeRawToken(3, 3, "go", "VERB", 0, "root");
+        g.lemma = QStringLiteral("go");
+        addToken(s, g);
+
+        Aux003Expect e;
+        e.anchorTokenId = 2;
+        e.expectedCount = 1;
+        e.expectedRuleId = QStringLiteral("AUX-003");
+        e.expectedDisplayIds = {2};
+        e.expectedConflictIds = {2};
+
+        QTest::addRow("6.81_must_to_go") << s << e;
     }
 }
+
+// ------------------------------------------------------------------------
+// Универсальная функция проверки
+// ------------------------------------------------------------------------
 
 void TEST_Rule_AUX003::TestRule()
 {
     QFETCH(RawSentence, rawSentence);
-    QFETCH(int, anchorTokenId);
-    QFETCH(int, expectedCount);
-    QFETCH(QString, expectedRuleId);
-    QFETCH(QList<QList<int>>, expectedDisplayIdsList);
-    QFETCH(QList<QSet<int>>, expectedConflictIdsList);
+    QFETCH(Aux003Expect, expect);
 
     const QString tag = QString(QTest::currentDataTag());
 
     SentenceModel sentence = buildSentenceModel(rawSentence);
 
-    TokenNode* anchor = sentence.tokensById.value(anchorTokenId, nullptr);
-    QVERIFY2(anchor != nullptr, qPrintable(QString("[%1] Якорный токен %2 не найден").arg(tag).arg(anchorTokenId)));
+    TokenNode* anchor = sentence.tokensById.value(expect.anchorTokenId, nullptr);
+    QVERIFY2(anchor != nullptr,
+             qPrintable(QStringLiteral("[%1] anchor %2 не найден")
+                        .arg(tag).arg(expect.anchorTokenId)));
 
     CheckerRuntime runtime = makeRuntimeWithResources();
     Rule_AUX003 rule;
 
     QSet<CandidateError> result = rule.check(*anchor, 0, DocumentModel(), runtime);
 
-    QCOMPARE(result.size(), expectedCount);
+    if (expect.expectedCount != -1) {
+        int actualCount = static_cast<int>(result.size());
+        if (actualCount != expect.expectedCount) {
+            qDebug() << "[TEST FAIL]" << tag
+                     << "Количество кандидатов: ожидалось =" << expect.expectedCount
+                     << "получено =" << actualCount;
+        }
+        QCOMPARE(actualCount, expect.expectedCount);
+    }
 
-    if (expectedCount == 0)
+    if (expect.expectedCount == 0) {
         return;
+    }
 
-    compareMultiCandidate(tag, result, expectedRuleId,
-                           expectedDisplayIdsList, expectedConflictIdsList);
+    if (!result.isEmpty()) {
+        compareSingleCandidate(tag, *result.begin(),
+                               expect.expectedRuleId,
+                               expect.expectedDisplayIds,
+                               expect.expectedConflictIds);
+    }
 }
