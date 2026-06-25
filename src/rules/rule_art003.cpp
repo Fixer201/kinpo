@@ -124,6 +124,11 @@ QSet<CandidateError> Rule_ART003::check(const TokenNode& anchor,
     if (isLanguage && nounHasChildWithLemma(noun, QStringLiteral("language")))
         return res;
 
+    // Исключение: народ/нация. PROPN-язык как подлежащее клаузы (nsubj)
+    // указывает на народ, а не на язык: «The English are polite».
+    if (isLanguage && noun.deprel == Deprel::Nsubj)
+        return res;
+
     if ((isSport || isMeal) && nounHasAmodChild(noun))
         return res;
 
