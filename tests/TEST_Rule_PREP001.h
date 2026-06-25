@@ -1,20 +1,19 @@
 /*!
 * \file TEST_Rule_PREP001.h
-* \brief Объявление тестов для правила PREP-001 (раздел 6.43–6.49).
+* \brief Объявление тестового класса для правила PREP-001.
 *
-* Проверяет правило "Неверный временной предлог":
-*  — день недели (in→on), месяц (on→in), часть дня (at→in), год (on→in),
-*    ночь (in→at)
-*  — корректный предлог не срабатывает (at 5 o'clock)
-*  — исключение: compound с днём недели переводит часть дня в категорию on
-*    (on Monday morning — NO ERRORS)
+* Проверяет правило «Неверный временной предлог».
 */
 
-#ifndef TEST_RULE_PREP001_H
-#define TEST_RULE_PREP001_H
+#ifndef TEST_RULE_PREP_001_H
+#define TEST_RULE_PREP_001_H
 
 #include <QObject>
 
+/*!
+* \class TEST_Rule_PREP001
+* \brief Тестовый класс для PREP-001 (раздел 6.43–6.49 тестов_v3.md).
+*/
 class TEST_Rule_PREP001 : public QObject
 {
     Q_OBJECT
@@ -23,8 +22,8 @@ public:
     ~TEST_Rule_PREP001();
 
 private slots:
-    void TestRule_data();
-    void TestRule();
+    void TestRule_data(); ///< DDT данные PREP-001
+    void TestRule();      ///< Выполнение проверок
 };
 
-#endif // TEST_RULE_PREP001_H
+#endif // TEST_RULE_PREP_001_H

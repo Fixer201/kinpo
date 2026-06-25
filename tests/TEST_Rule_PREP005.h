@@ -1,19 +1,19 @@
 /*!
 * \file TEST_Rule_PREP005.h
-* \brief Объявление тестов для правила PREP-005 (раздел 6.56–6.59).
+* \brief Объявление тестового класса для правила PREP-005.
 *
-* Проверяет правило "Неверный предлог при глаголе":
-*  — лишний предлог (discuss about → удалить)
-*  — пропущенный предлог (explain me → вставить to)
-*  — неверный предлог (depend of → заменить на on)
-*  — корректный предлог не срабатывает (explain about it)
+* Проверяет правило «Неверный предлог при глаголе».
 */
 
-#ifndef TEST_RULE_PREP005_H
-#define TEST_RULE_PREP005_H
+#ifndef TEST_RULE_PREP_005_H
+#define TEST_RULE_PREP_005_H
 
 #include <QObject>
 
+/*!
+* \class TEST_Rule_PREP005
+* \brief Тестовый класс для PREP-005 (раздел 6.56–6.59 тестов_v3.md).
+*/
 class TEST_Rule_PREP005 : public QObject
 {
     Q_OBJECT
@@ -22,8 +22,8 @@ public:
     ~TEST_Rule_PREP005();
 
 private slots:
-    void TestRule_data();
-    void TestRule();
+    void TestRule_data(); ///< DDT данные PREP-005
+    void TestRule();      ///< Выполнение проверок
 };
 
-#endif // TEST_RULE_PREP005_H
+#endif // TEST_RULE_PREP_005_H
