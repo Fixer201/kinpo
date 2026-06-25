@@ -1,11 +1,11 @@
 /*!
 * \file TEST_Rule_CONJ003.cpp
-* \brief Тесты для правила CONJ-003 (раздел 6.66, 6.99–6.100).
+* \brief DDT-тесты для правила CONJ-003 (раздел 6.66, 6.99-6.100 тесты_v3.md).
 *
-* Проверяет правило "although ↔ despite":
-*  — 6.66: although the rain → despite (именная группа)
-*  — 6.99: although his efforts → despite (именная группа с притяжательным)
-*  — 6.100: although it rains → NO ERRORS (клауза с глаголом)
+* Проверяет правило «although ↔ despite»:
+*  — 6.66: although перед именной группой (the rain) → despite;
+*  — 6.99: although перед притяжательным (his mistake) → despite;
+*  — 6.100: although перед клаузой (it rained) → без ошибок.
 */
 
 #include <QtTest>
@@ -19,44 +19,67 @@
 #include "auxiliaryfunctionsfortesting.h"
 #include "rule_conj003.h"
 
+// ------------------------------------------------------------------------
+// Структура ожиданий
+// ------------------------------------------------------------------------
+
+/*!
+* \struct Conj003Expect
+* \brief Точечные ожидания для тестов правила CONJ-003.
+*/
+struct Conj003Expect {
+    int anchorTokenId = -1;        ///< ID токена-якоря (SCONJ). -1: не проверять.
+    int expectedCount = -1;        ///< Ожидаемое число кандидатов. -1: не проверять.
+    QString expectedRuleId;        ///< Ожидаемый ruleId. Пусто: не проверять.
+    QList<int> expectedDisplayIds; ///< Ожидаемые displayTokenIds.
+    QSet<int> expectedConflictIds;  ///< Ожидаемые conflictTokenIds.
+};
+
+Q_DECLARE_METATYPE(Conj003Expect)
+
+// ------------------------------------------------------------------------
+// Конструктор / деструктор
+// ------------------------------------------------------------------------
+
+TEST_Rule_CONJ003::TEST_Rule_CONJ003() {}
+TEST_Rule_CONJ003::~TEST_Rule_CONJ003() {}
+
+// ------------------------------------------------------------------------
+// Вспомогательная функция создания runtime с ресурсами
+// ------------------------------------------------------------------------
+
 namespace {
 
 /*!
-* \brief Создать runtime с загруженными словарями.
-* \return CheckerRuntime с заполненными resources.
-*
-* CONJ-003 не использует словари, но загрузка сохраняет совместимость.
+* \brief Создаёт CheckerRuntime с загруженными словарями.
 */
 CheckerRuntime makeRuntimeWithResources()
 {
     CheckerRuntime runtime;
     QString listsDir = findListsDir();
     auto [res, warns] = loadResources(listsDir);
-    for (const QString& w : warns)
+    for (const QString& w : warns) {
         qDebug() << "[TEST_Rule_CONJ003]" << w;
+    }
     runtime.resources = std::move(res);
     return runtime;
 }
 
 } // namespace
 
-TEST_Rule_CONJ003::TEST_Rule_CONJ003() {}
-TEST_Rule_CONJ003::~TEST_Rule_CONJ003() {}
+// ------------------------------------------------------------------------
+// Данные тестов (6.66, 6.99-6.100)
+// ------------------------------------------------------------------------
 
 void TEST_Rule_CONJ003::TestRule_data()
 {
     QTest::addColumn<RawSentence>("rawSentence");
-    QTest::addColumn<int>("anchorTokenId");
-    QTest::addColumn<int>("expectedCount");
-    QTest::addColumn<QString>("expectedRuleId");
-    QTest::addColumn<QList<QList<int>>>("expectedDisplayIdsList");
-    QTest::addColumn<QList<QSet<int>>>("expectedConflictIdsList");
+    QTest::addColumn<Conj003Expect>("expect");
 
-    // 6.66 — although the rain → despite (именная группа)
-    // although/SCONJ[mark→rain], the/DET[det→rain], rain/NOUN[HEAD=0]
-    // HEAD(although)=rain/NOUN, у rain нет зависимых VERB/AUX → despite
+    // === 6.66 CONJ-003: although the rain → despite (именная группа)
     {
-        RawSentence s = makeRawSentence(1, QStringLiteral("test"), QStringLiteral("although the rain"));
+        RawSentence s = makeRawSentence(1, QStringLiteral("test"),
+                                        QStringLiteral("although the rain"));
         RawToken although = makeRawToken(1, 1, "although", "SCONJ", 3, "mark");
         although.lemma = QStringLiteral("although");
         addToken(s, although);
@@ -66,89 +89,106 @@ void TEST_Rule_CONJ003::TestRule_data()
         RawToken rain = makeRawToken(3, 3, "rain", "NOUN", 0, "root");
         rain.lemma = QStringLiteral("rain");
         addToken(s, rain);
-        QTest::addRow("6.66_although_the_rain")
-            << s << 1
-            << 1
-            << QStringLiteral("CONJ-003")
-            << (QList<QList<int>>{QList<int>{1}})
-            << (QList<QSet<int>>{QSet<int>{1}});
+
+        Conj003Expect e;
+        e.anchorTokenId = 1;
+        e.expectedCount = 1;
+        e.expectedRuleId = QStringLiteral("CONJ-003");
+        e.expectedDisplayIds = {1};
+        e.expectedConflictIds = {1};
+
+        QTest::addRow("6.66_although_the_rain") << s << e;
     }
 
-    // 6.99 — although his efforts → despite (именная группа с притяжательным)
-    // although/SCONJ[mark→efforts], his/PRON[nmod:poss→efforts],
-    // efforts/NOUN[HEAD=0]
-    // HEAD(although)=efforts/NOUN, у efforts нет зависимых VERB/AUX → despite
+    // === 6.99 CONJ-003: although his mistake → despite (притяжательное)
     {
-        RawSentence s = makeRawSentence(1, QStringLiteral("test"), QStringLiteral("although his efforts"));
+        RawSentence s = makeRawSentence(1, QStringLiteral("test"),
+                                        QStringLiteral("although his mistake"));
         RawToken although = makeRawToken(1, 1, "although", "SCONJ", 3, "mark");
         although.lemma = QStringLiteral("although");
         addToken(s, although);
         RawToken his = makeRawToken(2, 2, "his", "PRON", 3, "nmod:poss",
-                                     QStringLiteral("Poss=Yes"));
-        his.lemma = QStringLiteral("his");
+                                    QStringLiteral("Poss=Yes"));
+        his.lemma = QStringLiteral("he");
         addToken(s, his);
-        RawToken efforts = makeRawToken(3, 3, "efforts", "NOUN", 0, "root");
-        efforts.lemma = QStringLiteral("effort");
-        addToken(s, efforts);
-        QTest::addRow("6.99_although_his_efforts")
-            << s << 1
-            << 1
-            << QStringLiteral("CONJ-003")
-            << (QList<QList<int>>{QList<int>{1}})
-            << (QList<QSet<int>>{QSet<int>{1}});
+        RawToken mistake = makeRawToken(3, 3, "mistake", "NOUN", 0, "root");
+        mistake.lemma = QStringLiteral("mistake");
+        addToken(s, mistake);
+
+        Conj003Expect e;
+        e.anchorTokenId = 1;
+        e.expectedCount = 1;
+        e.expectedRuleId = QStringLiteral("CONJ-003");
+        e.expectedDisplayIds = {1};
+        e.expectedConflictIds = {1};
+
+        QTest::addRow("6.99_although_his_mistake") << s << e;
     }
 
-    // 6.100 — although it rains → NO ERRORS (клауза с глаголом)
-    // although/SCONJ[mark→rains], it/PRON[nsubj→rains], rains/VERB[HEAD=0]
-    // HEAD(although)=rains/VERB, не NOUN/PROPN → ветка (а) не срабатывает
+    // === 6.100 CONJ-003 (исключение): although it rained — без ошибок
+    // Клауза с глаголом, despite не подходит.
     {
-        RawSentence s = makeRawSentence(1, QStringLiteral("test"), QStringLiteral("although it rains"));
+        RawSentence s = makeRawSentence(1, QStringLiteral("test"),
+                                        QStringLiteral("although it rained"));
         RawToken although = makeRawToken(1, 1, "although", "SCONJ", 3, "mark");
         although.lemma = QStringLiteral("although");
         addToken(s, although);
         RawToken it = makeRawToken(2, 2, "it", "PRON", 3, "nsubj");
         it.lemma = QStringLiteral("it");
         addToken(s, it);
-        RawToken rains = makeRawToken(3, 3, "rains", "VERB", 0, "root");
-        rains.lemma = QStringLiteral("rain");
-        addToken(s, rains);
-        QTest::addRow("6.100_although_it_rains")
-            << s << 1
-            << 0
-            << QString()
-            << QList<QList<int>>()
-            << QList<QSet<int>>();
+        RawToken rained = makeRawToken(3, 3, "rained", "VERB", 0, "root");
+        rained.lemma = QStringLiteral("rain");
+        addToken(s, rained);
+
+        Conj003Expect e;
+        e.anchorTokenId = 1;
+        e.expectedCount = 0;
+
+        QTest::addRow("6.100_although_it_rained") << s << e;
     }
 }
+
+// ------------------------------------------------------------------------
+// Универсальная функция проверки
+// ------------------------------------------------------------------------
 
 void TEST_Rule_CONJ003::TestRule()
 {
     QFETCH(RawSentence, rawSentence);
-    QFETCH(int, anchorTokenId);
-    QFETCH(int, expectedCount);
-    QFETCH(QString, expectedRuleId);
-    QFETCH(QList<QList<int>>, expectedDisplayIdsList);
-    QFETCH(QList<QSet<int>>, expectedConflictIdsList);
+    QFETCH(Conj003Expect, expect);
 
     const QString tag = QString(QTest::currentDataTag());
 
     SentenceModel sentence = buildSentenceModel(rawSentence);
 
-    TokenNode* anchor = sentence.tokensById.value(anchorTokenId, nullptr);
-    QVERIFY2(anchor != nullptr, qPrintable(QString("[%1] Якорный токен %2 не найден").arg(tag).arg(anchorTokenId)));
+    TokenNode* anchor = sentence.tokensById.value(expect.anchorTokenId, nullptr);
+    QVERIFY2(anchor != nullptr,
+             qPrintable(QStringLiteral("[%1] anchor %2 не найден")
+                        .arg(tag).arg(expect.anchorTokenId)));
 
     CheckerRuntime runtime = makeRuntimeWithResources();
     Rule_CONJ003 rule;
 
-    // Якорь — although (SCONJ), проверяем его напрямую
     QSet<CandidateError> result = rule.check(*anchor, 0, DocumentModel(), runtime);
 
-    QCOMPARE(result.size(), expectedCount);
+    if (expect.expectedCount != -1) {
+        int actualCount = static_cast<int>(result.size());
+        if (actualCount != expect.expectedCount) {
+            qDebug() << "[TEST FAIL]" << tag
+                     << "Количество кандидатов: ожидалось =" << expect.expectedCount
+                     << "получено =" << actualCount;
+        }
+        QCOMPARE(actualCount, expect.expectedCount);
+    }
 
-    // Если кандидатов нет, правило не сработало, проверка завершена
-    if (expectedCount == 0)
+    if (expect.expectedCount == 0) {
         return;
+    }
 
-    compareMultiCandidate(tag, result, expectedRuleId,
-                           expectedDisplayIdsList, expectedConflictIdsList);
+    if (!result.isEmpty()) {
+        compareSingleCandidate(tag, *result.begin(),
+                               expect.expectedRuleId,
+                               expect.expectedDisplayIds,
+                               expect.expectedConflictIds);
+    }
 }

@@ -1,17 +1,19 @@
 /*!
 * \file TEST_Rule_CONJ002.h
-* \brief Объявление тестов для правила CONJ-002 (раздел 6.64–6.65).
+* \brief Объявление тестового класса для правила CONJ-002.
 *
-* Проверяет правило "because ↔ because of":
-*  — because перед именной группой → because of
-*  — because of перед клаузой → because
+* Проверяет правило «because ↔ because of».
 */
 
-#ifndef TEST_RULE_CONJ002_H
-#define TEST_RULE_CONJ002_H
+#ifndef TEST_RULE_CONJ_002_H
+#define TEST_RULE_CONJ_002_H
 
 #include <QObject>
 
+/*!
+* \class TEST_Rule_CONJ002
+* \brief Тестовый класс для CONJ-002 (раздел 6.64–6.65 тестов_v3.md).
+*/
 class TEST_Rule_CONJ002 : public QObject
 {
     Q_OBJECT
@@ -20,8 +22,8 @@ public:
     ~TEST_Rule_CONJ002();
 
 private slots:
-    void TestRule_data();
-    void TestRule();
+    void TestRule_data(); ///< DDT данные CONJ-002
+    void TestRule();      ///< Выполнение проверок
 };
 
-#endif // TEST_RULE_CONJ002_H
+#endif // TEST_RULE_CONJ_002_H

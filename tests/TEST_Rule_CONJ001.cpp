@@ -1,12 +1,12 @@
 /*!
 * \file TEST_Rule_CONJ001.cpp
-* \brief Тесты для правила CONJ-001 (раздел 6.60–6.63).
+* \brief DDT-тесты для правила CONJ-001 (раздел 6.60-6.63 тесты_v3.md).
 *
-* Проверяет правило "nor без отрицания":
-*  — 6.60: apples nor oranges → CONJ-001 (nor без отрицания)
-*  — 6.61: I do not want apples nor oranges → NO ERRORS (not снимает ошибку)
-*  — 6.62: None of them wanted tea nor coffee → NO ERRORS (none в поддереве)
-*  — 6.63: neither John nor Mary → NO ERRORS (C2.DEPREL=root, не conj)
+* Проверяет правило «nor без отрицания»:
+*  — 6.60: nor без отрицания — ошибка;
+*  — 6.61: not в поддереве снимает ошибку;
+*  — 6.62: none в поддереве снимает ошибку;
+*  — 6.63: neither...nor — корректно.
 */
 
 #include <QtTest>
@@ -20,44 +20,68 @@
 #include "auxiliaryfunctionsfortesting.h"
 #include "rule_conj001.h"
 
+// ------------------------------------------------------------------------
+// Структура ожиданий
+// ------------------------------------------------------------------------
+
+/*!
+* \struct Conj001Expect
+* \brief Точечные ожидания для тестов правила CONJ-001.
+*/
+struct Conj001Expect {
+    int anchorTokenId = -1;        ///< ID токена-якоря (CCONJ). -1: не проверять.
+    int expectedCount = -1;        ///< Ожидаемое число кандидатов. -1: не проверять.
+    QString expectedRuleId;        ///< Ожидаемый ruleId. Пусто: не проверять.
+    QList<int> expectedDisplayIds; ///< Ожидаемые displayTokenIds.
+    QSet<int> expectedConflictIds;  ///< Ожидаемые conflictTokenIds.
+};
+
+Q_DECLARE_METATYPE(Conj001Expect)
+
+// ------------------------------------------------------------------------
+// Конструктор / деструктор
+// ------------------------------------------------------------------------
+
+TEST_Rule_CONJ001::TEST_Rule_CONJ001() {}
+TEST_Rule_CONJ001::~TEST_Rule_CONJ001() {}
+
+// ------------------------------------------------------------------------
+// Вспомогательная функция создания runtime с ресурсами
+// ------------------------------------------------------------------------
+
 namespace {
 
 /*!
-* \brief Создать runtime с загруженными словарями.
-* \return CheckerRuntime с заполненными resources.
-*
-* CONJ-001 не использует словари, но загрузка сохраняет совместимость.
+* \brief Создаёт CheckerRuntime с загруженными словарями.
 */
 CheckerRuntime makeRuntimeWithResources()
 {
     CheckerRuntime runtime;
     QString listsDir = findListsDir();
     auto [res, warns] = loadResources(listsDir);
-    for (const QString& w : warns)
+    for (const QString& w : warns) {
         qDebug() << "[TEST_Rule_CONJ001]" << w;
+    }
     runtime.resources = std::move(res);
     return runtime;
 }
 
 } // namespace
 
-TEST_Rule_CONJ001::TEST_Rule_CONJ001() {}
-TEST_Rule_CONJ001::~TEST_Rule_CONJ001() {}
+// ------------------------------------------------------------------------
+// Данные тестов (6.60-6.63)
+// ------------------------------------------------------------------------
 
 void TEST_Rule_CONJ001::TestRule_data()
 {
     QTest::addColumn<RawSentence>("rawSentence");
-    QTest::addColumn<int>("anchorTokenId");
-    QTest::addColumn<int>("expectedCount");
-    QTest::addColumn<QString>("expectedRuleId");
-    QTest::addColumn<QList<QList<int>>>("expectedDisplayIdsList");
-    QTest::addColumn<QList<QSet<int>>>("expectedConflictIdsList");
+    QTest::addColumn<Conj001Expect>("expect");
 
-    // 6.60 — apples nor oranges → CONJ-001 (nor без отрицания)
-    // apples/NOUN[HEAD=0], nor/CCONJ[cc→oranges], oranges/NOUN[conj→apples]
-    // C2=oranges (conj), C1=apples (root), поддерево apples нет отрицания
+    // === 6.60 CONJ-001: nor без отрицания ===========================
+    // apples nor oranges → nor→or.
     {
-        RawSentence s = makeRawSentence(1, QStringLiteral("test"), QStringLiteral("apples nor oranges"));
+        RawSentence s = makeRawSentence(1, QStringLiteral("test"),
+                                        QStringLiteral("apples nor oranges"));
         RawToken apples = makeRawToken(1, 1, "apples", "NOUN", 0, "root");
         apples.lemma = QStringLiteral("apple");
         addToken(s, apples);
@@ -67,21 +91,22 @@ void TEST_Rule_CONJ001::TestRule_data()
         RawToken oranges = makeRawToken(3, 3, "oranges", "NOUN", 1, "conj");
         oranges.lemma = QStringLiteral("orange");
         addToken(s, oranges);
-        QTest::addRow("6.60_apples_nor_oranges")
-            << s << 2
-            << 1
-            << QStringLiteral("CONJ-001")
-            << (QList<QList<int>>{QList<int>{2}})
-            << (QList<QSet<int>>{QSet<int>{2}});
+
+        Conj001Expect e;
+        e.anchorTokenId = 2;
+        e.expectedCount = 1;
+        e.expectedRuleId = QStringLiteral("CONJ-001");
+        e.expectedDisplayIds = {2};
+        e.expectedConflictIds = {2};
+
+        QTest::addRow("6.60_apples_nor_oranges") << s << e;
     }
 
-    // 6.61 — I do not want apples nor oranges → NO ERRORS (not снимает ошибку)
-    // I/PRON[nsubj→want], do/AUX[aux→want], not/PART[advmod→want],
-    // want/VERB[HEAD=0], apples/NOUN[obj→want], nor/CCONJ[cc→oranges],
-    // oranges/NOUN[conj→apples]
-    // C2=oranges (conj), C1=apples, root=want. Поддерево want содержит not.
+    // === 6.61 CONJ-001 (исключение): not в поддереве ================
+    // I do not want apples nor want oranges — без ошибок.
     {
-        RawSentence s = makeRawSentence(1, QStringLiteral("test"), QStringLiteral("I do not want apples nor oranges"));
+        RawSentence s = makeRawSentence(1, QStringLiteral("test"),
+                                        QStringLiteral("I do not want apples nor want oranges"));
         RawToken i = makeRawToken(1, 1, "I", "PRON", 4, "nsubj");
         i.lemma = QStringLiteral("I");
         addToken(s, i);
@@ -91,33 +116,34 @@ void TEST_Rule_CONJ001::TestRule_data()
         RawToken notTok = makeRawToken(3, 3, "not", "PART", 4, "advmod");
         notTok.lemma = QStringLiteral("not");
         addToken(s, notTok);
-        RawToken want = makeRawToken(4, 4, "want", "VERB", 0, "root");
-        want.lemma = QStringLiteral("want");
-        addToken(s, want);
+        RawToken want1 = makeRawToken(4, 4, "want", "VERB", 0, "root");
+        want1.lemma = QStringLiteral("want");
+        addToken(s, want1);
         RawToken apples = makeRawToken(5, 5, "apples", "NOUN", 4, "obj");
         apples.lemma = QStringLiteral("apple");
         addToken(s, apples);
         RawToken nor = makeRawToken(6, 6, "nor", "CCONJ", 7, "cc");
         nor.lemma = QStringLiteral("nor");
         addToken(s, nor);
-        RawToken oranges = makeRawToken(7, 7, "oranges", "NOUN", 5, "conj");
+        RawToken want2 = makeRawToken(7, 7, "want", "VERB", 4, "conj");
+        want2.lemma = QStringLiteral("want");
+        addToken(s, want2);
+        RawToken oranges = makeRawToken(8, 8, "oranges", "NOUN", 7, "obj");
         oranges.lemma = QStringLiteral("orange");
         addToken(s, oranges);
-        QTest::addRow("6.61_not_want_nor")
-            << s << 6
-            << 0
-            << QString()
-            << QList<QList<int>>()
-            << QList<QSet<int>>();
+
+        Conj001Expect e;
+        e.anchorTokenId = 6;
+        e.expectedCount = 0;
+
+        QTest::addRow("6.61_not_want_nor") << s << e;
     }
 
-    // 6.62 — None of them wanted tea nor coffee → NO ERRORS (none в поддереве)
-    // None/PRON[nsubj→wanted], of/ADP[case→them], them/PRON[nmod→None],
-    // wanted/VERB[HEAD=0], tea/NOUN[obj→wanted], nor/CCONJ[cc→coffee],
-    // coffee/NOUN[conj→tea]
-    // C2=coffee (conj), C1=tea, root=wanted. Поддерево wanted содержит None.
+    // === 6.62 CONJ-001 (исключение): none в поддереве ===============
+    // None of them wanted tea nor coffee — без ошибок.
     {
-        RawSentence s = makeRawSentence(1, QStringLiteral("test"), QStringLiteral("None of them wanted tea nor coffee"));
+        RawSentence s = makeRawSentence(1, QStringLiteral("test"),
+                                        QStringLiteral("None of them wanted tea nor coffee"));
         RawToken none = makeRawToken(1, 1, "None", "PRON", 4, "nsubj");
         none.lemma = QStringLiteral("none");
         addToken(s, none);
@@ -139,69 +165,81 @@ void TEST_Rule_CONJ001::TestRule_data()
         RawToken coffee = makeRawToken(7, 7, "coffee", "NOUN", 5, "conj");
         coffee.lemma = QStringLiteral("coffee");
         addToken(s, coffee);
-        QTest::addRow("6.62_none_nor")
-            << s << 6
-            << 0
-            << QString()
-            << QList<QList<int>>()
-            << QList<QSet<int>>();
+
+        Conj001Expect e;
+        e.anchorTokenId = 6;
+        e.expectedCount = 0;
+
+        QTest::addRow("6.62_none_nor") << s << e;
     }
 
-    // 6.63 — neither John nor Mary → NO ERRORS (C2.DEPREL=root, не conj)
-    // neither/CCONJ[cc:preconj→John], John/PROPN[conj→Mary],
-    // nor/CCONJ[cc→Mary], Mary/PROPN[HEAD=0]
-    // C2=Mary, C2.DEPREL=root (не conj) → правило не проверяется
+    // === 6.63 CONJ-001 (положительный): neither...nor ===============
+    // neither John nor Mary — без ошибок (корректный neither...nor).
     {
-        RawSentence s = makeRawSentence(1, QStringLiteral("test"), QStringLiteral("neither John nor Mary"));
+        RawSentence s = makeRawSentence(1, QStringLiteral("test"),
+                                        QStringLiteral("neither John nor Mary"));
         RawToken neither = makeRawToken(1, 1, "neither", "CCONJ", 2, "cc:preconj");
         neither.lemma = QStringLiteral("neither");
         addToken(s, neither);
-        RawToken john = makeRawToken(2, 2, "John", "PROPN", 4, "conj");
+        RawToken john = makeRawToken(2, 2, "John", "PROPN", 0, "root");
         john.lemma = QStringLiteral("John");
         addToken(s, john);
         RawToken nor = makeRawToken(3, 3, "nor", "CCONJ", 4, "cc");
         nor.lemma = QStringLiteral("nor");
         addToken(s, nor);
-        RawToken mary = makeRawToken(4, 4, "Mary", "PROPN", 0, "root");
+        RawToken mary = makeRawToken(4, 4, "Mary", "PROPN", 2, "conj");
         mary.lemma = QStringLiteral("Mary");
         addToken(s, mary);
-        QTest::addRow("6.63_neither_nor")
-            << s << 3
-            << 0
-            << QString()
-            << QList<QList<int>>()
-            << QList<QSet<int>>();
+
+        Conj001Expect e;
+        e.anchorTokenId = 3;
+        e.expectedCount = 0;
+
+        QTest::addRow("6.63_neither_nor") << s << e;
     }
 }
+
+// ------------------------------------------------------------------------
+// Универсальная функция проверки
+// ------------------------------------------------------------------------
 
 void TEST_Rule_CONJ001::TestRule()
 {
     QFETCH(RawSentence, rawSentence);
-    QFETCH(int, anchorTokenId);
-    QFETCH(int, expectedCount);
-    QFETCH(QString, expectedRuleId);
-    QFETCH(QList<QList<int>>, expectedDisplayIdsList);
-    QFETCH(QList<QSet<int>>, expectedConflictIdsList);
+    QFETCH(Conj001Expect, expect);
 
     const QString tag = QString(QTest::currentDataTag());
 
     SentenceModel sentence = buildSentenceModel(rawSentence);
 
-    TokenNode* anchor = sentence.tokensById.value(anchorTokenId, nullptr);
-    QVERIFY2(anchor != nullptr, qPrintable(QString("[%1] Якорный токен %2 не найден").arg(tag).arg(anchorTokenId)));
+    TokenNode* anchor = sentence.tokensById.value(expect.anchorTokenId, nullptr);
+    QVERIFY2(anchor != nullptr,
+             qPrintable(QStringLiteral("[%1] anchor %2 не найден")
+                        .arg(tag).arg(expect.anchorTokenId)));
 
     CheckerRuntime runtime = makeRuntimeWithResources();
     Rule_CONJ001 rule;
 
-    // Якорь — союз nor, проверяем его напрямую
     QSet<CandidateError> result = rule.check(*anchor, 0, DocumentModel(), runtime);
 
-    QCOMPARE(result.size(), expectedCount);
+    if (expect.expectedCount != -1) {
+        int actualCount = static_cast<int>(result.size());
+        if (actualCount != expect.expectedCount) {
+            qDebug() << "[TEST FAIL]" << tag
+                     << "Количество кандидатов: ожидалось =" << expect.expectedCount
+                     << "получено =" << actualCount;
+        }
+        QCOMPARE(actualCount, expect.expectedCount);
+    }
 
-    // Если кандидатов нет, правило не сработало, проверка завершена
-    if (expectedCount == 0)
+    if (expect.expectedCount == 0) {
         return;
+    }
 
-    compareMultiCandidate(tag, result, expectedRuleId,
-                           expectedDisplayIdsList, expectedConflictIdsList);
+    if (!result.isEmpty()) {
+        compareSingleCandidate(tag, *result.begin(),
+                               expect.expectedRuleId,
+                               expect.expectedDisplayIds,
+                               expect.expectedConflictIds);
+    }
 }
