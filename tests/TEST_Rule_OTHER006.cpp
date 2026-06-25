@@ -1,3 +1,11 @@
+/*!
+* \file TEST_Rule_OTHER006.cpp
+* \brief DDT-тесты для правила OTHER-006 (раздел 6.98 тесты_v3.md).
+*
+* Проверяет правило «then вместо than»:
+*  — 6.98: better then → then→than (ADV после ADJ с Degree=Cmp).
+*/
+
 #include <QtTest>
 #include <QObject>
 #include <QSet>
@@ -9,83 +17,128 @@
 #include "auxiliaryfunctionsfortesting.h"
 #include "rule_other006.h"
 
+// ------------------------------------------------------------------------
+// Структура ожиданий
+// ------------------------------------------------------------------------
+
+/*!
+* \struct Other006Expect
+* \brief Точечные ожидания для тестов правила OTHER-006.
+*/
+struct Other006Expect {
+    int anchorTokenId = -1;        ///< ID токена-якоря (ADJ). -1: не проверять.
+    int expectedCount = -1;        ///< Ожидаемое число кандидатов. -1: не проверять.
+    QString expectedRuleId;        ///< Ожидаемый ruleId. Пусто: не проверять.
+    QList<int> expectedDisplayIds; ///< Ожидаемые displayTokenIds.
+    QSet<int> expectedConflictIds;  ///< Ожидаемые conflictTokenIds.
+};
+
+Q_DECLARE_METATYPE(Other006Expect)
+
+// ------------------------------------------------------------------------
+// Конструктор / деструктор
+// ------------------------------------------------------------------------
+
+TEST_Rule_OTHER006::TEST_Rule_OTHER006() {}
+TEST_Rule_OTHER006::~TEST_Rule_OTHER006() {}
+
+// ------------------------------------------------------------------------
+// Вспомогательная функция создания runtime с ресурсами
+// ------------------------------------------------------------------------
+
 namespace {
 
+/*!
+* \brief Создаёт CheckerRuntime с загруженными словарями.
+*/
 CheckerRuntime makeRuntimeWithResources()
 {
     CheckerRuntime runtime;
     QString listsDir = findListsDir();
     auto [res, warns] = loadResources(listsDir);
-    for (const QString& w : warns)
+    for (const QString& w : warns) {
         qDebug() << "[TEST_Rule_OTHER006]" << w;
+    }
     runtime.resources = std::move(res);
     return runtime;
 }
 
 } // namespace
 
-TEST_Rule_OTHER006::TEST_Rule_OTHER006() {}
-TEST_Rule_OTHER006::~TEST_Rule_OTHER006() {}
+// ------------------------------------------------------------------------
+// Данные тестов (6.98)
+// ------------------------------------------------------------------------
 
 void TEST_Rule_OTHER006::TestRule_data()
 {
     QTest::addColumn<RawSentence>("rawSentence");
-    QTest::addColumn<int>("anchorTokenId");
-    QTest::addColumn<int>("expectedCount");
-    QTest::addColumn<QString>("expectedRuleId");
-    QTest::addColumn<QList<QList<int>>>("expectedDisplayIdsList");
-    QTest::addColumn<QList<QSet<int>>>("expectedConflictIdsList");
+    QTest::addColumn<Other006Expect>("expect");
 
-    // 6.98: better then.
-    // better/ADJ[HEAD=0, Degree=Cmp], then/ADV[advmod->better]
-    // Срабатывание: один кандидат на then (id=2), display=[2], conflict={2}.
+    // === 6.98 OTHER-006: better then → then→than ===================
+    // better — ADJ с Degree=Cmp, then — ADV как advmod.
     {
-        RawSentence s = makeRawSentence(1, QStringLiteral("6.98"),
+        RawSentence s = makeRawSentence(1, QStringLiteral("test"),
                                         QStringLiteral("better then"));
-        RawToken better = makeRawToken(1, 1, "better", "ADJ", 0, "root",
-                                       QStringLiteral("Degree=Cmp"));
+        RawToken better = makeRawToken(1, 1, "better", "ADJ", 0, "root");
         better.lemma = QStringLiteral("good");
+        better.featsRaw = QStringLiteral("Degree=Cmp");
         addToken(s, better);
-
         RawToken then = makeRawToken(2, 2, "then", "ADV", 1, "advmod");
         then.lemma = QStringLiteral("then");
         addToken(s, then);
 
-        QTest::addRow("6.98_better_then")
-            << s << 1
-            << 1
-            << QStringLiteral("OTHER-006")
-            << (QList<QList<int>>{QList<int>{2}})
-            << (QList<QSet<int>>{QSet<int>{2}});
+        Other006Expect e;
+        e.anchorTokenId = 1;
+        e.expectedCount = 1;
+        e.expectedRuleId = QStringLiteral("OTHER-006");
+        e.expectedDisplayIds = {2};
+        e.expectedConflictIds = {2};
+
+        QTest::addRow("6.98_better_then") << s << e;
     }
 }
+
+// ------------------------------------------------------------------------
+// Универсальная функция проверки
+// ------------------------------------------------------------------------
 
 void TEST_Rule_OTHER006::TestRule()
 {
     QFETCH(RawSentence, rawSentence);
-    QFETCH(int, anchorTokenId);
-    QFETCH(int, expectedCount);
-    QFETCH(QString, expectedRuleId);
-    QFETCH(QList<QList<int>>, expectedDisplayIdsList);
-    QFETCH(QList<QSet<int>>, expectedConflictIdsList);
+    QFETCH(Other006Expect, expect);
 
     const QString tag = QString(QTest::currentDataTag());
 
     SentenceModel sentence = buildSentenceModel(rawSentence);
 
-    TokenNode* anchor = sentence.tokensById.value(anchorTokenId, nullptr);
-    QVERIFY2(anchor != nullptr, qPrintable(QString("[%1] Якорный токен %2 не найден").arg(tag).arg(anchorTokenId)));
+    TokenNode* anchor = sentence.tokensById.value(expect.anchorTokenId, nullptr);
+    QVERIFY2(anchor != nullptr,
+             qPrintable(QStringLiteral("[%1] anchor %2 не найден")
+                        .arg(tag).arg(expect.anchorTokenId)));
 
     CheckerRuntime runtime = makeRuntimeWithResources();
     Rule_OTHER006 rule;
 
     QSet<CandidateError> result = rule.check(*anchor, 0, DocumentModel(), runtime);
 
-    QCOMPARE(result.size(), expectedCount);
+    if (expect.expectedCount != -1) {
+        int actualCount = static_cast<int>(result.size());
+        if (actualCount != expect.expectedCount) {
+            qDebug() << "[TEST FAIL]" << tag
+                     << "Количество кандидатов: ожидалось =" << expect.expectedCount
+                     << "получено =" << actualCount;
+        }
+        QCOMPARE(actualCount, expect.expectedCount);
+    }
 
-    if (expectedCount == 0)
+    if (expect.expectedCount == 0) {
         return;
+    }
 
-    compareMultiCandidate(tag, result, expectedRuleId,
-                           expectedDisplayIdsList, expectedConflictIdsList);
+    if (!result.isEmpty()) {
+        compareSingleCandidate(tag, *result.begin(),
+                               expect.expectedRuleId,
+                               expect.expectedDisplayIds,
+                               expect.expectedConflictIds);
+    }
 }

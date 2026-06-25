@@ -1,18 +1,12 @@
 /*!
 * \file TEST_Rule_OTHER005.cpp
-* \brief Тесты правила OTHER-005: двойное отрицание.
+* \brief DDT-тесты для правила OTHER-005 (раздел 6.96-6.97 тесты_v3.md).
 *
-* Раздел 6.96–6.97 утверждённой версии тестов (тесты_v3.docx).
-* Якорём служит глагол (VERB). Правило срабатывает, если у VERB есть
-* прямой зависимый с Polarity=Neg и прямой зависимый-отрицательное
-* местоимение/наречие (nothing, nobody, nowhere, never, none, neither,
-* no one). Срабатывание — по одному кандидату на каждый отрицательный
-* зависимый из списка замен:
-*  6.96 — "He does not know nothing": nothing → anything;
-*  6.97 — "I do not know nobody":    nobody → anybody.
+* Проверяет правило «Двойное отрицание»:
+*  — 6.96: He does not know nothing → nothing→anything;
+*  — 6.97: He does not know nobody → nobody→anybody.
 *
-* Входной якорь — токен-VERB (know). displayTokenIds/conflictTokenIds
-* указывают на заменяемый отрицательный зависимый.
+* Якорь — VERB (know), правило проверяет obj-зависимый с Polarity=Neg.
 */
 
 #include <QtTest>
@@ -26,149 +20,171 @@
 #include "auxiliaryfunctionsfortesting.h"
 #include "rule_other005.h"
 
+// ------------------------------------------------------------------------
+// Структура ожиданий
+// ------------------------------------------------------------------------
+
+/*!
+* \struct Other005Expect
+* \brief Точечные ожидания для тестов правила OTHER-005.
+*/
+struct Other005Expect {
+    int anchorTokenId = -1;        ///< ID токена-якоря (VERB). -1: не проверять.
+    int expectedCount = -1;        ///< Ожидаемое число кандидатов. -1: не проверять.
+    QString expectedRuleId;        ///< Ожидаемый ruleId. Пусто: не проверять.
+    QList<int> expectedDisplayIds; ///< Ожидаемые displayTokenIds.
+    QSet<int> expectedConflictIds;  ///< Ожидаемые conflictTokenIds.
+};
+
+Q_DECLARE_METATYPE(Other005Expect)
+
+// ------------------------------------------------------------------------
+// Конструктор / деструктор
+// ------------------------------------------------------------------------
+
+TEST_Rule_OTHER005::TEST_Rule_OTHER005() {}
+TEST_Rule_OTHER005::~TEST_Rule_OTHER005() {}
+
+// ------------------------------------------------------------------------
+// Вспомогательная функция создания runtime с ресурсами
+// ------------------------------------------------------------------------
+
 namespace {
 
 /*!
-* \brief Создать runtime с загруженными словарями.
-* \return CheckerRuntime с заполненными resources.
-*
-* OTHER-005 не использует словари, но загрузка сохраняет совместимость
-* с другими тестами правил и единообразие запуска.
+* \brief Создаёт CheckerRuntime с загруженными словарями.
 */
 CheckerRuntime makeRuntimeWithResources()
 {
     CheckerRuntime runtime;
     QString listsDir = findListsDir();
     auto [res, warns] = loadResources(listsDir);
-    for (const QString& w : warns)
+    for (const QString& w : warns) {
         qDebug() << "[TEST_Rule_OTHER005]" << w;
+    }
     runtime.resources = std::move(res);
     return runtime;
 }
 
 } // namespace
 
-TEST_Rule_OTHER005::TEST_Rule_OTHER005() {}
-TEST_Rule_OTHER005::~TEST_Rule_OTHER005() {}
+// ------------------------------------------------------------------------
+// Данные тестов (6.96-6.97)
+// ------------------------------------------------------------------------
 
 void TEST_Rule_OTHER005::TestRule_data()
 {
     QTest::addColumn<RawSentence>("rawSentence");
-    QTest::addColumn<int>("anchorTokenId");
-    QTest::addColumn<int>("expectedCount");
-    QTest::addColumn<QString>("expectedRuleId");
-    QTest::addColumn<QList<QList<int>>>("expectedDisplayIdsList");
-    QTest::addColumn<QList<QSet<int>>>("expectedConflictIdsList");
+    QTest::addColumn<Other005Expect>("expect");
 
-    // 6.96: He does not know nothing.
-    // Якорь — know/VERB[HEAD=0]. Прямые зависимые:
-    //   He/PRON[nsubj], does/AUX[aux], not/PART[advmod, Polarity=Neg],
-    //   nothing/PRON[obj].
-    // Срабатывание: один кандидат на nothing (id=5), display=[5], conflict={5}.
+    // === 6.96 OTHER-005: двойное отрицание (nothing) ===============
+    // He does not know nothing → nothing→anything.
     {
-        RawSentence s = makeRawSentence(1, QStringLiteral("6.96"),
+        RawSentence s = makeRawSentence(1, QStringLiteral("test"),
                                         QStringLiteral("He does not know nothing"));
-        RawToken he = makeRawToken(1, 1, "He", "PRON", 4, "nsubj",
-                                   QStringLiteral("Case=Nom|Gender=Masc|Number=Sing|Person=3|PronType=Prs"));
+        RawToken he = makeRawToken(1, 1, "He", "PRON", 4, "nsubj");
         he.lemma = QStringLiteral("he");
         addToken(s, he);
-
-        RawToken does = makeRawToken(2, 2, "does", "AUX", 4, "aux",
-                                     QStringLiteral("Mood=Ind|Number=Sing|Person=3|Tense=Pres|VerbForm=Fin"));
+        RawToken does = makeRawToken(2, 2, "does", "AUX", 4, "aux");
         does.lemma = QStringLiteral("do");
         addToken(s, does);
-
-        RawToken notTok = makeRawToken(3, 3, "not", "PART", 4, "advmod",
-                                       QStringLiteral("Polarity=Neg"));
+        RawToken notTok = makeRawToken(3, 3, "not", "PART", 4, "advmod");
         notTok.lemma = QStringLiteral("not");
+        notTok.featsRaw = QStringLiteral("Polarity=Neg");
         addToken(s, notTok);
-
-        RawToken know = makeRawToken(4, 4, "know", "VERB", 0, "root",
-                                     QStringLiteral("Mood=Ind|Number=Sing|Person=1|Tense=Pres|VerbForm=Fin"));
+        RawToken know = makeRawToken(4, 4, "know", "VERB", 0, "root");
         know.lemma = QStringLiteral("know");
         addToken(s, know);
-
-        RawToken nothing = makeRawToken(5, 5, "nothing", "PRON", 4, "obj",
-                                         QStringLiteral("Number=Sing|PronType=Neg"));
+        RawToken nothing = makeRawToken(5, 5, "nothing", "PRON", 4, "obj");
         nothing.lemma = QStringLiteral("nothing");
+        nothing.featsRaw = QStringLiteral("PronType=Neg");
         addToken(s, nothing);
 
-        QTest::addRow("6.96_not_know_nothing")
-            << s << 4
-            << 1
-            << QStringLiteral("OTHER-005")
-            << (QList<QList<int>>{QList<int>{5}})
-            << (QList<QSet<int>>{QSet<int>{5}});
+        Other005Expect e;
+        e.anchorTokenId = 4;
+        e.expectedCount = 1;
+        e.expectedRuleId = QStringLiteral("OTHER-005");
+        e.expectedDisplayIds = {5};
+        e.expectedConflictIds = {5};
+
+        QTest::addRow("6.96_not_know_nothing") << s << e;
     }
 
-    // 6.97: I do not know nobody.
-    // Якорь — know/VERB[HEAD=0]. Прямые зависимые:
-    //   I/PRON[nsubj], do/AUX[aux], not/PART[advmod, Polarity=Neg],
-    //   nobody/PRON[obj].
-    // Срабатывание: один кандидат на nobody (id=5), display=[5], conflict={5}.
+    // === 6.97 OTHER-005: двойное отрицание (nobody) ================
+    // He does not know nobody → nobody→anybody.
     {
-        RawSentence s = makeRawSentence(1, QStringLiteral("6.97"),
-                                        QStringLiteral("I do not know nobody"));
-        RawToken iTok = makeRawToken(1, 1, "I", "PRON", 4, "nsubj",
-                                     QStringLiteral("Case=Nom|Number=Sing|Person=1|PronType=Prs"));
-        iTok.lemma = QStringLiteral("I");
-        addToken(s, iTok);
-
-        RawToken doTok = makeRawToken(2, 2, "do", "AUX", 4, "aux",
-                                      QStringLiteral("Mood=Ind|Number=Sing|Person=1|Tense=Pres|VerbForm=Fin"));
-        doTok.lemma = QStringLiteral("do");
-        addToken(s, doTok);
-
-        RawToken notTok = makeRawToken(3, 3, "not", "PART", 4, "advmod",
-                                       QStringLiteral("Polarity=Neg"));
+        RawSentence s = makeRawSentence(1, QStringLiteral("test"),
+                                        QStringLiteral("He does not know nobody"));
+        RawToken he = makeRawToken(1, 1, "He", "PRON", 4, "nsubj");
+        he.lemma = QStringLiteral("he");
+        addToken(s, he);
+        RawToken does = makeRawToken(2, 2, "does", "AUX", 4, "aux");
+        does.lemma = QStringLiteral("do");
+        addToken(s, does);
+        RawToken notTok = makeRawToken(3, 3, "not", "PART", 4, "advmod");
         notTok.lemma = QStringLiteral("not");
+        notTok.featsRaw = QStringLiteral("Polarity=Neg");
         addToken(s, notTok);
-
-        RawToken know = makeRawToken(4, 4, "know", "VERB", 0, "root",
-                                     QStringLiteral("Mood=Ind|Number=Sing|Person=1|Tense=Pres|VerbForm=Fin"));
+        RawToken know = makeRawToken(4, 4, "know", "VERB", 0, "root");
         know.lemma = QStringLiteral("know");
         addToken(s, know);
-
-        RawToken nobody = makeRawToken(5, 5, "nobody", "PRON", 4, "obj",
-                                       QStringLiteral("Number=Sing|PronType=Neg"));
+        RawToken nobody = makeRawToken(5, 5, "nobody", "PRON", 4, "obj");
         nobody.lemma = QStringLiteral("nobody");
+        nobody.featsRaw = QStringLiteral("PronType=Neg");
         addToken(s, nobody);
 
-        QTest::addRow("6.97_do_not_know_nobody")
-            << s << 4
-            << 1
-            << QStringLiteral("OTHER-005")
-            << (QList<QList<int>>{QList<int>{5}})
-            << (QList<QSet<int>>{QSet<int>{5}});
+        Other005Expect e;
+        e.anchorTokenId = 4;
+        e.expectedCount = 1;
+        e.expectedRuleId = QStringLiteral("OTHER-005");
+        e.expectedDisplayIds = {5};
+        e.expectedConflictIds = {5};
+
+        QTest::addRow("6.97_not_know_nobody") << s << e;
     }
 }
+
+// ------------------------------------------------------------------------
+// Универсальная функция проверки
+// ------------------------------------------------------------------------
 
 void TEST_Rule_OTHER005::TestRule()
 {
     QFETCH(RawSentence, rawSentence);
-    QFETCH(int, anchorTokenId);
-    QFETCH(int, expectedCount);
-    QFETCH(QString, expectedRuleId);
-    QFETCH(QList<QList<int>>, expectedDisplayIdsList);
-    QFETCH(QList<QSet<int>>, expectedConflictIdsList);
+    QFETCH(Other005Expect, expect);
 
     const QString tag = QString(QTest::currentDataTag());
 
     SentenceModel sentence = buildSentenceModel(rawSentence);
 
-    TokenNode* anchor = sentence.tokensById.value(anchorTokenId, nullptr);
-    QVERIFY2(anchor != nullptr, qPrintable(QString("[%1] Якорный токен %2 не найден").arg(tag).arg(anchorTokenId)));
+    TokenNode* anchor = sentence.tokensById.value(expect.anchorTokenId, nullptr);
+    QVERIFY2(anchor != nullptr,
+             qPrintable(QStringLiteral("[%1] anchor %2 не найден")
+                        .arg(tag).arg(expect.anchorTokenId)));
 
     CheckerRuntime runtime = makeRuntimeWithResources();
     Rule_OTHER005 rule;
 
     QSet<CandidateError> result = rule.check(*anchor, 0, DocumentModel(), runtime);
 
-    QCOMPARE(result.size(), expectedCount);
+    if (expect.expectedCount != -1) {
+        int actualCount = static_cast<int>(result.size());
+        if (actualCount != expect.expectedCount) {
+            qDebug() << "[TEST FAIL]" << tag
+                     << "Количество кандидатов: ожидалось =" << expect.expectedCount
+                     << "получено =" << actualCount;
+        }
+        QCOMPARE(actualCount, expect.expectedCount);
+    }
 
-    if (expectedCount == 0)
+    if (expect.expectedCount == 0) {
         return;
+    }
 
-    compareMultiCandidate(tag, result, expectedRuleId,
-                           expectedDisplayIdsList, expectedConflictIdsList);
+    if (!result.isEmpty()) {
+        compareSingleCandidate(tag, *result.begin(),
+                               expect.expectedRuleId,
+                               expect.expectedDisplayIds,
+                               expect.expectedConflictIds);
+    }
 }

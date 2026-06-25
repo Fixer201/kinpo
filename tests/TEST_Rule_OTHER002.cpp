@@ -1,9 +1,10 @@
 /*!
 * \file TEST_Rule_OTHER002.cpp
-* \brief Тесты для правила OTHER-002 (раздел 6.89–6.90).
+* \brief DDT-тесты для правила OTHER-002 (раздел 6.89-6.90 тесты_v3.md).
 *
-* 6.89: He works good. good в наречной позиции, заменяется на well.
-* 6.90: He does good. good как существительное (NOUN, obj), ошибок нет.
+* Проверяет правило «good как наречие»:
+*  — 6.89: He works good → good→well (ADJ как advmod);
+*  — 6.90: He does good → без ошибок (do good, UPOS=NOUN).
 */
 
 #include <QtTest>
@@ -17,111 +18,152 @@
 #include "auxiliaryfunctionsfortesting.h"
 #include "rule_other002.h"
 
+// ------------------------------------------------------------------------
+// Структура ожиданий
+// ------------------------------------------------------------------------
+
+/*!
+* \struct Other002Expect
+* \brief Точечные ожидания для тестов правила OTHER-002.
+*/
+struct Other002Expect {
+    int anchorTokenId = -1;        ///< ID токена-якоря (ADJ). -1: не проверять.
+    int expectedCount = -1;        ///< Ожидаемое число кандидатов. -1: не проверять.
+    QString expectedRuleId;        ///< Ожидаемый ruleId. Пусто: не проверять.
+    QList<int> expectedDisplayIds; ///< Ожидаемые displayTokenIds.
+    QSet<int> expectedConflictIds;  ///< Ожидаемые conflictTokenIds.
+};
+
+Q_DECLARE_METATYPE(Other002Expect)
+
+// ------------------------------------------------------------------------
+// Конструктор / деструктор
+// ------------------------------------------------------------------------
+
+TEST_Rule_OTHER002::TEST_Rule_OTHER002() {}
+TEST_Rule_OTHER002::~TEST_Rule_OTHER002() {}
+
+// ------------------------------------------------------------------------
+// Вспомогательная функция создания runtime с ресурсами
+// ------------------------------------------------------------------------
+
 namespace {
 
 /*!
-* \brief Создать runtime с загруженными словарями.
-* \return CheckerRuntime с заполненными resources.
-*
-* OTHER-002 не использует словари, но загрузка сохраняет совместимость
-* с другими тестами правил.
+* \brief Создаёт CheckerRuntime с загруженными словарями.
 */
 CheckerRuntime makeRuntimeWithResources()
 {
     CheckerRuntime runtime;
     QString listsDir = findListsDir();
     auto [res, warns] = loadResources(listsDir);
-    for (const QString& w : warns)
+    for (const QString& w : warns) {
         qDebug() << "[TEST_Rule_OTHER002]" << w;
+    }
     runtime.resources = std::move(res);
     return runtime;
 }
 
 } // namespace
 
-TEST_Rule_OTHER002::TEST_Rule_OTHER002() {}
-TEST_Rule_OTHER002::~TEST_Rule_OTHER002() {}
+// ------------------------------------------------------------------------
+// Данные тестов (6.89-6.90)
+// ------------------------------------------------------------------------
 
 void TEST_Rule_OTHER002::TestRule_data()
 {
     QTest::addColumn<RawSentence>("rawSentence");
-    QTest::addColumn<int>("anchorTokenId");
-    QTest::addColumn<int>("expectedCount");
-    QTest::addColumn<QString>("expectedRuleId");
-    QTest::addColumn<QList<QList<int>>>("expectedDisplayIdsList");
-    QTest::addColumn<QList<QSet<int>>>("expectedConflictIdsList");
+    QTest::addColumn<Other002Expect>("expect");
 
-    // 6.89: He works good. good в наречной позиции, заменяется на well.
-    // He/PRON[nsubj→works], works/VERB[HEAD=0], good/ADJ[advmod→works]
-    // Якорь=good (id=3), V=works (id=2, VERB, LEMMA=work ≠ do)
+    // === 6.89 OTHER-002: good как наречие → good→well ==============
+    // He works good. good — ADJ как advmod.
     {
-        RawSentence s = makeRawSentence(1, QStringLiteral("test"), QStringLiteral("He works good"));
-        RawToken he = makeRawToken(1, 1, "He", "PRON", 2, "nsubj");
-        he.lemma = QStringLiteral("he");
-        addToken(s, he);
-        RawToken works = makeRawToken(2, 2, "works", "VERB", 0, "root");
-        works.lemma = QStringLiteral("work");
-        addToken(s, works);
-        RawToken good = makeRawToken(3, 3, "good", "ADJ", 2, "advmod");
-        good.lemma = QStringLiteral("good");
-        addToken(s, good);
-        QTest::addRow("6.89_works_good")
-            << s << 3
-            << 1
-            << QStringLiteral("OTHER-002")
-            << (QList<QList<int>>{QList<int>{3}})
-            << (QList<QSet<int>>{QSet<int>{3}});
+        RawSentence s = makeRawSentence(1, QStringLiteral("test"),
+                                        QStringLiteral("He works good"));
+        RawToken h = makeRawToken(1, 1, "He", "PRON", 2, "nsubj");
+        h.lemma = QStringLiteral("he");
+        addToken(s, h);
+        RawToken w = makeRawToken(2, 2, "works", "VERB", 0, "root");
+        w.lemma = QStringLiteral("work");
+        addToken(s, w);
+        RawToken g = makeRawToken(3, 3, "good", "ADJ", 2, "advmod");
+        g.lemma = QStringLiteral("good");
+        addToken(s, g);
+
+        Other002Expect e;
+        e.anchorTokenId = 3;
+        e.expectedCount = 1;
+        e.expectedRuleId = QStringLiteral("OTHER-002");
+        e.expectedDisplayIds = {3};
+        e.expectedConflictIds = {3};
+
+        QTest::addRow("6.89_works_good") << s << e;
     }
 
-    // 6.90: He does good. good как существительное, ошибок нет.
-    // He/PRON[nsubj→does], does/VERB[HEAD=0], good/NOUN[obj→does]
-    // good имеет UPOS=NOUN и DEPREL=obj, правило не срабатывает.
+    // === 6.90 OTHER-002 (исключение): do good — без ошибок =========
+    // He does good. good — NOUN как obj, устойчивое выражение.
     {
-        RawSentence s = makeRawSentence(1, QStringLiteral("test"), QStringLiteral("He does good"));
-        RawToken he = makeRawToken(1, 1, "He", "PRON", 2, "nsubj");
-        he.lemma = QStringLiteral("he");
-        addToken(s, he);
-        RawToken does = makeRawToken(2, 2, "does", "VERB", 0, "root");
-        does.lemma = QStringLiteral("do");
-        addToken(s, does);
-        RawToken good = makeRawToken(3, 3, "good", "NOUN", 2, "obj");
-        good.lemma = QStringLiteral("good");
-        addToken(s, good);
-        QTest::addRow("6.90_does_good")
-            << s << 3
-            << 0
-            << QString()
-            << QList<QList<int>>()
-            << QList<QSet<int>>();
+        RawSentence s = makeRawSentence(1, QStringLiteral("test"),
+                                        QStringLiteral("He does good"));
+        RawToken h = makeRawToken(1, 1, "He", "PRON", 2, "nsubj");
+        h.lemma = QStringLiteral("he");
+        addToken(s, h);
+        RawToken d = makeRawToken(2, 2, "does", "VERB", 0, "root");
+        d.lemma = QStringLiteral("do");
+        addToken(s, d);
+        RawToken g = makeRawToken(3, 3, "good", "NOUN", 2, "obj");
+        g.lemma = QStringLiteral("good");
+        addToken(s, g);
+
+        Other002Expect e;
+        e.anchorTokenId = 3;
+        e.expectedCount = 0;
+
+        QTest::addRow("6.90_does_good") << s << e;
     }
 }
+
+// ------------------------------------------------------------------------
+// Универсальная функция проверки
+// ------------------------------------------------------------------------
 
 void TEST_Rule_OTHER002::TestRule()
 {
     QFETCH(RawSentence, rawSentence);
-    QFETCH(int, anchorTokenId);
-    QFETCH(int, expectedCount);
-    QFETCH(QString, expectedRuleId);
-    QFETCH(QList<QList<int>>, expectedDisplayIdsList);
-    QFETCH(QList<QSet<int>>, expectedConflictIdsList);
+    QFETCH(Other002Expect, expect);
 
     const QString tag = QString(QTest::currentDataTag());
 
     SentenceModel sentence = buildSentenceModel(rawSentence);
 
-    TokenNode* anchor = sentence.tokensById.value(anchorTokenId, nullptr);
-    QVERIFY2(anchor != nullptr, qPrintable(QString("[%1] Якорный токен %2 не найден").arg(tag).arg(anchorTokenId)));
+    TokenNode* anchor = sentence.tokensById.value(expect.anchorTokenId, nullptr);
+    QVERIFY2(anchor != nullptr,
+             qPrintable(QStringLiteral("[%1] anchor %2 не найден")
+                        .arg(tag).arg(expect.anchorTokenId)));
 
     CheckerRuntime runtime = makeRuntimeWithResources();
     Rule_OTHER002 rule;
 
     QSet<CandidateError> result = rule.check(*anchor, 0, DocumentModel(), runtime);
 
-    QCOMPARE(result.size(), expectedCount);
+    if (expect.expectedCount != -1) {
+        int actualCount = static_cast<int>(result.size());
+        if (actualCount != expect.expectedCount) {
+            qDebug() << "[TEST FAIL]" << tag
+                     << "Количество кандидатов: ожидалось =" << expect.expectedCount
+                     << "получено =" << actualCount;
+        }
+        QCOMPARE(actualCount, expect.expectedCount);
+    }
 
-    if (expectedCount == 0)
+    if (expect.expectedCount == 0) {
         return;
+    }
 
-    compareMultiCandidate(tag, result, expectedRuleId,
-                           expectedDisplayIdsList, expectedConflictIdsList);
+    if (!result.isEmpty()) {
+        compareSingleCandidate(tag, *result.begin(),
+                               expect.expectedRuleId,
+                               expect.expectedDisplayIds,
+                               expect.expectedConflictIds);
+    }
 }
