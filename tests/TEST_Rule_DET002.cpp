@@ -39,19 +39,6 @@ Q_DECLARE_METATYPE(Det002Expect)
 TEST_Rule_DET002::TEST_Rule_DET002() {}
 TEST_Rule_DET002::~TEST_Rule_DET002() {}
 
-namespace {
-CheckerRuntime makeRuntimeWithResources()
-{
-    CheckerRuntime runtime;
-    QString listsDir = findListsDir();
-    auto [res, warns] = loadResources(listsDir);
-    for (const QString& w : warns)
-        qDebug() << "[TEST_Rule_DET002]" << w;
-    runtime.resources = std::move(res);
-    return runtime;
-}
-} // namespace
-
 void TEST_Rule_DET002::TestRule_data()
 {
     QTest::addColumn<RawSentence>("rawSentence");

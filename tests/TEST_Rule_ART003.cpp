@@ -55,22 +55,9 @@ TEST_Rule_ART003::~TEST_Rule_ART003() {}
 // ------------------------------------------------------------------------
 
 namespace {
-
 /*!
 * \brief Создаёт CheckerRuntime с загруженными словарями.
 */
-CheckerRuntime makeRuntimeWithResources()
-{
-    CheckerRuntime runtime;
-    QString listsDir = findListsDir();
-    auto [res, warns] = loadResources(listsDir);
-    for (const QString& w : warns) {
-        qDebug() << "[TEST_Rule_ART003]" << w;
-    }
-    runtime.resources = std::move(res);
-    return runtime;
-}
-
 } // namespace
 
 // ------------------------------------------------------------------------

@@ -49,7 +49,6 @@ TEST_Rule_AUX001::~TEST_Rule_AUX001() {}
 // ------------------------------------------------------------------------
 
 namespace {
-
 /*!
 * \brief Создаёт CheckerRuntime с загруженными словарями.
 * \return Runtime с заполненными ресурсами.
@@ -57,18 +56,6 @@ namespace {
 * Загружает словари из директории lists, обнаруженной через findListsDir.
 * Предупреждения о загрузке выводятся в qDebug с тегом теста.
 */
-CheckerRuntime makeRuntimeWithResources()
-{
-    CheckerRuntime runtime;
-    QString listsDir = findListsDir();
-    auto [res, warns] = loadResources(listsDir);
-    for (const QString& w : warns) {
-        qDebug() << "[TEST_Rule_AUX001]" << w;
-    }
-    runtime.resources = std::move(res);
-    return runtime;
-}
-
 } // namespace
 
 // ------------------------------------------------------------------------
@@ -143,46 +130,5 @@ void TEST_Rule_AUX001::TestRule()
 {
     QFETCH(RawSentence, rawSentence);
     QFETCH(Aux001Expect, expect);
-
-    const QString tag = QString(QTest::currentDataTag());
-
-    // Строим модель предложения из сырых данных.
-    SentenceModel sentence = buildSentenceModel(rawSentence);
-
-    // Достаём токен-якорь по anchorTokenId.
-    TokenNode* anchor = sentence.tokensById.value(expect.anchorTokenId, nullptr);
-    QVERIFY2(anchor != nullptr,
-             qPrintable(QStringLiteral("[%1] anchor %2 не найден")
-                        .arg(tag).arg(expect.anchorTokenId)));
-
-    // Создаём runtime с ресурсами и экземпляр правила.
-    CheckerRuntime runtime = makeRuntimeWithResources();
-    Rule_AUX001 rule;
-
-    // Вызываем проверяемое правило.
-    QSet<CandidateError> result = rule.check(*anchor, 0, DocumentModel(), runtime);
-
-    // Проверяем количество кандидатов, если задано.
-    if (expect.expectedCount != -1) {
-        int actualCount = static_cast<int>(result.size());
-        if (actualCount != expect.expectedCount) {
-            qDebug() << "[TEST FAIL]" << tag
-                     << "Количество кандидатов: ожидалось =" << expect.expectedCount
-                     << "получено =" << actualCount;
-        }
-        QCOMPARE(actualCount, expect.expectedCount);
-    }
-
-    // Если кандидатов не ожидается — выходим.
-    if (expect.expectedCount == 0) {
-        return;
-    }
-
-    // Проверяем единственного кандидата через хелпер.
-    if (!result.isEmpty()) {
-        compareSingleCandidate(tag, *result.begin(),
-                               expect.expectedRuleId,
-                               expect.expectedDisplayIds,
-                               expect.expectedConflictIds);
-    }
+    verifyAnchorRule<Aux001Expect, Rule_AUX001>(rawSentence, expect, QString(QTest::currentDataTag()));
 }

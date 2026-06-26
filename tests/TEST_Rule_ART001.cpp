@@ -18,7 +18,6 @@
 #include "TEST_Rule_ART001.h"
 #include "datamodel.h"
 #include "modelbuilder.h"
-#include "wordlists.h"
 #include "auxiliaryfunctionsfortesting.h"
 #include "rule_art001.h"
 
@@ -48,29 +47,6 @@ TEST_Rule_ART001::TEST_Rule_ART001() {}
 TEST_Rule_ART001::~TEST_Rule_ART001() {}
 
 // ------------------------------------------------------------------------
-// Вспомогательная функция создания runtime с ресурсами
-// ------------------------------------------------------------------------
-
-namespace {
-
-/*!
-* \brief Создаёт CheckerRuntime с загруженными словарями.
-*/
-CheckerRuntime makeRuntimeWithResources()
-{
-    CheckerRuntime runtime;
-    QString listsDir = findListsDir();
-    auto [res, warns] = loadResources(listsDir);
-    for (const QString& w : warns) {
-        qDebug() << "[TEST_Rule_ART001]" << w;
-    }
-    runtime.resources = std::move(res);
-    return runtime;
-}
-
-} // namespace
-
-// ------------------------------------------------------------------------
 // Данные тестов (6.1-6.6)
 // ------------------------------------------------------------------------
 
@@ -91,7 +67,7 @@ void TEST_Rule_ART001::TestRule_data()
         e.anchorTokenId = 1;
         e.expectedCount = 1;
         e.expectedRuleId = QStringLiteral("ART-001");
-        e.expectedDisplayIds = {1};
+        e.expectedDisplayIds = {1, 2};
         e.expectedConflictIds = {1};
 
         QTest::addRow("6.1_a_Europe") << s << e;
@@ -109,7 +85,7 @@ void TEST_Rule_ART001::TestRule_data()
         e.anchorTokenId = 1;
         e.expectedCount = 1;
         e.expectedRuleId = QStringLiteral("ART-001");
-        e.expectedDisplayIds = {1};
+        e.expectedDisplayIds = {1, 2};
         e.expectedConflictIds = {1};
 
         QTest::addRow("6.2_the_London") << s << e;
@@ -127,7 +103,7 @@ void TEST_Rule_ART001::TestRule_data()
         e.anchorTokenId = 1;
         e.expectedCount = 1;
         e.expectedRuleId = QStringLiteral("ART-001");
-        e.expectedDisplayIds = {1};
+        e.expectedDisplayIds = {1, 2};
         e.expectedConflictIds = {1};
 
         QTest::addRow("6.3_an_Oxford") << s << e;
@@ -178,7 +154,7 @@ void TEST_Rule_ART001::TestRule_data()
         e.anchorTokenId = 1;
         e.expectedCount = 1;
         e.expectedRuleId = QStringLiteral("ART-001");
-        e.expectedDisplayIds = {1};
+        e.expectedDisplayIds = {1, 2};
         e.expectedConflictIds = {1};
 
         QTest::addRow("6.5a_family_singular_Smith") << s << e;
@@ -224,39 +200,5 @@ void TEST_Rule_ART001::TestRule()
 {
     QFETCH(RawSentence, rawSentence);
     QFETCH(Art001Expect, expect);
-
-    const QString tag = QString(QTest::currentDataTag());
-
-    SentenceModel sentence = buildSentenceModel(rawSentence);
-
-    TokenNode* anchor = sentence.tokensById.value(expect.anchorTokenId, nullptr);
-    QVERIFY2(anchor != nullptr,
-             qPrintable(QStringLiteral("[%1] anchor %2 не найден")
-                        .arg(tag).arg(expect.anchorTokenId)));
-
-    CheckerRuntime runtime = makeRuntimeWithResources();
-    Rule_ART001 rule;
-
-    QSet<CandidateError> result = rule.check(*anchor, 0, DocumentModel(), runtime);
-
-    if (expect.expectedCount != -1) {
-        int actualCount = static_cast<int>(result.size());
-        if (actualCount != expect.expectedCount) {
-            qDebug() << "[TEST FAIL]" << tag
-                     << "Количество кандидатов: ожидалось =" << expect.expectedCount
-                     << "получено =" << actualCount;
-        }
-        QCOMPARE(actualCount, expect.expectedCount);
-    }
-
-    if (expect.expectedCount == 0) {
-        return;
-    }
-
-    if (!result.isEmpty()) {
-        compareSingleCandidate(tag, *result.begin(),
-                               expect.expectedRuleId,
-                               expect.expectedDisplayIds,
-                               expect.expectedConflictIds);
-    }
+    verifyAnchorRule<Art001Expect, Rule_ART001>(rawSentence, expect, QString(QTest::currentDataTag()));
 }

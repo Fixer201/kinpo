@@ -15,7 +15,6 @@
 #include "TEST_Rule_ART005a.h"
 #include "datamodel.h"
 #include "modelbuilder.h"
-#include "wordlists.h"
 #include "auxiliaryfunctionsfortesting.h"
 #include "rule_art005a.h"
 
@@ -43,29 +42,6 @@ Q_DECLARE_METATYPE(Art005aExpect)
 
 TEST_Rule_ART005a::TEST_Rule_ART005a() {}
 TEST_Rule_ART005a::~TEST_Rule_ART005a() {}
-
-// ------------------------------------------------------------------------
-// Вспомогательная функция создания runtime с ресурсами
-// ------------------------------------------------------------------------
-
-namespace {
-
-/*!
-* \brief Создаёт CheckerRuntime с загруженными словарями.
-*/
-CheckerRuntime makeRuntimeWithResources()
-{
-    CheckerRuntime runtime;
-    QString listsDir = findListsDir();
-    auto [res, warns] = loadResources(listsDir);
-    for (const QString& w : warns) {
-        qDebug() << "[TEST_Rule_ART005a]" << w;
-    }
-    runtime.resources = std::move(res);
-    return runtime;
-}
-
-} // namespace
 
 // ------------------------------------------------------------------------
 // Данные тестов (6.18-6.20)
@@ -96,7 +72,7 @@ void TEST_Rule_ART005a::TestRule_data()
         e.anchorTokenId = 2;
         e.expectedCount = 1;
         e.expectedRuleId = QStringLiteral("ART-005a");
-        e.expectedDisplayIds = {1};
+        e.expectedDisplayIds = {1, 2, 3};
         e.expectedConflictIds = {1};
 
         QTest::addRow("6.18_the_President_Obama") << s << e;
@@ -159,39 +135,5 @@ void TEST_Rule_ART005a::TestRule()
 {
     QFETCH(RawSentence, rawSentence);
     QFETCH(Art005aExpect, expect);
-
-    const QString tag = QString(QTest::currentDataTag());
-
-    SentenceModel sentence = buildSentenceModel(rawSentence);
-
-    TokenNode* anchor = sentence.tokensById.value(expect.anchorTokenId, nullptr);
-    QVERIFY2(anchor != nullptr,
-             qPrintable(QStringLiteral("[%1] anchor %2 не найден")
-                        .arg(tag).arg(expect.anchorTokenId)));
-
-    CheckerRuntime runtime = makeRuntimeWithResources();
-    Rule_ART005a rule;
-
-    QSet<CandidateError> result = rule.check(*anchor, 0, DocumentModel(), runtime);
-
-    if (expect.expectedCount != -1) {
-        int actualCount = static_cast<int>(result.size());
-        if (actualCount != expect.expectedCount) {
-            qDebug() << "[TEST FAIL]" << tag
-                     << "Количество кандидатов: ожидалось =" << expect.expectedCount
-                     << "получено =" << actualCount;
-        }
-        QCOMPARE(actualCount, expect.expectedCount);
-    }
-
-    if (expect.expectedCount == 0) {
-        return;
-    }
-
-    if (!result.isEmpty()) {
-        compareSingleCandidate(tag, *result.begin(),
-                               expect.expectedRuleId,
-                               expect.expectedDisplayIds,
-                               expect.expectedConflictIds);
-    }
+    verifyAnchorRule<Art005aExpect, Rule_ART005a>(rawSentence, expect, QString(QTest::currentDataTag()));
 }

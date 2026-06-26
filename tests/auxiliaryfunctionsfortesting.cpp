@@ -7,6 +7,7 @@
 #include <QTest>
 #include <QDir>
 #include <QFileInfo>
+#include <QDebug>
 
 // =====================================================================
 // Хелперы поиска ресурсов
@@ -376,4 +377,23 @@ void compareMultiCandidate(const QString& testName,
                  << matchedIndices.size() << "из" << expectedDisplayIdsList.size();
     }
     QCOMPARE(matchedIndices.size(), expectedDisplayIdsList.size());
+}
+
+// =====================================================================
+// Хелперы для тестов правил
+// =====================================================================
+
+CheckerRuntime makeRuntimeWithResources()
+{
+    CheckerRuntime runtime;
+    const QString listsDir = findListsDir();
+    if (listsDir.isEmpty()) {
+        qDebug() << "[RUNTIME] Директория lists не найдена!";
+        return runtime;
+    }
+    auto [res, warns] = loadResources(listsDir);
+    for (const QString& w : warns)
+        qDebug() << "[RUNTIME]" << w;
+    runtime.resources = std::move(res);
+    return runtime;
 }

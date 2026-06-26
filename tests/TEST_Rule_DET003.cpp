@@ -15,7 +15,6 @@
 #include "TEST_Rule_DET003.h"
 #include "datamodel.h"
 #include "modelbuilder.h"
-#include "wordlists.h"
 #include "auxiliaryfunctionsfortesting.h"
 #include "rule_det003.h"
 
@@ -43,29 +42,6 @@ Q_DECLARE_METATYPE(Det003Expect)
 
 TEST_Rule_DET003::TEST_Rule_DET003() {}
 TEST_Rule_DET003::~TEST_Rule_DET003() {}
-
-// ------------------------------------------------------------------------
-// Вспомогательная функция создания runtime с ресурсами
-// ------------------------------------------------------------------------
-
-namespace {
-
-/*!
-* \brief Создаёт CheckerRuntime с загруженными словарями.
-*/
-CheckerRuntime makeRuntimeWithResources()
-{
-    CheckerRuntime runtime;
-    QString listsDir = findListsDir();
-    auto [res, warns] = loadResources(listsDir);
-    for (const QString& w : warns) {
-        qDebug() << "[TEST_Rule_DET003]" << w;
-    }
-    runtime.resources = std::move(res);
-    return runtime;
-}
-
-} // namespace
 
 // ------------------------------------------------------------------------
 // Данные тестов (6.37-6.39)
@@ -160,39 +136,5 @@ void TEST_Rule_DET003::TestRule()
 {
     QFETCH(RawSentence, rawSentence);
     QFETCH(Det003Expect, expect);
-
-    const QString tag = QString(QTest::currentDataTag());
-
-    SentenceModel sentence = buildSentenceModel(rawSentence);
-
-    TokenNode* anchor = sentence.tokensById.value(expect.anchorTokenId, nullptr);
-    QVERIFY2(anchor != nullptr,
-             qPrintable(QStringLiteral("[%1] anchor %2 не найден")
-                        .arg(tag).arg(expect.anchorTokenId)));
-
-    CheckerRuntime runtime = makeRuntimeWithResources();
-    Rule_DET003 rule;
-
-    QSet<CandidateError> result = rule.check(*anchor, 0, DocumentModel(), runtime);
-
-    if (expect.expectedCount != -1) {
-        int actualCount = static_cast<int>(result.size());
-        if (actualCount != expect.expectedCount) {
-            qDebug() << "[TEST FAIL]" << tag
-                     << "Количество кандидатов: ожидалось =" << expect.expectedCount
-                     << "получено =" << actualCount;
-        }
-        QCOMPARE(actualCount, expect.expectedCount);
-    }
-
-    if (expect.expectedCount == 0) {
-        return;
-    }
-
-    if (!result.isEmpty()) {
-        compareSingleCandidate(tag, *result.begin(),
-                               expect.expectedRuleId,
-                               expect.expectedDisplayIds,
-                               expect.expectedConflictIds);
-    }
+    verifyAnchorRule<Det003Expect, Rule_DET003>(rawSentence, expect, QString(QTest::currentDataTag()));
 }

@@ -11,9 +11,13 @@
 
 #include <QString>
 #include <QStringList>
+#include <QSet>
+#include <QTest>
 #include <optional>
 #include "datamodel.h"
 #include "checkersystem.h"
+#include "wordlists.h"
+#include "modelbuilder.h"
 
 // ========================================================================
 // Хелперы поиска ресурсов
@@ -263,5 +267,85 @@ void compareMultiCandidate(const QString& testName,
                             const QString& expectedRuleId,
                             const QList<QList<int>>& expectedDisplayIdsList,
                             const QList<QSet<int>>& expectedConflictIdsList);
+
+// =====================================================================
+// Хелперы для тестов правил
+// =====================================================================
+
+/*!
+* \brief Создать CheckerRuntime с загруженными словарями.
+* \return CheckerRuntime с заполненными resources.
+*
+* Загружает словари через findListsDir() + loadResources().
+* Единая точка создания runtime для всех тестов правил.
+*/
+CheckerRuntime makeRuntimeWithResources();
+
+/*!
+* \brief Шаблонная функция проверки для правил с якорным токеном.
+* \param [in] rawSentence Входные данные CoNLL-U.
+* \param [in] expect      Структура ожиданий (XxxExpect).
+* \param [in] tag         Имя теста (QTest::currentDataTag()).
+*
+* TExpect — конкретная структура ожиданий (Art001Expect, Prep001Expect и т.д.).
+* TRule — класс проверяемого правила (Rule_ART001, Rule_PREP001 и т.д.).
+* TExpect обязан иметь поля anchorTokenId, expectedCount, expectedRuleId,
+* expectedDisplayIds, expectedConflictIds с типами как в XxxExpect.
+*
+* Функция заменяет 25 копий одного и того же тела TestRule() в тестах
+* правил, где логика сводится к: достать якорь по ID, вызвать check(),
+* сверить количество, сверить единственный кандидат. Все эти тесты
+* отличаются только типом ожиданий и классом правила — шаблон скрывает
+* это различие, не жертвуя читаемостью вызова (3 строки в каждом тесте).
+*
+* НЕ подходит для правил, где check() вызывается для каждого токена
+* в цикле (ART-003, ART-004, DET-002, CONJ-004, AUX-004) — там
+* ожидается несколько кандидатов, проверка через compareConflictZones.
+* Для ART-002 тоже не подходит — встроена дополнительная ветка ART-002a.
+*/
+template<typename TExpect, typename TRule>
+void verifyAnchorRule(const RawSentence& rawSentence,
+                      const TExpect& expect,
+                      const QString& tag)
+{
+    // Сборка модели из RawSentence — обязательный шаг перед проверкой
+    SentenceModel sentence = buildSentenceModel(rawSentence);
+
+    // Якорный токен: правила с якорным паттерном always требуют один anchorTokenId
+    TokenNode* anchor = sentence.tokensById.value(expect.anchorTokenId, nullptr);
+    QVERIFY2(anchor != nullptr,
+             qPrintable(QStringLiteral("[%1] anchor %2 не найден")
+                        .arg(tag).arg(expect.anchorTokenId)));
+
+    // Каждый тест правил загружает словари с нуля — избегаем перекрёстного влияния
+    CheckerRuntime runtime = makeRuntimeWithResources();
+    TRule rule;
+
+    // 0 = sentenceIndex (для правил без DocumentModel невалидный индекс не используется)
+    QSet<CandidateError> result = rule.check(*anchor, 0, DocumentModel(), runtime);
+
+    // expectedCount == -1 в DDT-строке означает «не проверять количество»
+    if (expect.expectedCount != -1) {
+        int actualCount = static_cast<int>(result.size());
+        if (actualCount != expect.expectedCount) {
+            qDebug() << "[TEST FAIL]" << tag
+                     << "Количество кандидатов: ожидалось =" << expect.expectedCount
+                     << "получено =" << actualCount;
+        }
+        QCOMPARE(actualCount, expect.expectedCount);
+    }
+
+    // Если ожидается 0 кандидатов — проверять нечего, выходим
+    if (expect.expectedCount == 0)
+        return;
+
+    // Якорные правила возвращают 0 или 1 кандидат — берём первый (и единственный)
+    if (!result.isEmpty()) {
+        compareSingleCandidate(tag, *result.begin(),
+                               expect.expectedRuleId,
+                               expect.expectedDisplayIds,
+                               expect.expectedConflictIds);
+    }
+}
 
 #endif // AUXILIARYFUNCTIONSFORTESTING_H
