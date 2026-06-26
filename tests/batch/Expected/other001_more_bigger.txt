@@ -1,1 +1,1 @@
-other001 | OTHER-001 | 1 | more | more | 
+other001 | OTHER-001 | 1 | more |  | «more» избыточно при синтетической степени «bigger».

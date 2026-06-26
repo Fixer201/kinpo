@@ -85,7 +85,7 @@ bool findPerfectAuxAndVerb(const TokenNode& root,
 QSet<CandidateError> Rule_PREP004::check(const TokenNode& anchor,
                                         int /*sentenceIndex*/,
                                         const DocumentModel& /*document*/,
-                                        const CheckerRuntime& /*runtime*/) const
+                                        const CheckerRuntime& runtime) const
 {
     QSet<CandidateError> res;
 
@@ -110,6 +110,20 @@ QSet<CandidateError> Rule_PREP004::check(const TokenNode& anchor,
     ce.sentId = QStringLiteral("test");
     ce.displayTokenIds = {auxFound->id, verbFound->id};
     ce.conflictTokenIds = {verbFound->id};
+    {
+        AtomicEdit edit;
+        edit.type = AtomicEditType::ReplaceTokens;
+        edit.targetTokenIds = {verbFound->id};
+        // Past Simple из past_forms.txt; fallback — лемма + "(Past Simple)"
+        const QString verbLemma = verbFound->lemma.toLower();
+        auto pfIt = runtime.resources.pastForms.find(verbLemma);
+        if (pfIt != runtime.resources.pastForms.end() && !pfIt->pastSimple.isEmpty())
+            edit.newTokens.append(pfIt->pastSimple);
+        else
+            edit.newTokens.append(verbLemma + QStringLiteral(" (Past Simple)"));
+        ce.edits.append(edit);
+    }
+    ce.description = QStringLiteral("«ago» не используется с Present Perfect. Замените на Simple Past.");
     res.insert(ce);
     return res;
 }

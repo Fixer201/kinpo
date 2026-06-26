@@ -209,6 +209,18 @@ QSet<CandidateError> Rule_PREP002::check(const TokenNode& anchor,
     ce.sentId = QStringLiteral("test");
     ce.displayTokenIds = {anchor.id};
     ce.conflictTokenIds = {anchor.id};
+    {
+        AtomicEdit edit;
+        edit.type = AtomicEditType::ReplaceTokens;
+        edit.targetTokenIds = {anchor.id};
+        edit.newTokens = {(formLower == QStringLiteral("for"))
+                          ? QStringLiteral("since") : QStringLiteral("for")};
+        ce.edits.append(edit);
+    }
+    const QString expected = (formLower == QStringLiteral("for"))
+                             ? QStringLiteral("since") : QStringLiteral("for");
+    ce.description = QStringLiteral("С выражением длительности / момента используется «%1», а не «%2».")
+                         .arg(expected).arg(formLower);
     res.insert(ce);
     return res;
 }

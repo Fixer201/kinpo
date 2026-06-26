@@ -108,6 +108,22 @@ QSet<CandidateError> Rule_OTHER005::check(const TokenNode& anchor,
         ce.sentId = QStringLiteral("test");
         ce.displayTokenIds = {child->id};
         ce.conflictTokenIds = {child->id};
+        {
+            AtomicEdit edit;
+            edit.type = AtomicEditType::ReplaceTokens;
+            edit.targetTokenIds = {child->id};
+            const QString replacement = negReplacementMap().value(lemma);
+            if (!replacement.isEmpty())
+                edit.newTokens = {replacement};
+            ce.edits.append(edit);
+        }
+        const QString replacement = negReplacementMap().value(lemma);
+        if (!replacement.isEmpty()) {
+            ce.description = QStringLiteral("Двойное отрицание: «%1» следует заменить на «%2».")
+                                 .arg(child->form).arg(replacement);
+        } else {
+            ce.description = QStringLiteral("Двойное отрицание: «%1» следует заменить.").arg(child->form);
+        }
         res.insert(ce);
     }
 

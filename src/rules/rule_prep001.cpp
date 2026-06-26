@@ -237,6 +237,13 @@ QSet<CandidateError> Rule_PREP001::check(const TokenNode& anchor,
             ce.sentId = QStringLiteral("test");
             ce.displayTokenIds = {anchor.id};
             ce.conflictTokenIds = {anchor.id};
+            AtomicEdit edit;
+            edit.type = AtomicEditType::ReplaceTokens;
+            edit.targetTokenIds = {anchor.id};
+            edit.newTokens = {QStringLiteral("at")};
+            ce.edits.append(edit);
+            ce.description = QStringLiteral("С временным выражением «%1» используется предлог «%2», а не «%3».")
+                                 .arg(n.form).arg(QStringLiteral("at")).arg(formLower);
             res.insert(ce);
         }
         return res;
@@ -252,6 +259,15 @@ QSet<CandidateError> Rule_PREP001::check(const TokenNode& anchor,
     ce.sentId = QStringLiteral("test");
     ce.displayTokenIds = {anchor.id};
     ce.conflictTokenIds = {anchor.id};
+    {
+        AtomicEdit edit;
+        edit.type = AtomicEditType::ReplaceTokens;
+        edit.targetTokenIds = {anchor.id};
+        edit.newTokens = {expected};
+        ce.edits.append(edit);
+    }
+    ce.description = QStringLiteral("С временным выражением «%1» используется предлог «%2», а не «%3».")
+                         .arg(n.form).arg(expected).arg(formLower);
     res.insert(ce);
 
     // Night: добавить кандидата удаления det=the, если у HEAD(night) есть
@@ -265,6 +281,11 @@ QSet<CandidateError> Rule_PREP001::check(const TokenNode& anchor,
                 detCe.sentId = QStringLiteral("test");
                 detCe.displayTokenIds = {child->id};
                 detCe.conflictTokenIds = {child->id};
+                AtomicEdit detEdit;
+                detEdit.type = AtomicEditType::DeleteTokens;
+                detEdit.targetTokenIds = {child->id};
+                detCe.edits.append(detEdit);
+                detCe.description = QStringLiteral("Перед «night» с предлогом «at» артикль не используется.");
                 res.insert(detCe);
                 break;
             }

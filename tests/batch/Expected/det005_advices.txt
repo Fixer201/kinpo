@@ -1,1 +1,1 @@
-det005 | DET-005 | 1 | advices | advices | 
+det005 | DET-005 | 1 | advices | advice | Неисчисляемое «advice» не употребляется во множественном числе.

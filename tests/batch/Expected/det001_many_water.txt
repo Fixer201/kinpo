@@ -1,1 +1,1 @@
-det001 | DET-001 | 1 | many | many | 
+det001 | DET-001 | 1-2 | many water | much water | Детерминатив «many» несовместим с существительным: ожидается «much».

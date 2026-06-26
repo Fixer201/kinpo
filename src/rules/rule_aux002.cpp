@@ -37,7 +37,7 @@ bool Rule_AUX002::canConflict() const
 QSet<CandidateError> Rule_AUX002::check(const TokenNode& anchor,
                                         int /*sentenceIndex*/,
                                         const DocumentModel& /*document*/,
-                                        const CheckerRuntime& /*runtime*/) const
+                                        const CheckerRuntime& runtime) const
 {
     QSet<CandidateError> res;
 
@@ -72,6 +72,15 @@ QSet<CandidateError> Rule_AUX002::check(const TokenNode& anchor,
         ce.sentId = QStringLiteral("test");
         ce.displayTokenIds = {anchor.id, v->id};
         ce.conflictTokenIds = {v->id};
+        {
+            AtomicEdit edit;
+            edit.type = AtomicEditType::ReplaceTokens;
+            edit.targetTokenIds = {v->id};
+            edit.newTokens = {v->lemma};
+            ce.edits.append(edit);
+        }
+        ce.description = QStringLiteral("После «%1» ожидается инфинитив: «%2».")
+                             .arg(anchor.form).arg(v->lemma);
         res.insert(ce);
         return res;
     }
@@ -86,6 +95,28 @@ QSet<CandidateError> Rule_AUX002::check(const TokenNode& anchor,
     ce.sentId = QStringLiteral("test");
     ce.displayTokenIds = {anchor.id, v->id};
     ce.conflictTokenIds = {v->id};
+    {
+        AtomicEdit edit;
+        edit.type = AtomicEditType::ReplaceTokens;
+        edit.targetTokenIds = {v->id};
+        // Past Participle из past_forms.txt; fallback — лемма + "(Past Participle)"
+        const QString verbLemma = v->lemma.toLower();
+        auto pfIt = runtime.resources.pastForms.find(verbLemma);
+        if (pfIt != runtime.resources.pastForms.end() && !pfIt->pastParticiple.isEmpty())
+            edit.newTokens.append(pfIt->pastParticiple);
+        else
+            edit.newTokens.append(verbLemma + QStringLiteral(" (Past Participle)"));
+        ce.edits.append(edit);
+    }
+    {
+        const QString verbLemma = v->lemma.toLower();
+        auto pfIt = runtime.resources.pastForms.find(verbLemma);
+        const QString expected = (pfIt != runtime.resources.pastForms.end() && !pfIt->pastParticiple.isEmpty())
+                                 ? pfIt->pastParticiple
+                                 : verbLemma + QStringLiteral(" (Past Participle)");
+        ce.description = QStringLiteral("После «%1» ожидается Past Participle: «%2».")
+                             .arg(anchor.form).arg(expected);
+    }
     res.insert(ce);
     return res;
 }

@@ -126,6 +126,14 @@ QSet<CandidateError> Rule_CONJ005::check(const TokenNode& anchor,
         ce.sentId = QStringLiteral("test");
         ce.displayTokenIds = {anchor.id};
         ce.conflictTokenIds = {anchor.id};
+        {
+            AtomicEdit edit;
+            edit.type = AtomicEditType::ReplaceTokens;
+            edit.targetTokenIds = {anchor.id};
+            edit.newTokens = {QStringLiteral("whether")};
+            ce.edits.append(edit);
+        }
+        ce.description = QStringLiteral("В конструкции «if...or not» ожидается «whether».");
         res.insert(ce);
         return res;
     }

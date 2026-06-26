@@ -132,6 +132,13 @@ QSet<CandidateError> Rule_CONJ006::check(const TokenNode& anchor,
     ce.sentId = QStringLiteral("test");
     ce.displayTokenIds = {anchor.id};
     ce.conflictTokenIds = {anchor.id};
+    {
+        AtomicEdit edit;
+        edit.type = AtomicEditType::DeleteTokens;
+        edit.targetTokenIds = {anchor.id};
+        ce.edits.append(edit);
+    }
+    ce.description = QStringLiteral("Избыточный координатор «%1» при подчинительном союзе.").arg(anchor.form);
     res.insert(ce);
     return res;
 }

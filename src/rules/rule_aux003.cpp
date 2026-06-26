@@ -93,6 +93,13 @@ QSet<CandidateError> Rule_AUX003::check(const TokenNode& anchor,
     ce.sentId = QStringLiteral("test");
     ce.displayTokenIds = {anchor.id};
     ce.conflictTokenIds = {anchor.id};
+    {
+        AtomicEdit edit;
+        edit.type = AtomicEditType::DeleteTokens;
+        edit.targetTokenIds = {anchor.id};
+        ce.edits.append(edit);
+    }
+    ce.description = QStringLiteral("Частица «to» не используется после модального глагола.");
     res.insert(ce);
     return res;
 }

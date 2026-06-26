@@ -59,6 +59,14 @@ QSet<CandidateError> Rule_OTHER003::check(const TokenNode& anchor,
         ce.sentId = QStringLiteral("test");
         ce.displayTokenIds = {anchor.id};
         ce.conflictTokenIds = {anchor.id};
+        {
+            AtomicEdit edit;
+            edit.type = AtomicEditType::ReplaceTokens;
+            edit.targetTokenIds = {anchor.id};
+            edit.newTokens = {QStringLiteral("very")};
+            ce.edits.append(edit);
+        }
+        ce.description = QStringLiteral("Перед прилагательным без сравнительной степени используется «very», а не «much».");
         res.insert(ce);
         return res;
     }
@@ -70,6 +78,14 @@ QSet<CandidateError> Rule_OTHER003::check(const TokenNode& anchor,
         ce.sentId = QStringLiteral("test");
         ce.displayTokenIds = {anchor.id};
         ce.conflictTokenIds = {anchor.id};
+        {
+            AtomicEdit edit;
+            edit.type = AtomicEditType::ReplaceTokens;
+            edit.targetTokenIds = {anchor.id};
+            edit.newTokens = {QStringLiteral("much")};
+            ce.edits.append(edit);
+        }
+        ce.description = QStringLiteral("Перед прилагательным в сравнительной степени используется «much», а не «very».");
         res.insert(ce);
         return res;
     }

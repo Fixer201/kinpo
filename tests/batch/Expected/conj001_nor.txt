@@ -1,1 +1,1 @@
-conj001 | CONJ-001 | 2 | nor | nor | 
+conj001 | CONJ-001 | 2 | nor | or | «nor» без отрицания: ожидается «or».

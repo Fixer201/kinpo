@@ -61,6 +61,14 @@ QSet<CandidateError> Rule_OTHER002::check(const TokenNode& anchor,
     ce.sentId = QStringLiteral("test");
     ce.displayTokenIds = {anchor.id};
     ce.conflictTokenIds = {anchor.id};
+    {
+        AtomicEdit edit;
+        edit.type = AtomicEditType::ReplaceTokens;
+        edit.targetTokenIds = {anchor.id};
+        edit.newTokens = {QStringLiteral("well")};
+        ce.edits.append(edit);
+    }
+    ce.description = QStringLiteral("В наречной позиции используется «well», а не «good».");
     res.insert(ce);
     return res;
 }

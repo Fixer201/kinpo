@@ -59,6 +59,14 @@ QSet<CandidateError> Rule_OTHER001::check(const TokenNode& anchor,
             ce.sentId = QStringLiteral("test");
             ce.displayTokenIds = {anchor.id};
             ce.conflictTokenIds = {anchor.id};
+            {
+                AtomicEdit edit;
+                edit.type = AtomicEditType::DeleteTokens;
+                edit.targetTokenIds = {anchor.id};
+                ce.edits.append(edit);
+            }
+            ce.description = QStringLiteral("«%1» избыточно при синтетической степени «%2».")
+                                 .arg(anchor.form).arg(a->form);
             res.insert(ce);
         }
         return res;
@@ -73,6 +81,14 @@ QSet<CandidateError> Rule_OTHER001::check(const TokenNode& anchor,
             ce.sentId = QStringLiteral("test");
             ce.displayTokenIds = {anchor.id};
             ce.conflictTokenIds = {anchor.id};
+            {
+                AtomicEdit edit;
+                edit.type = AtomicEditType::DeleteTokens;
+                edit.targetTokenIds = {anchor.id};
+                ce.edits.append(edit);
+            }
+            ce.description = QStringLiteral("«%1» избыточно при синтетической степени «%2».")
+                                 .arg(anchor.form).arg(a->form);
             res.insert(ce);
         }
         return res;

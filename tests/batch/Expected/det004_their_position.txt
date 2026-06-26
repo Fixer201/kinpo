@@ -1,1 +1,1 @@
-det004 | DET-003 | 1 | their | their | 
+det004 | DET-003 | 1 | their | they're | Притяжательное «their» в позиции подлежащего: ожидается «they're».

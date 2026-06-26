@@ -1,1 +1,1 @@
-conj004 | CONJ-004 | 3 | or | or | 
+conj004 | CONJ-004 | 3 | or | nor | В паре «neither» ожидается «nor», а не «or».

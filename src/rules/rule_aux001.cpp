@@ -98,6 +98,13 @@ QSet<CandidateError> Rule_AUX001::check(const TokenNode& anchor,
     ce.sentId = QStringLiteral("test");
     ce.displayTokenIds = {anchor.id};
     ce.conflictTokenIds = {anchor.id};
+    {
+        AtomicEdit edit;
+        edit.type = AtomicEditType::DeleteTokens;
+        edit.targetTokenIds = {anchor.id};
+        ce.edits.append(edit);
+    }
+    ce.description = QStringLiteral("Вспомогательный «do» не используется с модальным глаголом.");
     res.insert(ce);
     return res;
 }

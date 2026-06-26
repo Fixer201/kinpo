@@ -1,1 +1,1 @@
-other006 | OTHER-006 | 2 | then | then | 
+other006 | OTHER-006 | 2 | then | than | После сравнительной степени ожидается «than», а не «then».

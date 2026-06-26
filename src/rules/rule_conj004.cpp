@@ -90,6 +90,19 @@ QSet<CandidateError> Rule_CONJ004::check(const TokenNode& anchor,
         ce.sentId = QStringLiteral("test");
         ce.displayTokenIds = {anchor.id};
         ce.conflictTokenIds = {anchor.id};
+        {
+            AtomicEdit edit;
+            edit.type = AtomicEditType::ReplaceTokens;
+            edit.targetTokenIds = {anchor.id};
+            const QString expected = (lemma == QStringLiteral("or"))
+                                     ? QStringLiteral("nor") : QStringLiteral("or");
+            edit.newTokens = {expected};
+            ce.edits.append(edit);
+        }
+        const QString expected = (lemma == QStringLiteral("or"))
+                                 ? QStringLiteral("nor") : QStringLiteral("or");
+        ce.description = QStringLiteral("В паре «neither» ожидается «%1», а не «%2».")
+                             .arg(expected).arg(lemma);
         res.insert(ce);
         return res;
     }
@@ -103,6 +116,19 @@ QSet<CandidateError> Rule_CONJ004::check(const TokenNode& anchor,
         ce.sentId = QStringLiteral("test");
         ce.displayTokenIds = {anchor.id};
         ce.conflictTokenIds = {anchor.id};
+        {
+            AtomicEdit edit;
+            edit.type = AtomicEditType::ReplaceTokens;
+            edit.targetTokenIds = {anchor.id};
+            const QString expected = (lemma == QStringLiteral("nor"))
+                                     ? QStringLiteral("or") : QStringLiteral("nor");
+            edit.newTokens = {expected};
+            ce.edits.append(edit);
+        }
+        const QString expected = (lemma == QStringLiteral("nor"))
+                                 ? QStringLiteral("or") : QStringLiteral("nor");
+        ce.description = QStringLiteral("В паре «either» ожидается «%1», а не «%2».")
+                             .arg(expected).arg(lemma);
         res.insert(ce);
         return res;
     }

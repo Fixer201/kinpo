@@ -142,6 +142,14 @@ QSet<CandidateError> Rule_CONJ001::check(const TokenNode& anchor,
     ce.sentId = QStringLiteral("test");
     ce.displayTokenIds = {anchor.id};
     ce.conflictTokenIds = {anchor.id};
+    {
+        AtomicEdit edit;
+        edit.type = AtomicEditType::ReplaceTokens;
+        edit.targetTokenIds = {anchor.id};
+        edit.newTokens = {QStringLiteral("or")};
+        ce.edits.append(edit);
+    }
+    ce.description = QStringLiteral("«nor» без отрицания: ожидается «or».");
     res.insert(ce);
     return res;
 }

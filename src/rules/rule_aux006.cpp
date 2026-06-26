@@ -106,6 +106,14 @@ QSet<CandidateError> Rule_AUX006::check(const TokenNode& anchor,
     ce.sentId = QStringLiteral("test");
     ce.displayTokenIds = {anchor.id};
     ce.conflictTokenIds = {anchor.id};
+    {
+        AtomicEdit edit;
+        edit.type = AtomicEditType::DeleteTokens;
+        edit.targetTokenIds = {anchor.id};
+        ce.edits.append(edit);
+    }
+    ce.description = QStringLiteral("После «%1» + дополнение частица «to» не используется (bare infinitive).")
+                         .arg(v->lemma);
     res.insert(ce);
     return res;
 }

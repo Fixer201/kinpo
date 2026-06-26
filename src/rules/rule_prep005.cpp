@@ -132,6 +132,22 @@ QSet<CandidateError> Rule_PREP005::check(const TokenNode& anchor,
                 ce.sentId = QStringLiteral("test");
                 ce.displayTokenIds = {caseNode->id};
                 ce.conflictTokenIds = {caseNode->id};
+                if (entry.action == VerbPrepAction::DeletePrep) {
+                    AtomicEdit edit;
+                    edit.type = AtomicEditType::DeleteTokens;
+                    edit.targetTokenIds = {caseNode->id};
+                    ce.edits.append(edit);
+                    ce.description = QStringLiteral("Глагол «%1» употребляется без предлога.")
+                                         .arg(anchor.lemma);
+                } else {
+                    AtomicEdit edit;
+                    edit.type = AtomicEditType::ReplaceTokens;
+                    edit.targetTokenIds = {caseNode->id};
+                    edit.newTokens.append(entry.prep.value_or(QString()));
+                    ce.edits.append(edit);
+                    ce.description = QStringLiteral("Глагол «%1» требует предлога «%2».")
+                                         .arg(anchor.lemma).arg(entry.prep.value_or(QString()));
+                }
                 res.insert(ce);
             }
         } else if (entry.action == VerbPrepAction::InsertPrep) {
@@ -143,6 +159,15 @@ QSet<CandidateError> Rule_PREP005::check(const TokenNode& anchor,
                 ce.sentId = QStringLiteral("test");
                 ce.displayTokenIds = {anchor.id, objNode->id};
                 ce.conflictTokenIds = {objNode->id};
+                {
+                    AtomicEdit edit;
+                    edit.type = AtomicEditType::InsertBefore;
+                    edit.referenceTokenId = objNode->id;
+                    edit.newTokens.append(entry.prep.value_or(QString()));
+                    ce.edits.append(edit);
+                }
+                ce.description = QStringLiteral("Глагол «%1» требует предлога «%2».")
+                                     .arg(anchor.lemma).arg(entry.prep.value_or(QString()));
                 res.insert(ce);
             }
         }

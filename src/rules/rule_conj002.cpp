@@ -138,6 +138,14 @@ QSet<CandidateError> Rule_CONJ002::check(const TokenNode& anchor,
         ce.sentId = QStringLiteral("test");
         ce.displayTokenIds = {anchor.id};
         ce.conflictTokenIds = {anchor.id};
+        {
+            AtomicEdit edit;
+            edit.type = AtomicEditType::ReplaceTokens;
+            edit.targetTokenIds = {anchor.id};
+            edit.newTokens = {QStringLiteral("because of")};
+            ce.edits.append(edit);
+        }
+        ce.description = QStringLiteral("Перед именной группой / клаузой используется «because of», а не «because».");
         res.insert(ce);
         return res;
     }
@@ -153,6 +161,13 @@ QSet<CandidateError> Rule_CONJ002::check(const TokenNode& anchor,
     ce.sentId = QStringLiteral("test");
     ce.displayTokenIds = {anchor.id, ofNode->id};
     ce.conflictTokenIds = {anchor.id, ofNode->id};
+    {
+        AtomicEdit edit;
+        edit.type = AtomicEditType::DeleteTokens;
+        edit.targetTokenIds = {ofNode->id};
+        ce.edits.append(edit);
+    }
+    ce.description = QStringLiteral("Перед именной группой / клаузой используется «because», а не «because of».");
     res.insert(ce);
     return res;
 }

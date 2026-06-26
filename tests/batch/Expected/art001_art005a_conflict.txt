@@ -1,1 +1,1 @@
-art005a | ART-005a | 1 | the | the | 
+art005a | ART-005a | 1-3 | the Mr. Smith | Mr. Smith | Артикль «the» не используется с титулом перед именем.

@@ -111,6 +111,14 @@ QSet<CandidateError> Rule_AUX005::check(const TokenNode& anchor,
         ce.sentId = QStringLiteral("test");
         ce.displayTokenIds = {anchor.id, nextTok->id, v->id};
         ce.conflictTokenIds = {nextTok->id};
+        {
+            AtomicEdit edit;
+            edit.type = AtomicEditType::ReplaceTokens;
+            edit.targetTokenIds = {nextTok->id};
+            edit.newTokens = {QStringLiteral("have")};
+            ce.edits.append(edit);
+        }
+        ce.description = QStringLiteral("«of» после модального — ожидается «have».");
         res.insert(ce);
         return res;
     }
@@ -121,6 +129,14 @@ QSet<CandidateError> Rule_AUX005::check(const TokenNode& anchor,
     ce.sentId = QStringLiteral("test");
     ce.displayTokenIds = {anchor.id, v->id};
     ce.conflictTokenIds = {v->id};
+    {
+        AtomicEdit edit;
+        edit.type = AtomicEditType::InsertAfter;
+        edit.referenceTokenId = anchor.id;
+        edit.newTokens = {QStringLiteral("have")};
+        ce.edits.append(edit);
+    }
+    ce.description = QStringLiteral("После модального требуется «have» для перфекта.");
     res.insert(ce);
     return res;
 }

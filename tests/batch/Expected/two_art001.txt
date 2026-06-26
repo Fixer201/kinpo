@@ -1,2 +1,2 @@
-multi | ART-001 | 1 | a | a | 
-multi | ART-001 | 4 | the | the | 
+multi | ART-001 | 1-2 | a London | London | Артикль не используется перед именем собственным.
+multi | ART-001 | 4-5 | the Europe | Europe | Артикль не используется перед именем собственным.

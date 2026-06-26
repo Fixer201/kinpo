@@ -106,6 +106,14 @@ QSet<CandidateError> Rule_PREP003::check(const TokenNode& anchor,
         ce.sentId = QStringLiteral("test");
         ce.displayTokenIds = {anchor.id};
         ce.conflictTokenIds = {anchor.id};
+        {
+            AtomicEdit edit;
+            edit.type = AtomicEditType::ReplaceTokens;
+            edit.targetTokenIds = {anchor.id};
+            edit.newTokens = {QStringLiteral("during")};
+            ce.edits.append(edit);
+        }
+        ce.description = QStringLiteral("Перед именной группой / клаузой используется «during», а не «while».");
         res.insert(ce);
         return res;
     }
@@ -131,6 +139,14 @@ QSet<CandidateError> Rule_PREP003::check(const TokenNode& anchor,
         ce.sentId = QStringLiteral("test");
         ce.displayTokenIds = {anchor.id};
         ce.conflictTokenIds = {anchor.id};
+        {
+            AtomicEdit edit;
+            edit.type = AtomicEditType::ReplaceTokens;
+            edit.targetTokenIds = {anchor.id};
+            edit.newTokens = {QStringLiteral("while")};
+            ce.edits.append(edit);
+        }
+        ce.description = QStringLiteral("Перед именной группой / клаузой используется «while», а не «during».");
         res.insert(ce);
         return res;
     }
