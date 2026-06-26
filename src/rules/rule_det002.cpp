@@ -140,12 +140,9 @@ QSet<CandidateError> Rule_DET002::check(const TokenNode& anchor,
             // Найти второй детерминатив (не артикль) для определения типа
             QString typeLabel;
             for (const TokenNode* det : dets) {
-                if (det == art)
-                    continue;
-                if (!articles.contains(det->lemma.toLower())) {
+                if (typeLabel.isEmpty() && det != art &&
+                    !articles.contains(det->lemma.toLower()))
                     typeLabel = detTypeLabel(det->lemma.toLower());
-                    break;
-                }
             }
             if (typeLabel.isEmpty())
                 typeLabel = QStringLiteral("детерминатив");

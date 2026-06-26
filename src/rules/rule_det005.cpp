@@ -65,7 +65,7 @@ QSet<CandidateError> Rule_DET005::check(const TokenNode& anchor,
     AtomicEdit edit;
     edit.type = AtomicEditType::ReplaceTokens;
     edit.targetTokenIds = {anchor.id};
-    edit.newTokens = {anchor.lemma};
+    edit.newTokens.append(anchor.lemma);
     ce.edits.append(edit);
     ce.description = QStringLiteral("Неисчисляемое «%1» не употребляется во множественном числе.")
                          .arg(anchor.lemma);

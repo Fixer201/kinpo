@@ -135,7 +135,7 @@ QSet<CandidateError> Rule_CONJ003::check(const TokenNode& anchor,
             AtomicEdit edit;
             edit.type = AtomicEditType::ReplaceTokens;
             edit.targetTokenIds = {anchor.id};
-            edit.newTokens = {QStringLiteral("despite")};
+            edit.newTokens.append(QStringLiteral("despite"));
             ce.edits.append(edit);
         }
         ce.description = QStringLiteral("Перед именной группой / клаузой используется «despite», а не «although».");
@@ -178,7 +178,7 @@ QSet<CandidateError> Rule_CONJ003::check(const TokenNode& anchor,
             AtomicEdit edit;
             edit.type = AtomicEditType::ReplaceTokens;
             edit.targetTokenIds = {anchor.id};
-            edit.newTokens = {QStringLiteral("although")};
+            edit.newTokens.append(QStringLiteral("although"));
             ce.edits.append(edit);
         }
         ce.description = QStringLiteral("Перед именной группой / клаузой используется «although», а не «despite».");

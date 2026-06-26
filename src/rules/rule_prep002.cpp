@@ -213,8 +213,8 @@ QSet<CandidateError> Rule_PREP002::check(const TokenNode& anchor,
         AtomicEdit edit;
         edit.type = AtomicEditType::ReplaceTokens;
         edit.targetTokenIds = {anchor.id};
-        edit.newTokens = {(formLower == QStringLiteral("for"))
-                          ? QStringLiteral("since") : QStringLiteral("for")};
+        edit.newTokens.append((formLower == QStringLiteral("for"))
+                          ? QStringLiteral("since") : QStringLiteral("for"));
         ce.edits.append(edit);
     }
     const QString expected = (formLower == QStringLiteral("for"))

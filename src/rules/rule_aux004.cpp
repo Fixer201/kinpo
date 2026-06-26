@@ -52,17 +52,14 @@ const QSet<QString> modalVerbs = {
 */
 bool hasEarlierModalChild(const TokenNode& v, int anchorId)
 {
+    bool found = false;
     for (const TokenNode* child : v.children) {
-        if (child->id >= anchorId)
-            continue;
-        if (child->upos != Upos::AUX)
-            continue;
-        if (child->deprel != Deprel::Aux)
-            continue;
-        if (modalVerbs.contains(child->lemma.toLower()))
-            return true;
+        if (child->id < anchorId && child->upos == Upos::AUX &&
+            child->deprel == Deprel::Aux &&
+            modalVerbs.contains(child->lemma.toLower()))
+            found = true;
     }
-    return false;
+    return found;
 }
 
 } // namespace

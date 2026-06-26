@@ -84,8 +84,9 @@ QString buildCorrection(const CandidateError& ce,
         }
         case AtomicEditType::InsertBefore: {
             int idx = -1;
-            for (int i = 0; i < elems.size(); ++i)
-                if (elems[i].originalId == edit.referenceTokenId) { idx = i; break; }
+            for (int i = 0; i < elems.size() && idx < 0; ++i)
+                if (elems[i].originalId == edit.referenceTokenId)
+                    idx = i;
             if (idx >= 0)
                 for (int j = edit.newTokens.size() - 1; j >= 0; --j)
                     elems.insert(idx, {0, edit.newTokens[j]});
@@ -93,8 +94,9 @@ QString buildCorrection(const CandidateError& ce,
         }
         case AtomicEditType::InsertAfter: {
             int idx = -1;
-            for (int i = 0; i < elems.size(); ++i)
-                if (elems[i].originalId == edit.referenceTokenId) { idx = i; break; }
+            for (int i = 0; i < elems.size() && idx < 0; ++i)
+                if (elems[i].originalId == edit.referenceTokenId)
+                    idx = i;
             if (idx >= 0)
                 for (int j = 0; j < edit.newTokens.size(); ++j)
                     elems.insert(idx + 1 + j, {0, edit.newTokens[j]});

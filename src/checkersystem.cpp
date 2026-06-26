@@ -27,20 +27,22 @@ bool conditionApplies(PriorityConditionKind kind,
         return true;
 
     if (kind == PriorityConditionKind::Art003LanguageCase) {
+        bool result = false;
         for (int tid : higher.conflictTokenIds) {
             TokenNode* node = sentence.tokensById.value(tid, nullptr);
-            if (!node)
-                continue;
-            if (node->upos != Upos::PROPN ||
-                (node->lemma != QStringLiteral("English") && node->form != QStringLiteral("English")))
-                continue;
-            for (TokenNode* child : node->children) {
-                if (child->form == QStringLiteral("language") || child->lemma == QStringLiteral("language"))
-                    return false;
+            if (!result && node &&
+                node->upos == Upos::PROPN &&
+                (node->lemma == QStringLiteral("English") || node->form == QStringLiteral("English"))) {
+                bool hasLanguageChild = false;
+                for (TokenNode* child : node->children) {
+                    if (!hasLanguageChild &&
+                        (child->form == QStringLiteral("language") || child->lemma == QStringLiteral("language")))
+                        hasLanguageChild = true;
+                }
+                result = !hasLanguageChild;
             }
-            return true;
         }
-        return false;
+        return result;
     }
 
     return false;
@@ -72,13 +74,11 @@ void resolveCandidate(CandidateError candidate,
     for (const CandidateError& existing : zone) {
         // Проверяем: существующий кандидат подавляет нового?
         auto higherIt = runtime.priorityIndex.conditionsByHigherRule.find(existing.ruleId);
-        if (higherIt != runtime.priorityIndex.conditionsByHigherRule.end()) {
+        if (!newSuppressed && higherIt != runtime.priorityIndex.conditionsByHigherRule.end()) {
             auto condIt = higherIt->find(candidate.ruleId);
             if (condIt != higherIt->end()) {
-                if (conditionApplies(condIt.value(), existing, sentence)) {
+                if (conditionApplies(condIt.value(), existing, sentence))
                     newSuppressed = true;
-                    break;
-                }
             }
         }
 

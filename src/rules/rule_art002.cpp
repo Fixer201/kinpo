@@ -96,24 +96,25 @@ bool isTimeException(const TokenNode& adj, const TokenNode& noun,
         !runtime.resources.durations.contains(nounLemma))
         return false;
 
+    bool hasModifyingContext = false;
     for (const TokenNode* child : noun.children) {
-        if (child->deprel == Deprel::Nmod) {
+        if (!hasModifyingContext && child->deprel == Deprel::Nmod) {
             for (const TokenNode* sub : child->children) {
                 if (sub->deprel == Deprel::Case && sub->lemma.toLower() == QStringLiteral("of"))
-                    return false;
+                    hasModifyingContext = true;
             }
         }
-        if (child->upos == Upos::NUM)
-            return false;
-        if (child->deprel == Deprel::Case) {
+        if (!hasModifyingContext && child->upos == Upos::NUM)
+            hasModifyingContext = true;
+        if (!hasModifyingContext && child->deprel == Deprel::Case) {
             const QString caseLemma = child->lemma.toLower();
             if (caseLemma == QStringLiteral("for") ||
                 caseLemma == QStringLiteral("in") ||
                 caseLemma == QStringLiteral("over"))
-                return false;
+                hasModifyingContext = true;
         }
     }
-    return true;
+    return !hasModifyingContext;
 }
 
 } // namespace
@@ -166,7 +167,7 @@ QSet<CandidateError> Rule_ART002::check(const TokenNode& anchor,
     AtomicEdit edit;
     edit.type = AtomicEditType::InsertBefore;
     edit.referenceTokenId = anchor.id;
-    edit.newTokens = {QStringLiteral("the")};
+    edit.newTokens.append(QStringLiteral("the"));
     ce.edits.append(edit);
     ce.description = QStringLiteral("Перед «%1» + существительным требуется артикль «the».")
                          .arg(anchor.form);
@@ -254,7 +255,7 @@ QSet<CandidateError> Rule_ART002a::check(const TokenNode& anchor,
     AtomicEdit edit;
     edit.type = AtomicEditType::InsertBefore;
     edit.referenceTokenId = anchor.id;
-    edit.newTokens = {QStringLiteral("the")};
+    edit.newTokens.append(QStringLiteral("the"));
     ce.edits.append(edit);
     ce.description = QStringLiteral("Аналитическая превосходная степень требует артикля «the».");
     res.insert(ce);

@@ -92,7 +92,7 @@ QSet<CandidateError> Rule_DET003::check(const TokenNode& anchor,
     AtomicEdit edit;
     edit.type = AtomicEditType::ReplaceTokens;
     edit.targetTokenIds = {anchor.id};
-    edit.newTokens = {contraction};
+    edit.newTokens.append(contraction);
     ce.edits.append(edit);
     ce.description = QStringLiteral("Притяжательное «%1» в позиции подлежащего: ожидается «%2».")
                          .arg(anchor.form).arg(contraction);

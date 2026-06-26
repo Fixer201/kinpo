@@ -129,10 +129,8 @@ QSet<CandidateError> Rule_DET001::check(const TokenNode& anchor,
     // Ищем запись, условиям которой соответствует NOUN (это несовместимость)
     QString correction;
     for (const DetCompatEntry& entry : it.value()) {
-        if (matchesEntry(entry, number, countability)) {
+        if (correction.isEmpty() && matchesEntry(entry, number, countability))
             correction = entry.correction;
-            break;
-        }
     }
 
     if (correction.isEmpty())
@@ -151,7 +149,7 @@ QSet<CandidateError> Rule_DET001::check(const TokenNode& anchor,
     AtomicEdit edit;
     edit.type = AtomicEditType::ReplaceTokens;
     edit.targetTokenIds = {anchor.id};
-    edit.newTokens = {correction};
+    edit.newTokens.append(correction);
     ce.edits.append(edit);
     ce.description = QStringLiteral("Детерминатив «%1» несовместим с существительным: ожидается «%2».")
                          .arg(anchor.form).arg(correction);

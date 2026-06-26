@@ -106,13 +106,14 @@ QSet<CandidateError> Rule_ART005a::check(const TokenNode& anchor,
             propn = anchor.parent;
         }
         // Зависимый PROPN, связь через flat/compound
+        bool propnFound = false;
         for (const TokenNode* child : anchor.children) {
-            if (child->upos == Upos::PROPN &&
+            if (!propnFound && child->upos == Upos::PROPN &&
                 (child->deprel == Deprel::Flat ||
                  child->deprel == Deprel::FlatName ||
                  child->deprel == Deprel::Compound)) {
                 propn = child;
-                break;
+                propnFound = true;
             }
         }
     }

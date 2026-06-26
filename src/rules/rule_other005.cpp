@@ -85,46 +85,42 @@ QSet<CandidateError> Rule_OTHER005::check(const TokenNode& anchor,
     // Проверяем наличие прямого зависимого с Polarity=Neg
     bool hasNeg = false;
     for (const TokenNode* child : anchor.children) {
-        if (child && child->features.polarityNeg) {
+        if (!hasNeg && child && child->features.polarityNeg)
             hasNeg = true;
-            break;
-        }
     }
     if (!hasNeg)
         return res;
 
     // Собираем кандидатов для каждого прямого зависимого из списка замен
     for (const TokenNode* child : anchor.children) {
-        if (!child)
-            continue;
-        // LEMMA сравнивается без учёта регистра (по спецификации списков)
-        const QString lemma = child->lemma.toLower();
-        // no one проверяется по форме, остальные — по LEMMA
-        if (!negReplacementMap().contains(lemma) && !isNoOneForm(child->form))
-            continue;
+        if (child) {
+            const QString lemma = child->lemma.toLower();
+            if (negReplacementMap().contains(lemma) || isNoOneForm(child->form)) {
 
-        CandidateError ce;
-        ce.ruleId = QStringLiteral("OTHER-005");
-        ce.sentId = QStringLiteral("test");
-        ce.displayTokenIds = {child->id};
-        ce.conflictTokenIds = {child->id};
-        {
-            AtomicEdit edit;
-            edit.type = AtomicEditType::ReplaceTokens;
-            edit.targetTokenIds = {child->id};
-            const QString replacement = negReplacementMap().value(lemma);
-            if (!replacement.isEmpty())
-                edit.newTokens = {replacement};
-            ce.edits.append(edit);
+                CandidateError ce;
+                ce.ruleId = QStringLiteral("OTHER-005");
+                ce.sentId = QStringLiteral("test");
+                ce.displayTokenIds = {child->id};
+                ce.conflictTokenIds = {child->id};
+                {
+                    AtomicEdit edit;
+                    edit.type = AtomicEditType::ReplaceTokens;
+                    edit.targetTokenIds = {child->id};
+                    const QString replacement = negReplacementMap().value(lemma);
+                    if (!replacement.isEmpty())
+                        edit.newTokens.append(replacement);
+                    ce.edits.append(edit);
+                }
+                const QString replacement = negReplacementMap().value(lemma);
+                if (!replacement.isEmpty()) {
+                    ce.description = QStringLiteral("Двойное отрицание: «%1» следует заменить на «%2».")
+                                         .arg(child->form).arg(replacement);
+                } else {
+                    ce.description = QStringLiteral("Двойное отрицание: «%1» следует заменить.").arg(child->form);
+                }
+                res.insert(ce);
+            }
         }
-        const QString replacement = negReplacementMap().value(lemma);
-        if (!replacement.isEmpty()) {
-            ce.description = QStringLiteral("Двойное отрицание: «%1» следует заменить на «%2».")
-                                 .arg(child->form).arg(replacement);
-        } else {
-            ce.description = QStringLiteral("Двойное отрицание: «%1» следует заменить.").arg(child->form);
-        }
-        res.insert(ce);
     }
 
     return res;

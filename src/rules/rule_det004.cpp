@@ -76,7 +76,7 @@ QSet<CandidateError> Rule_DET004::check(const TokenNode& anchor,
     AtomicEdit edit;
     edit.type = AtomicEditType::ReplaceTokens;
     edit.targetTokenIds = {anchor.id};
-    edit.newTokens = {possessive};
+    edit.newTokens.append(possessive);
     ce.edits.append(edit);
     ce.description = QStringLiteral("«%1» в притяжательной позиции: ожидается «%2».")
                          .arg(anchor.form).arg(possessive);

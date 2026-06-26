@@ -82,18 +82,19 @@ QString buildPropnGroupLemma(const TokenNode& head)
 bool hasClassifierInGroup(const TokenNode& head, const QSet<QString>& classifiers)
 {
     // Проверяем прямых зависимых головного PROPN
+    bool found = false;
     for (const TokenNode* child : head.children) {
-        if (classifiers.contains(child->form.toLower()))
-            return true;
+        if (!found && classifiers.contains(child->form.toLower()))
+            found = true;
     }
 
     // Проверяем соседние токены (previousToken, nextToken)
-    if (head.previousToken && classifiers.contains(head.previousToken->form.toLower()))
-        return true;
-    if (head.nextToken && classifiers.contains(head.nextToken->form.toLower()))
-        return true;
+    if (!found && head.previousToken && classifiers.contains(head.previousToken->form.toLower()))
+        found = true;
+    if (!found && head.nextToken && classifiers.contains(head.nextToken->form.toLower()))
+        found = true;
 
-    return false;
+    return found;
 }
 
 /*!

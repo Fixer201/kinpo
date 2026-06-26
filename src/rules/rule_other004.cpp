@@ -88,7 +88,7 @@ QSet<CandidateError> Rule_OTHER004::check(const TokenNode& anchor,
             AtomicEdit edit;
             edit.type = AtomicEditType::ReplaceTokens;
             edit.targetTokenIds = {anchor.id};
-            edit.newTokens = {nsubjMap().value(f)};
+            edit.newTokens.append(nsubjMap().value(f));
             ce.edits.append(edit);
         }
         ce.description = QStringLiteral("Местоимение «%1» в позиции подлежащего: ожидается «%2».")
@@ -109,7 +109,7 @@ QSet<CandidateError> Rule_OTHER004::check(const TokenNode& anchor,
             AtomicEdit edit;
             edit.type = AtomicEditType::ReplaceTokens;
             edit.targetTokenIds = {anchor.id};
-            edit.newTokens = {objMap().value(f)};
+            edit.newTokens.append(objMap().value(f));
             ce.edits.append(edit);
         }
         ce.description = QStringLiteral("Местоимение «%1» в позиции дополнения: ожидается «%2».")

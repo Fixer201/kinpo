@@ -63,15 +63,13 @@ const QSet<QString> coordinatorLemmas = {
 const TokenNode* findSubordinator(const TokenNode& v1,
                                   const QSet<QString>& allowedLemmas)
 {
+    const TokenNode* result = nullptr;
     for (const TokenNode* child : v1.children) {
-        if (child->deprel != Deprel::Mark)
-            continue;
-        if (child->upos != Upos::SCONJ)
-            continue;
-        if (allowedLemmas.contains(child->lemma.toLower()))
-            return child;
+        if (child->deprel == Deprel::Mark && child->upos == Upos::SCONJ &&
+            allowedLemmas.contains(child->lemma.toLower()))
+            result = child;
     }
-    return nullptr;
+    return result;
 }
 
 /*!
@@ -94,9 +92,8 @@ const TokenNode* findAdvclWithSubordinator(const TokenNode& v2,
             : causativeSubordinators;
 
     for (const TokenNode* child : v2.children) {
-        if (child->deprel != Deprel::Advcl)
-            continue;
-        if (findSubordinator(*child, allowedLemmas) != nullptr)
+        if (child->deprel == Deprel::Advcl &&
+            findSubordinator(*child, allowedLemmas) != nullptr)
             return child;
     }
     return nullptr;

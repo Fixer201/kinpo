@@ -76,7 +76,7 @@ QSet<CandidateError> Rule_AUX002::check(const TokenNode& anchor,
             AtomicEdit edit;
             edit.type = AtomicEditType::ReplaceTokens;
             edit.targetTokenIds = {v->id};
-            edit.newTokens = {v->lemma};
+            edit.newTokens.append(v->lemma);
             ce.edits.append(edit);
         }
         ce.description = QStringLiteral("После «%1» ожидается инфинитив: «%2».")

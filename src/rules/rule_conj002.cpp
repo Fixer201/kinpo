@@ -142,7 +142,7 @@ QSet<CandidateError> Rule_CONJ002::check(const TokenNode& anchor,
             AtomicEdit edit;
             edit.type = AtomicEditType::ReplaceTokens;
             edit.targetTokenIds = {anchor.id};
-            edit.newTokens = {QStringLiteral("because of")};
+            edit.newTokens.append(QStringLiteral("because of"));
             ce.edits.append(edit);
         }
         ce.description = QStringLiteral("Перед именной группой / клаузой используется «because of», а не «because».");

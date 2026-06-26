@@ -73,11 +73,12 @@ bool isAbbreviation(const QString& form)
 {
     if (form.size() < 2)
         return false;
+    bool allUpper = true;
     for (const QChar& c : form) {
-        if (!c.isUpper())
-            return false;
+        if (allUpper && !c.isUpper())
+            allUpper = false;
     }
-    return true;
+    return allUpper;
 }
 
 /*!
@@ -191,7 +192,7 @@ QSet<CandidateError> Rule_ART006::check(const TokenNode& anchor,
     AtomicEdit edit;
     edit.type = AtomicEditType::ReplaceTokens;
     edit.targetTokenIds = {anchor.id};
-    edit.newTokens = {expected};
+    edit.newTokens.append(expected);
     ce.edits.append(edit);
     if (expected == QStringLiteral("an"))
         ce.description = QStringLiteral("Перед гласным звуком используется «an».");

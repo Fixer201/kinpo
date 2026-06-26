@@ -53,19 +53,19 @@ bool findOblWithCaseLemma(const TokenNode& verb,
                           const QString& wrongPrepLemma,
                           const TokenNode*& caseNode)
 {
+    bool found = false;
     for (const TokenNode* child : verb.children) {
-        if (child->deprel != Deprel::Obl)
-            continue;
-        // Ищем case-зависимого у obl
-        for (const TokenNode* grandchild : child->children) {
-            if (grandchild->deprel == Deprel::Case &&
-                grandchild->lemma.toLower() == wrongPrepLemma) {
-                caseNode = grandchild;
-                return true;
+        if (child->deprel == Deprel::Obl && !found) {
+            for (const TokenNode* grandchild : child->children) {
+                if (grandchild->deprel == Deprel::Case &&
+                    grandchild->lemma.toLower() == wrongPrepLemma) {
+                    caseNode = grandchild;
+                    found = true;
+                }
             }
         }
     }
-    return false;
+    return found;
 }
 
 /*!
@@ -79,22 +79,21 @@ bool findOblWithCaseLemma(const TokenNode& verb,
 */
 bool findObjWithoutCase(const TokenNode& verb, const TokenNode*& objNode)
 {
+    bool found = false;
     for (const TokenNode* child : verb.children) {
-        if (child->deprel != Deprel::Obj)
-            continue;
-        // Проверяем, есть ли у obj дочерний case
-        bool hasCase = false;
-        for (const TokenNode* grandchild : child->children)
-            if (grandchild->deprel == Deprel::Case) {
-                hasCase = true;
-                break;
+        if (child->deprel == Deprel::Obj && !found) {
+            // Проверяем, есть ли у obj дочерний case
+            bool hasCase = false;
+            for (const TokenNode* grandchild : child->children)
+                if (grandchild->deprel == Deprel::Case)
+                    hasCase = true;
+            if (!hasCase) {
+                objNode = child;
+                found = true;
             }
-        if (!hasCase) {
-            objNode = child;
-            return true;
         }
     }
-    return false;
+    return found;
 }
 
 } // namespace

@@ -175,9 +175,10 @@ std::variant<MwtRecord, Diagnostic> parseMwtLine(
         };
     }
 
+    std::optional<Diagnostic> mwtError;
     for (int i = 2; i < cols.size(); ++i) {
-        if (cols[i] != QStringLiteral("_")) {
-            return Diagnostic{
+        if (!mwtError.has_value() && cols[i] != QStringLiteral("_")) {
+            mwtError = Diagnostic{
                 DiagnosticKind::InputFormatError,
                 lineNumber,
                 std::nullopt,
@@ -186,6 +187,8 @@ std::variant<MwtRecord, Diagnostic> parseMwtLine(
             };
         }
     }
+    if (mwtError.has_value())
+        return mwtError.value();
 
     MwtRecord rec;
     rec.lineNumber = lineNumber;
@@ -395,26 +398,27 @@ std::optional<Diagnostic> validateSentenceStructure(const RawSentence& sentence)
     }
 
     for (const auto& token : sentence.tokens) {
-        if (color[token.id] != 0)
-            continue;
+        if (color[token.id] == 0) {
+            int current = token.id;
+            bool reachedProcessed = false;
+            while (current != 0 && !reachedProcessed) {
+                int state = color.value(current, 0);
+                if (state == 2)
+                    reachedProcessed = true;
+                else if (state == 1)
+                    return makeDiag(sentence, token.lineNumber,
+                                    QStringLiteral("HEAD образует петлю"));
+                else {
+                    color[current] = 1;
+                    current = idToToken.value(current)->headId;
+                }
+            }
 
-        int current = token.id;
-        while (current != 0) {
-            int state = color.value(current, 0);
-            if (state == 2)
-                break;
-            if (state == 1)
-                return makeDiag(sentence, token.lineNumber,
-                                QStringLiteral("HEAD образует петлю"));
-
-            color[current] = 1;
-            current = idToToken.value(current)->headId;
-        }
-
-        int fin = token.id;
-        while (fin != 0 && color.value(fin, 0) == 1) {
-            color[fin] = 2;
-            fin = idToToken.value(fin)->headId;
+            int fin = token.id;
+            while (fin != 0 && color.value(fin, 0) == 1) {
+                color[fin] = 2;
+                fin = idToToken.value(fin)->headId;
+            }
         }
     }
 

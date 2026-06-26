@@ -91,7 +91,7 @@ QSet<CandidateError> Rule_OTHER006::check(const TokenNode& anchor,
             AtomicEdit edit;
             edit.type = AtomicEditType::ReplaceTokens;
             edit.targetTokenIds = {id};
-            edit.newTokens = {QStringLiteral("than")};
+            edit.newTokens.append(QStringLiteral("than"));
             ce.edits.append(edit);
         }
         ce.description = QStringLiteral("После сравнительной степени ожидается «than», а не «then».");

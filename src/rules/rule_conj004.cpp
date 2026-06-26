@@ -55,15 +55,13 @@ bool hasCorrelate(const DocumentModel& document, int sentenceIndex,
     const SentenceModel& sentence = *document.sentences[sentenceIndex];
     const QString lower = correlateLemma.toLower();
 
+    bool found = false;
     for (const TokenNode* token : sentence.tokens) {
-        if (token->upos != Upos::CCONJ)
-            continue;
-        if (token->deprel != Deprel::CcPreconj)
-            continue;
-        if (token->lemma.toLower() == lower)
-            return true;
+        if (token->upos == Upos::CCONJ && token->deprel == Deprel::CcPreconj &&
+            token->lemma.toLower() == lower)
+            found = true;
     }
-    return false;
+    return found;
 }
 
 } // namespace
@@ -96,7 +94,7 @@ QSet<CandidateError> Rule_CONJ004::check(const TokenNode& anchor,
             edit.targetTokenIds = {anchor.id};
             const QString expected = (lemma == QStringLiteral("or"))
                                      ? QStringLiteral("nor") : QStringLiteral("or");
-            edit.newTokens = {expected};
+            edit.newTokens.append(expected);
             ce.edits.append(edit);
         }
         const QString expected = (lemma == QStringLiteral("or"))
@@ -122,7 +120,7 @@ QSet<CandidateError> Rule_CONJ004::check(const TokenNode& anchor,
             edit.targetTokenIds = {anchor.id};
             const QString expected = (lemma == QStringLiteral("nor"))
                                      ? QStringLiteral("or") : QStringLiteral("nor");
-            edit.newTokens = {expected};
+            edit.newTokens.append(expected);
             ce.edits.append(edit);
         }
         const QString expected = (lemma == QStringLiteral("nor"))

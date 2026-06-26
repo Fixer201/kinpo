@@ -63,7 +63,7 @@ QSet<CandidateError> Rule_OTHER003::check(const TokenNode& anchor,
             AtomicEdit edit;
             edit.type = AtomicEditType::ReplaceTokens;
             edit.targetTokenIds = {anchor.id};
-            edit.newTokens = {QStringLiteral("very")};
+            edit.newTokens.append(QStringLiteral("very"));
             ce.edits.append(edit);
         }
         ce.description = QStringLiteral("Перед прилагательным без сравнительной степени используется «very», а не «much».");
@@ -82,7 +82,7 @@ QSet<CandidateError> Rule_OTHER003::check(const TokenNode& anchor,
             AtomicEdit edit;
             edit.type = AtomicEditType::ReplaceTokens;
             edit.targetTokenIds = {anchor.id};
-            edit.newTokens = {QStringLiteral("much")};
+            edit.newTokens.append(QStringLiteral("much"));
             ce.edits.append(edit);
         }
         ce.description = QStringLiteral("Перед прилагательным в сравнительной степени используется «much», а не «very».");

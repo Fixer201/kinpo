@@ -101,41 +101,32 @@ QSet<CandidateError> Rule_CONJ005::check(const TokenNode& anchor,
     const QList<const TokenNode*> orTokens = collectOrInSubtree(*v);
 
     for (const TokenNode* orTok : orTokens) {
-        // not должен идти сразу после or, пропуская пунктуацию и MWT
         const TokenNode* notTok = orTok->nextNonPunct();
-        if (notTok == nullptr)
-            continue;
 
-        // not — это отрицательная частица, а не наречие или союз
-        if (notTok->upos != Upos::PART ||
-            notTok->lemma.toLower() != QStringLiteral("not"))
-            continue;
+        // not должен идти сразу после or, пропуская пунктуацию и MWT.
+        // not — отрицательная частица, сочинённый элемент из поддерева V.
+        if (notTok != nullptr &&
+            notTok->upos == Upos::PART &&
+            notTok->lemma.toLower() == QStringLiteral("not") &&
+            notTok->deprel == Deprel::Conj &&
+            isInSubtree(notTok, *v)) {
 
-        // not должен быть сочинённым элементом (conj), а не зависимым
-        // от другого токена, и его голова должна быть в поддереве V
-        if (notTok->deprel != Deprel::Conj)
-            continue;
-
-        if (!isInSubtree(notTok, *v))
-            continue;
-
-        // Все условия выполнены: конструкция if...or not найдена,
-        // if заменяется на whether
-        CandidateError ce;
-        ce.ruleId = QStringLiteral("CONJ-005");
-        ce.sentId = QStringLiteral("test");
-        ce.displayTokenIds = {anchor.id};
-        ce.conflictTokenIds = {anchor.id};
-        {
-            AtomicEdit edit;
-            edit.type = AtomicEditType::ReplaceTokens;
-            edit.targetTokenIds = {anchor.id};
-            edit.newTokens = {QStringLiteral("whether")};
-            ce.edits.append(edit);
+            CandidateError ce;
+            ce.ruleId = QStringLiteral("CONJ-005");
+            ce.sentId = QStringLiteral("test");
+            ce.displayTokenIds = {anchor.id};
+            ce.conflictTokenIds = {anchor.id};
+            {
+                AtomicEdit edit;
+                edit.type = AtomicEditType::ReplaceTokens;
+                edit.targetTokenIds = {anchor.id};
+                edit.newTokens.append(QStringLiteral("whether"));
+                ce.edits.append(edit);
+            }
+            ce.description = QStringLiteral("В конструкции «if...or not» ожидается «whether».");
+            res.insert(ce);
+            return res;
         }
-        ce.description = QStringLiteral("В конструкции «if...or not» ожидается «whether».");
-        res.insert(ce);
-        return res;
     }
 
     return res;
