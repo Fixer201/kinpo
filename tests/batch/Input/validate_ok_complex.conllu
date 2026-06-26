@@ -1,0 +1,10 @@
+# sent_id = validate_ok_complex
+# text = The big dog quickly chased a cat .
+1	The	the	DET	DT	Definite=Def|PronType=Art	3	det	3:det	_
+2	big	big	ADJ	JJ	Degree=Pos	3	amod	3:amod	_
+3	dog	dog	NOUN	NN	Number=Sing	4	nsubj	4:nsubj	_
+4	quickly	quickly	ADV	RB	_	5	advmod	5:advmod	_
+5	chased	chase	VERB	VBD	Mood=Ind|Tense=Past|VerbForm=Fin	0	root	0:root	_
+6	a	a	DET	DT	Definite=Ind|PronType=Art	7	det	7:det	_
+7	cat	cat	NOUN	NN	Number=Sing	5	obj	5:obj	_
+8	.	.	PUNCT	.	_	5	punct	5:punct	SpaceAfter=No

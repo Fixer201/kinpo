@@ -1,0 +1,9 @@
+# sent_id = validate_ok_two_sentences_1
+# text = cat sleeps
+1	cat	cat	NOUN	NN	Number=Sing	2	nsubj	2:nsubj	_
+2	sleeps	sleep	VERB	VBZ	Mood=Ind|Number=Sing|Person=3|Tense=Pres|VerbForm=Fin	0	root	0:root	_
+
+# sent_id = validate_ok_two_sentences_2
+# text = dog runs
+1	dog	dog	NOUN	NN	Number=Sing	2	nsubj	2:nsubj	_
+2	runs	run	VERB	VBZ	Mood=Ind|Number=Sing|Person=3|Tense=Pres|VerbForm=Fin	0	root	0:root	_

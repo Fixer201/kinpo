@@ -1,0 +1,4 @@
+# sent_id = test
+# text = hello world
+1	hello	hello	NOUN	NN	Number=Sing	0	root	0:root	_
+2	world	world	NOUN	NN	Number=Sing	0	root	0:root	_
