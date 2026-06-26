@@ -14,3 +14,6 @@ moc_*.h
 target_wrapper.sh
 app/app
 tests/tests
+tests/batch/Output/
+build-mingw/
+build-mingw-build/
