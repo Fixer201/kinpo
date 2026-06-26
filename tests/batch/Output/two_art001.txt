@@ -1,2 +1,0 @@
-multi | ART-001 | 1 | a | a | 
-multi | ART-001 | 4 | the | the | 
