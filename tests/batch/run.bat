@@ -32,23 +32,45 @@ for %%f in (Input\*.conllu) do (
     set "name=%%~nf"
     set "expfile=Expected\%%~nf.txt"
     set "outfile=Output\%%~nf.txt"
+    set "console=Output\%%~nf_stderr.txt"
 
-    "%EXE%" "%%f" "!outfile!" --lists "%LISTS_DIR%" > nul 2>&1
+    "%EXE%" "%%f" "!outfile!" --lists "%LISTS_DIR%" 2> "!console!"
+    set "rc=!errorlevel!"
+
+    if not exist "!outfile!" type nul > "!outfile!"
 
     if exist "!expfile!" (
-        fc "!expfile!" "!outfile!" >nul 2>&1
-        if !errorlevel! equ 0 (
-            echo   [PASS] %%~nf
-            set /a PASSED+=1
+        if !rc! neq 0 (
+            REM Негативный тест: ошибка в stderr
+            fc "!expfile!" "!console!" >nul 2>&1
+            if !errorlevel! equ 0 (
+                echo   [PASS] %%~nf
+                set /a PASSED+=1
+            ) else (
+                echo   [FAIL] %%~nf — сообщение об ошибке не совпадает
+                echo         Ожидалось:
+                type "!expfile!"
+                echo.
+                echo         Получено:
+                type "!console!"
+                echo.
+                set /a FAILED+=1
+            )
         ) else (
-            echo   [FAIL] %%~nf
-            echo         Ожидалось:
-            type "!expfile!"
-            echo.
-            echo         Получено:
-            type "!outfile!"
-            echo.
-            set /a FAILED+=1
+            fc "!expfile!" "!outfile!" >nul 2>&1
+            if !errorlevel! equ 0 (
+                echo   [PASS] %%~nf
+                set /a PASSED+=1
+            ) else (
+                echo   [FAIL] %%~nf
+                echo         Ожидалось:
+                type "!expfile!"
+                echo.
+                echo         Получено:
+                type "!outfile!"
+                echo.
+                set /a FAILED+=1
+            )
         )
     ) else (
         echo   [PASS] %%~nf ^(новый, без эталона^)

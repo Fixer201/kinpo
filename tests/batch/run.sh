@@ -43,14 +43,28 @@ for infile in "$IN_DIR"/*.conllu; do
     [ -f "$outfile" ] || true > "$outfile"
 
     if [ -f "$expfile" ]; then
-        if diff -q "$expfile" "$outfile" > /dev/null 2>&1; then
-            echo "  [PASS] $name"
-            PASSED=$((PASSED + 1))
+        if [ $rc -ne 0 ]; then
+            # Негативный тест: программа завершилась с ошибкой.
+            # Сравниваем stderr (console) с эталоном, outfile игнорируем.
+            if diff -q "$expfile" "$console" > /dev/null 2>&1; then
+                echo "  [PASS] $name"
+                PASSED=$((PASSED + 1))
+            else
+                echo "  [FAIL] $name — сообщение об ошибке не совпадает"
+                echo "         Ожидалось: $(cat "$expfile")"
+                echo "         Получено:  $(cat "$console")"
+                FAILED=$((FAILED + 1))
+            fi
         else
-            echo "  [FAIL] $name — вывод не совпадает с эталоном"
-            echo "         Ожидалось: $(cat "$expfile")"
-            echo "         Получено:  $(cat "$outfile")"
-            FAILED=$((FAILED + 1))
+            if diff -q "$expfile" "$outfile" > /dev/null 2>&1; then
+                echo "  [PASS] $name"
+                PASSED=$((PASSED + 1))
+            else
+                echo "  [FAIL] $name — вывод не совпадает с эталоном"
+                echo "         Ожидалось: $(cat "$expfile")"
+                echo "         Получено:  $(cat "$outfile")"
+                FAILED=$((FAILED + 1))
+            fi
         fi
     else
         if [ $rc -eq 0 ]; then
