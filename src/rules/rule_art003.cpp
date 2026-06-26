@@ -135,8 +135,13 @@ QSet<CandidateError> Rule_ART003::check(const TokenNode& anchor,
     CandidateError ce;
     ce.ruleId = QStringLiteral("ART-003");
     ce.sentId = QStringLiteral("test");
-    ce.displayTokenIds = {anchor.id};
+    ce.displayTokenIds = {anchor.id, noun.id};
     ce.conflictTokenIds = {anchor.id};
+    AtomicEdit edit;
+    edit.type = AtomicEditType::DeleteTokens;
+    edit.targetTokenIds = {anchor.id};
+    ce.edits.append(edit);
+    ce.description = QStringLiteral("Артикль не используется перед названием языка / вида спорта / приёма пищи.");
     res.insert(ce);
     return res;
 }

@@ -62,6 +62,13 @@ QSet<CandidateError> Rule_DET005::check(const TokenNode& anchor,
     ce.sentId = QStringLiteral("test");
     ce.displayTokenIds = {anchor.id};
     ce.conflictTokenIds = {anchor.id};
+    AtomicEdit edit;
+    edit.type = AtomicEditType::ReplaceTokens;
+    edit.targetTokenIds = {anchor.id};
+    edit.newTokens = {anchor.lemma};
+    ce.edits.append(edit);
+    ce.description = QStringLiteral("Неисчисляемое «%1» не употребляется во множественном числе.")
+                         .arg(anchor.lemma);
     res.insert(ce);
     return res;
 }

@@ -186,8 +186,17 @@ QSet<CandidateError> Rule_ART006::check(const TokenNode& anchor,
     CandidateError ce;
     ce.ruleId = QStringLiteral("ART-006");
     ce.sentId = QStringLiteral("test");
-    ce.displayTokenIds = {anchor.id};
+    ce.displayTokenIds = {anchor.id, next->id};
     ce.conflictTokenIds = {anchor.id};
+    AtomicEdit edit;
+    edit.type = AtomicEditType::ReplaceTokens;
+    edit.targetTokenIds = {anchor.id};
+    edit.newTokens = {expected};
+    ce.edits.append(edit);
+    if (expected == QStringLiteral("an"))
+        ce.description = QStringLiteral("Перед гласным звуком используется «an».");
+    else
+        ce.description = QStringLiteral("Перед согласным звуком используется «a».");
     res.insert(ce);
     return res;
 }

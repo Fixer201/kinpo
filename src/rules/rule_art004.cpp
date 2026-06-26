@@ -183,6 +183,12 @@ QSet<CandidateError> Rule_ART004::check(const TokenNode& anchor,
     ce.sentId = QStringLiteral("test");
     ce.displayTokenIds = ids;
     ce.conflictTokenIds = QSet<int>(ids.begin(), ids.end());
+    AtomicEdit edit;
+    edit.type = AtomicEditType::InsertBefore;
+    edit.referenceTokenId = anchor.id;
+    edit.newTokens = {QStringLiteral("the")};
+    ce.edits.append(edit);
+    ce.description = QStringLiteral("Географическое название требует артикля «the».");
     res.insert(ce);
     return res;
 }

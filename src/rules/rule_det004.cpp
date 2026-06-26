@@ -72,6 +72,14 @@ QSet<CandidateError> Rule_DET004::check(const TokenNode& anchor,
     ce.sentId = QStringLiteral("test");
     ce.displayTokenIds = {anchor.id};
     ce.conflictTokenIds = {anchor.id};
+    const QString possessive = homophoneToPossessive.value(formLower);
+    AtomicEdit edit;
+    edit.type = AtomicEditType::ReplaceTokens;
+    edit.targetTokenIds = {anchor.id};
+    edit.newTokens = {possessive};
+    ce.edits.append(edit);
+    ce.description = QStringLiteral("«%1» в притяжательной позиции: ожидается «%2».")
+                         .arg(anchor.form).arg(possessive);
     res.insert(ce);
     return res;
 }

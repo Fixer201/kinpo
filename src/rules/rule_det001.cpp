@@ -146,8 +146,15 @@ QSet<CandidateError> Rule_DET001::check(const TokenNode& anchor,
     CandidateError ce;
     ce.ruleId = QStringLiteral("DET-001");
     ce.sentId = QStringLiteral("test");
-    ce.displayTokenIds = {anchor.id};
+    ce.displayTokenIds = {anchor.id, noun.id};
     ce.conflictTokenIds = {anchor.id};
+    AtomicEdit edit;
+    edit.type = AtomicEditType::ReplaceTokens;
+    edit.targetTokenIds = {anchor.id};
+    edit.newTokens = {correction};
+    ce.edits.append(edit);
+    ce.description = QStringLiteral("Детерминатив «%1» несовместим с существительным: ожидается «%2».")
+                         .arg(anchor.form).arg(correction);
     res.insert(ce);
     return res;
 }

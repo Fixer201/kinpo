@@ -10,6 +10,7 @@
 
 #include "rule_art005a.h"
 #include <QSet>
+#include <algorithm>
 
 const Rule_ART005a& Rule_ART005a::instance()
 {
@@ -129,8 +130,15 @@ QSet<CandidateError> Rule_ART005a::check(const TokenNode& anchor,
     CandidateError ce;
     ce.ruleId = QStringLiteral("ART-005a");
     ce.sentId = QStringLiteral("test");
-    ce.displayTokenIds = {detId};
+    QList<int> displayIds = {detId, anchor.id, propn->id};
+    std::sort(displayIds.begin(), displayIds.end());
+    ce.displayTokenIds = displayIds;
     ce.conflictTokenIds = {detId};
+    AtomicEdit edit;
+    edit.type = AtomicEditType::DeleteTokens;
+    edit.targetTokenIds = {detId};
+    ce.edits.append(edit);
+    ce.description = QStringLiteral("Артикль «the» не используется с титулом перед именем.");
     res.insert(ce);
     return res;
 }

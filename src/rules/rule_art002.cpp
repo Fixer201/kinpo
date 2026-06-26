@@ -163,6 +163,13 @@ QSet<CandidateError> Rule_ART002::check(const TokenNode& anchor,
     ce.sentId = QStringLiteral("test");
     ce.displayTokenIds = {anchor.id, noun.id};
     ce.conflictTokenIds = {noun.id};
+    AtomicEdit edit;
+    edit.type = AtomicEditType::InsertBefore;
+    edit.referenceTokenId = anchor.id;
+    edit.newTokens = {QStringLiteral("the")};
+    ce.edits.append(edit);
+    ce.description = QStringLiteral("Перед «%1» + существительным требуется артикль «the».")
+                         .arg(anchor.form);
     res.insert(ce);
     return res;
 }
@@ -244,6 +251,12 @@ QSet<CandidateError> Rule_ART002a::check(const TokenNode& anchor,
     ce.sentId = QStringLiteral("test");
     ce.displayTokenIds = {anchor.id, adj.id, noun.id};
     ce.conflictTokenIds = {noun.id};
+    AtomicEdit edit;
+    edit.type = AtomicEditType::InsertBefore;
+    edit.referenceTokenId = anchor.id;
+    edit.newTokens = {QStringLiteral("the")};
+    ce.edits.append(edit);
+    ce.description = QStringLiteral("Аналитическая превосходная степень требует артикля «the».");
     res.insert(ce);
     return res;
 }

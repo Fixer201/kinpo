@@ -9,6 +9,7 @@
 
 #include "rule_det002.h"
 #include <QSet>
+#include <algorithm>
 
 const Rule_DET002& Rule_DET002::instance()
 {
@@ -53,6 +54,33 @@ const QSet<QString> articles = {
     QStringLiteral("a"), QStringLiteral("an"), QStringLiteral("the")
 };
 
+// Притяжательные детерминативы
+const QSet<QString> possessiveDets = {
+    QStringLiteral("my"), QStringLiteral("your"), QStringLiteral("his"),
+    QStringLiteral("her"), QStringLiteral("its"), QStringLiteral("our"),
+    QStringLiteral("their")
+};
+
+// Указательные детерминативы
+const QSet<QString> demonstrativeDets = {
+    QStringLiteral("this"), QStringLiteral("that"),
+    QStringLiteral("these"), QStringLiteral("those")
+};
+
+/*!
+* \brief Классифицировать тип детерминатива для описания ошибки.
+* \param [in] lemma Лемма детерминатива (нижний регистр).
+* \return Русское название типа: «притяжательное», «указательное», «квантор».
+*/
+QString detTypeLabel(const QString& lemma)
+{
+    if (possessiveDets.contains(lemma))
+        return QStringLiteral("притяжательное");
+    if (demonstrativeDets.contains(lemma))
+        return QStringLiteral("указательное");
+    return QStringLiteral("квантор");
+}
+
 /*!
 * \brief Собрать центральные детерминативы среди прямых зависимых NOUN.
 * \param [in] noun Токен NOUN.
@@ -93,6 +121,12 @@ QSet<CandidateError> Rule_DET002::check(const TokenNode& anchor,
     if (dets.size() < 2)
         return res;
 
+    // Собираем отсортированный список ID всех детерминативов для фрагмента
+    QList<int> allDetIds;
+    for (const TokenNode* det : dets)
+        allDetIds.append(det->id);
+    std::sort(allDetIds.begin(), allDetIds.end());
+
     // Собираем все артикли среди центральных детерминативов
     QList<const TokenNode*> articleDets;
     for (const TokenNode* det : dets) {
@@ -103,11 +137,29 @@ QSet<CandidateError> Rule_DET002::check(const TokenNode& anchor,
     if (!articleDets.isEmpty()) {
         // Есть артикль: создать кандидат удаления для каждого артикля
         for (const TokenNode* art : articleDets) {
+            // Найти второй детерминатив (не артикль) для определения типа
+            QString typeLabel;
+            for (const TokenNode* det : dets) {
+                if (det == art)
+                    continue;
+                if (!articles.contains(det->lemma.toLower())) {
+                    typeLabel = detTypeLabel(det->lemma.toLower());
+                    break;
+                }
+            }
+            if (typeLabel.isEmpty())
+                typeLabel = QStringLiteral("детерминатив");
+
             CandidateError ce;
             ce.ruleId = QStringLiteral("DET-002");
             ce.sentId = QStringLiteral("test");
-            ce.displayTokenIds = {art->id};
+            ce.displayTokenIds = allDetIds;
             ce.conflictTokenIds = {art->id};
+            AtomicEdit edit;
+            edit.type = AtomicEditType::DeleteTokens;
+            edit.targetTokenIds = {art->id};
+            ce.edits.append(edit);
+            ce.description = QStringLiteral("Артикль и %1 не могут использоваться вместе.").arg(typeLabel);
             res.insert(ce);
         }
         return res;
@@ -122,11 +174,18 @@ QSet<CandidateError> Rule_DET002::check(const TokenNode& anchor,
     for (const TokenNode* det : dets) {
         if (det == minDet)
             continue;
+        QString typeLabel = detTypeLabel(det->lemma.toLower());
+
         CandidateError ce;
         ce.ruleId = QStringLiteral("DET-002");
         ce.sentId = QStringLiteral("test");
-        ce.displayTokenIds = {det->id};
+        ce.displayTokenIds = allDetIds;
         ce.conflictTokenIds = {det->id};
+        AtomicEdit edit;
+        edit.type = AtomicEditType::DeleteTokens;
+        edit.targetTokenIds = {det->id};
+        ce.edits.append(edit);
+        ce.description = QStringLiteral("Артикль и %1 не могут использоваться вместе.").arg(typeLabel);
         res.insert(ce);
     }
     return res;
