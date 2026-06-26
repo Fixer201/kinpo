@@ -105,6 +105,7 @@ void loadPriorityIndex(PriorityIndex& idx)
     idx.conditionsByHigherRule[QStringLiteral("DET-001")][QStringLiteral("ART-006")] = PriorityConditionKind::Always;
     idx.conditionsByHigherRule[QStringLiteral("PREP-004")][QStringLiteral("AUX-002")] = PriorityConditionKind::Always;
     idx.conditionsByHigherRule[QStringLiteral("ART-003")][QStringLiteral("ART-001")] = PriorityConditionKind::Art003LanguageCase;
+    idx.conditionsByHigherRule[QStringLiteral("ART-005a")][QStringLiteral("ART-001")] = PriorityConditionKind::Always;
 }
 
 } // namespace

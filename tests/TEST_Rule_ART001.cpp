@@ -150,12 +150,13 @@ void TEST_Rule_ART001::TestRule_data()
     }
 
     // === 6.5 ART-001 (исключение): фамилия во мн.ч. =================
-    // Вход: the Smiths. Ожидается: NO ERRORS (фамилия во мн.ч.).
+    // Вход: the Smiths. Ожидается: NO ERRORS (фамилия во мн.ч., Number=Plur).
     {
         RawSentence s = makeRawSentence(1, QStringLiteral("test"),
-                                        QStringLiteral("the Smiths"));
+                                         QStringLiteral("the Smiths"));
         addToken(s, makeRawToken(1, 1, "the", "DET", 2, "det"));
-        addToken(s, makeRawToken(2, 2, "Smiths", "PROPN", 0, "root"));
+        addToken(s, makeRawToken(2, 2, "Smiths", "PROPN", 0, "root",
+                                 QStringLiteral("Number=Plur")));
 
         Art001Expect e;
         e.anchorTokenId = 1;
@@ -168,9 +169,10 @@ void TEST_Rule_ART001::TestRule_data()
     // Вход: the Smith. Ожидается: the→-, кандидат на токене 1.
     {
         RawSentence s = makeRawSentence(1, QStringLiteral("test"),
-                                        QStringLiteral("the Smith"));
+                                         QStringLiteral("the Smith"));
         addToken(s, makeRawToken(1, 1, "the", "DET", 2, "det"));
-        addToken(s, makeRawToken(2, 2, "Smith", "PROPN", 0, "root"));
+        addToken(s, makeRawToken(2, 2, "Smith", "PROPN", 0, "root",
+                                 QStringLiteral("Number=Sing")));
 
         Art001Expect e;
         e.anchorTokenId = 1;

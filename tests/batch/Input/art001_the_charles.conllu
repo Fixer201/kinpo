@@ -1,0 +1,4 @@
+# sent_id = art001
+# text = the Charles
+1	the	the	DET	DT	_	2	det	2:det	_
+2	Charles	Charles	PROPN	NNP	Number=Sing	0	root	0:root	_

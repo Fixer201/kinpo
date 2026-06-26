@@ -97,6 +97,34 @@ bool hasClassifierInGroup(const TokenNode& head, const QSet<QString>& classifier
 }
 
 /*!
+* \brief Проверить, является ли группа PROPN составным с America.
+* \param [in] head Головной токен группы PROPN.
+* \return true если головной токен имеет lemma/form «america» и среди
+*         зависимых с DEPREL=Compound есть lemma ∈ {north, south, central, latin}.
+*
+* Уточнение внешн. спецификации ART-001: составные с America не требуют
+* артикля, исключения 5–7 к ним не применяются.
+*/
+bool isAmericaCompound(const TokenNode& head)
+{
+    const QString headLower = head.lemma.isEmpty() ? head.form.toLower() : head.lemma.toLower();
+    if (headLower != QStringLiteral("america"))
+        return false;
+
+    for (const TokenNode* child : head.children) {
+        if (child->deprel != Deprel::Compound)
+            continue;
+        const QString childLower = child->lemma.isEmpty() ? child->form.toLower() : child->lemma.toLower();
+        if (childLower == QStringLiteral("north") ||
+            childLower == QStringLiteral("south") ||
+            childLower == QStringLiteral("central") ||
+            childLower == QStringLiteral("latin"))
+            return true;
+    }
+    return false;
+}
+
+/*!
 * \brief Проверить, является ли форма одной из особых (Reverend, Honorable).
 * \param [in] form Форма токена (приводится к нижнему регистру).
 * \return true если форма — reverend или honorable.
@@ -157,9 +185,13 @@ QSet<CandidateError> Rule_ART001::check(const TokenNode& anchor,
     if (isSpecialTitle(propn.form))
         return res;
 
-    // Исключение 5: N.Number=Plur и D.LEMMA=the (the Smiths, the Beatles)
-    // Проверяем по форме: заканчивается на 's' (эвристика мн.ч.)
-    if (propn.form.endsWith('s', Qt::CaseInsensitive))
+    // Уточнение: составные с America (North/South/Central/Latin America)
+    // не требуют артикля. Исключения 5–7 к ним не применяются.
+    if (isAmericaCompound(propn))
+        return res;
+
+    // Исключение 5: N.Number=Plur и D.LEMMA=the (the Smiths, the Beatles).
+    if (propn.features.number == NumberValue::Plur)
         return res;
 
     // Исключение 6: среди прямых зависимых N или соседних токенов в группе PROPN

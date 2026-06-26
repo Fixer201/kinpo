@@ -1,0 +1,5 @@
+# sent_id = art001
+# text = the South America
+1	the	the	DET	DT	_	3	det	3:det	_
+2	South	South	PROPN	NNP	Number=Sing	3	compound	3:compound	_
+3	America	America	PROPN	NNP	Number=Sing	0	root	0:root	_

@@ -1,0 +1,5 @@
+# sent_id = art005a
+# text = the Mr. Smith
+1	the	the	DET	DT	_	3	det	3:det	_
+2	Mr.	Mr.	NOUN	NN	Number=Sing	3	nmod:desc	3:nmod:desc	_
+3	Smith	Smith	PROPN	NNP	Number=Sing	0	root	0:root	_

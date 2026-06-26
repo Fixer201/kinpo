@@ -19,12 +19,12 @@ void TEST_InitializeRuntime::TestInitializeRuntime_data()
     QTest::addRow("ok_builtin_lists")
         << findListsDir()
         << true
-        << 3;
+        << 4;
 
     QTest::addRow("err_nonexistent_lists")
         << QStringLiteral("/nonexistent/path")
         << false
-        << 3;
+        << 4;
 }
 
 void TEST_InitializeRuntime::TestInitializeRuntime()
@@ -47,7 +47,7 @@ void TEST_InitializeRuntime::TestInitializeRuntime()
         // dispatch должен быть непустым
         QVERIFY(rt.dispatch.size() > 0);
 
-        // PriorityIndex должен содержать 3 записи из раздела 2.4.1
+        // PriorityIndex должен содержать 4 записи приоритетов между правилами
         int priorityCount = 0;
         for (auto it = rt.priorityIndex.conditionsByHigherRule.begin();
              it != rt.priorityIndex.conditionsByHigherRule.end(); ++it) {
