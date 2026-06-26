@@ -337,7 +337,7 @@ struct CandidateError {
     QList<int> displayTokenIds; ///< ID токенов для отображения
     QSet<int> conflictTokenIds; ///< ID токенов зоны конфликта
     QList<AtomicEdit> edits;    ///< Операции исправления
-    QHash<QString, QString> messageParams; ///< Значения для шаблона описания
+    QString description;        ///< Готовое человекочитаемое описание ошибки
 
     bool operator==(const CandidateError& other) const {
         return ruleId == other.ruleId &&
@@ -534,12 +534,6 @@ public:
     virtual QString ruleId() const = 0;
     virtual QSet<Upos> anchorUpos() const = 0;
     virtual bool canConflict() const = 0;
-
-    // Шаблон человекочитаемого описания ошибки с плейсхолдерами {KEY}.
-    // Базовая реализация возвращает пустую строку. Подклассы переопределяют
-    // для формирования описания по спецификации (раздел 2.4.3 внешн. спеки).
-    virtual QString descriptionTemplate() const { return QString(); }
-    virtual QSet<QString> messageParamKeys() const { return {}; }
 
     virtual QSet<CandidateError> check(const TokenNode& anchor,
                                        int sentenceIndex,

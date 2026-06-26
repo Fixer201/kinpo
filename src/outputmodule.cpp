@@ -160,25 +160,13 @@ static QString formatFragment(const QList<int>& ids, const SentenceModel& senten
 }
 
 /*!
-* \brief Заменить плейсхолдеры {KEY} в шаблоне.
-*/
-static QString fillTemplate(const QString& templateStr,
-                            const QHash<QString, QString>& params)
-{
-    QString result = templateStr;
-    for (auto it = params.begin(); it != params.end(); ++it)
-        result.replace(QStringLiteral("{") + it.key() + QStringLiteral("}"), it.value());
-    return result;
-}
-
-/*!
 * \brief Строка вывода одной ошибки.
 *
 * Формат: [sent_id] | [ruleId] | [position] | [fragment] | [correction] | [description]
 */
 static QString formatErrorLine(const CandidateError& ce,
                                 const SentenceModel& sentence,
-                                const Rule* rule)
+                                const Rule* /*rule*/)
 {
     QList<int> ids = sortedDisplayIds(ce);
 
@@ -187,15 +175,8 @@ static QString formatErrorLine(const CandidateError& ce,
           << ce.ruleId
           << formatPosition(ids)
           << formatFragment(ids, sentence)
-          << buildCorrection(ce, sentence);
-
-    QString description;
-    if (rule) {
-        QString tmpl = rule->descriptionTemplate();
-        if (!tmpl.isEmpty())
-            description = fillTemplate(tmpl, ce.messageParams);
-    }
-    parts << description;
+          << buildCorrection(ce, sentence)
+          << ce.description;
 
     return parts.join(QStringLiteral(" | "));
 }
