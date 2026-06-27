@@ -178,7 +178,7 @@ QSet<CandidateError> Rule_DET002::check(const TokenNode& anchor,
             edit.type = AtomicEditType::DeleteTokens;
             edit.targetTokenIds = {det->id};
             ce.edits.append(edit);
-            ce.description = QStringLiteral("Артикль и %1 не могут использоваться вместе.").arg(typeLabel);
+            ce.description = QStringLiteral("Два детерминатива не могут использоваться вместе.");
             res.insert(ce);
         }
     }

@@ -148,9 +148,6 @@ QSet<CandidateError> Rule_ART002::check(const TokenNode& anchor,
     if (nounHasDet(noun))
         return res;
 
-    if (noun.upos == Upos::Prop)
-        return res;
-
     if (isTimeException(anchor, noun, runtime))
         return res;
 

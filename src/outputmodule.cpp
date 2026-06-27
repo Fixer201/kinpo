@@ -167,8 +167,7 @@ static QString formatFragment(const QList<int>& ids, const SentenceModel& senten
 * Формат: [sent_id] | [ruleId] | [position] | [fragment] | [correction] | [description]
 */
 static QString formatErrorLine(const CandidateError& ce,
-                                const SentenceModel& sentence,
-                                const Rule* /*rule*/)
+                                const SentenceModel& sentence)
 {
     QList<int> ids = sortedDisplayIds(ce);
 
@@ -213,23 +212,10 @@ static QList<CandidateError> sortErrors(const QSet<CandidateError>& errors,
 }
 
 /*!
-* \brief Найти правило по ruleId в dispatch.
-*/
-static const Rule* findRule(const QString& ruleId, const CheckerRuntime& runtime)
-{
-    for (auto it = runtime.dispatch.begin(); it != runtime.dispatch.end(); ++it)
-        for (const Rule* rule : it.value())
-            if (rule->ruleId() == ruleId)
-                return rule;
-    return nullptr;
-}
-
-/*!
 * \brief Список форматированных строк вывода.
 */
 static QStringList formatErrors(const QSet<CandidateError>& errors,
-                                 const DocumentModel& document,
-                                 const CheckerRuntime& runtime)
+                                 const DocumentModel& document)
 {
     if (errors.isEmpty())
         return {QStringLiteral("NO ERRORS FOUND")};
@@ -245,8 +231,7 @@ static QStringList formatErrors(const QSet<CandidateError>& errors,
             lines.append(ce.sentId + QStringLiteral(" | ") + ce.ruleId
                          + QStringLiteral(" | ???"));
         } else {
-            const Rule* rule = findRule(ce.ruleId, runtime);
-            lines.append(formatErrorLine(ce, *sentence, rule));
+            lines.append(formatErrorLine(ce, *sentence));
         }
     }
     return lines;
@@ -263,7 +248,7 @@ void writeOutput(const QSet<CandidateError>& errors,
                  const DocumentModel& document,
                  const CheckerRuntime& runtime)
 {
-    QStringList lines = formatErrors(errors, document, runtime);
+    QStringList lines = formatErrors(errors, document);
 
     // Атомарная запись: пишем во временный файл, затем переименовываем.
     const QString& outputPath = runtime.config.outputPath;
