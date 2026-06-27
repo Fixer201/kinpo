@@ -66,22 +66,22 @@ Q_DECLARE_METATYPE(Deprel)
 * в buildSentenceModel при построении TokenNode из RawToken.
 */
 enum class Upos {
-    ADJ,      ///< Прилагательное (Adjective)
-    ADP,      ///< Адпозиция (Adposition)
-    ADV,      ///< Наречие (Adverb)
-    AUX,      ///< Вспомогательный глагол (Auxiliary)
-    CCONJ,    ///< Сочинительный союз (Coordinating conjunction)
-    DET,      ///< Детерминатив (Determiner)
-    INTJ,     ///< Междометие (Interjection)
-    NOUN,     ///< Существительное (Noun)
-    NUM,      ///< Числительное (Numeral)
-    PART,     ///< Частица (Particle)
-    PRON,     ///< Местоимение (Pronoun)
-    PROPN,    ///< Имя собственное (Proper noun)
-    PUNCT,    ///< Пунктуация (Punctuation)
-    SCONJ,    ///< Подчинительный союз (Subordinating conjunction)
-    SYM,      ///< Символ (Symbol)
-    VERB,     ///< Глагол (Verb)
+    Adj,      ///< Прилагательное (Adjective)
+    Adp,      ///< Адпозиция (Adposition)
+    Adv,      ///< Наречие (Adverb)
+    Aux,      ///< Вспомогательный глагол (Auxiliary)
+    CConj,    ///< Сочинительный союз (Coordinating conjunction)
+    Det,      ///< Детерминатив (Determiner)
+    Intj,     ///< Междометие (Interjection)
+    Noun,     ///< Существительное (Noun)
+    Num,      ///< Числительное (Numeral)
+    Part,     ///< Частица (Particle)
+    Pron,     ///< Местоимение (Pronoun)
+    Prop,    ///< Имя собственное (Proper noun)
+    Punct,    ///< Пунктуация (Punctuation)
+    SConj,    ///< Подчинительный союз (Subordinating conjunction)
+    Sym,      ///< Символ (Symbol)
+    Verb,     ///< Глагол (Verb)
     X         ///< Прочее (Other)
 };
 Q_DECLARE_METATYPE(Upos)
@@ -308,24 +308,10 @@ struct AtomicEdit {
     int referenceTokenId = 0;
     QStringList newTokens;
 
-    bool operator==(const AtomicEdit& other) const {
-        return type == other.type &&
-               targetTokenIds == other.targetTokenIds &&
-               referenceTokenId == other.referenceTokenId &&
-               newTokens == other.newTokens;
-    }
+    bool operator==(const AtomicEdit& other) const;
 };
 
-inline uint qHash(const AtomicEdit& e, uint seed = 0) noexcept
-{
-    uint h = qHash(static_cast<int>(e.type), seed);
-    for (int id : e.targetTokenIds)
-        h ^= qHash(id, seed) + 0x9e3779b9;
-    h ^= qHash(e.referenceTokenId, seed) + 0x9e3779b9;
-    for (const QString& s : e.newTokens)
-        h ^= qHash(s, seed) + 0x9e3779b9;
-    return h;
-}
+uint qHash(const AtomicEdit& e, uint seed = 0) noexcept;
 
 /*!
 * \struct CandidateError
@@ -339,24 +325,10 @@ struct CandidateError {
     QList<AtomicEdit> edits;    ///< Операции исправления
     QString description;        ///< Готовое человекочитаемое описание ошибки
 
-    bool operator==(const CandidateError& other) const {
-        return ruleId == other.ruleId &&
-               sentId == other.sentId &&
-               conflictTokenIds == other.conflictTokenIds &&
-               edits == other.edits;
-    }
+    bool operator==(const CandidateError& other) const;
 };
 
-inline uint qHash(const CandidateError& ce, uint seed = 0) noexcept
-{
-    uint h = qHash(ce.ruleId, seed);
-    h ^= qHash(ce.sentId, seed) + 0x9e3779b9;
-    for (int id : ce.conflictTokenIds)
-        h ^= qHash(id, seed) + 0x9e3779b9;
-    for (const AtomicEdit& e : ce.edits)
-        h ^= qHash(e, seed) + 0x9e3779b9;
-    return h;
-}
+uint qHash(const CandidateError& ce, uint seed = 0) noexcept;
 
 Q_DECLARE_METATYPE(CandidateError)
 
@@ -457,20 +429,10 @@ struct VerbPrepEntry {
     VerbPrepAction action;                ///< Действие
     std::optional<QString> prep;          ///< Правильный предлог (nullopt для DeletePrep)
 
-    bool operator==(const VerbPrepEntry& other) const {
-        return wrongPrep == other.wrongPrep &&
-               action == other.action &&
-               prep == other.prep;
-    }
+    bool operator==(const VerbPrepEntry& other) const;
 };
 
-inline uint qHash(const VerbPrepEntry& vpe, uint seed = 0) noexcept
-{
-    uint h = qHash(static_cast<int>(vpe.action), seed);
-    if (vpe.wrongPrep) h ^= qHash(*vpe.wrongPrep, seed) + 0x9e3779b9;
-    if (vpe.prep) h ^= qHash(*vpe.prep, seed) + 0x9e3779b9;
-    return h;
-}
+uint qHash(const VerbPrepEntry& vpe, uint seed = 0) noexcept;
 
 /*!
 * \struct RuleResources
@@ -481,13 +443,13 @@ inline uint qHash(const VerbPrepEntry& vpe, uint seed = 0) noexcept
 */
 struct RuleResources {
     QSet<QString> geoThe;          ///< Географические названия, требующие "the" (geo_the.txt)
-    QSet<QString> adjRequiresThe;  ///< ADJ, требующие "the" (adj_requires_the.txt)
+    QSet<QString> adjRequiresThe;  ///< Adj, требующие "the" (adj_requires_the.txt)
     QSet<QString> languages;       ///< Названия языков (languages.txt)
     QSet<QString> sports;          ///< Виды спорта (sports.txt)
     QSet<QString> meals;           ///< Приёмы пищи (meals.txt)
     QSet<QString> titles;          ///< Титулы (titles.txt)
     QSet<QString> uncountable;     ///< Неисчисляемые существительные (uncountable.txt)
-    QSet<QString> propnThe;        ///< PROPN, требующие "the" (propn_with_the.txt)
+    QSet<QString> propnThe;        ///< Prop, требующие "the" (propn_with_the.txt)
     QSet<QString> classifiers;     ///< Слова-классификаторы (classifiers.txt)
     QSet<QString> timeUnits;       ///< Единицы времени (time_units.txt)
     QSet<QString> activityVerbs;   ///< Глаголы активности (activity_verbs.txt)
