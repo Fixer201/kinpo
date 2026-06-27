@@ -115,11 +115,10 @@ QSet<CandidateError> Rule_PREP005::check(const TokenNode& anchor,
 
     // Перебираем все записи для этого глагола
     for (const VerbPrepEntry& entry : it.value()) {
-        if (entry.action == VerbPrepAction::DeletePrep ||
-            entry.action == VerbPrepAction::ReplacePrep) {
+        if ((entry.action == VerbPrepAction::DeletePrep ||
+             entry.action == VerbPrepAction::ReplacePrep) &&
+            entry.wrongPrep.has_value()) {
             // Лишний или неверный предлог: ищем obl с case == wrongPrep
-            if (!entry.wrongPrep.has_value())
-                continue;
             const QString wrongPrepLower = entry.wrongPrep->toLower();
 
             const TokenNode* caseNode = nullptr;

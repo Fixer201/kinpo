@@ -91,14 +91,11 @@ QList<const TokenNode*> collectCentralDets(const TokenNode& noun)
 {
     QList<const TokenNode*> dets;
     for (const TokenNode* child : noun.children) {
-        if (child->deprel == Deprel::Conj)
-            continue;
         const QString lemmaLower = child->lemma.toLower();
-        if (!centralDets.contains(lemmaLower))
-            continue;
-        if (predeterminers.contains(lemmaLower))
-            continue;
-        dets.append(child);
+        if (child->deprel != Deprel::Conj &&
+            centralDets.contains(lemmaLower) &&
+            !predeterminers.contains(lemmaLower))
+            dets.append(child);
     }
     return dets;
 }
@@ -169,21 +166,21 @@ QSet<CandidateError> Rule_DET002::check(const TokenNode& anchor,
             minDet = det;
     }
     for (const TokenNode* det : dets) {
-        if (det == minDet)
-            continue;
-        QString typeLabel = detTypeLabel(det->lemma.toLower());
+        if (det != minDet) {
+            QString typeLabel = detTypeLabel(det->lemma.toLower());
 
-        CandidateError ce;
-        ce.ruleId = QStringLiteral("DET-002");
-        ce.sentId = QStringLiteral("test");
-        ce.displayTokenIds = allDetIds;
-        ce.conflictTokenIds = {det->id};
-        AtomicEdit edit;
-        edit.type = AtomicEditType::DeleteTokens;
-        edit.targetTokenIds = {det->id};
-        ce.edits.append(edit);
-        ce.description = QStringLiteral("Артикль и %1 не могут использоваться вместе.").arg(typeLabel);
-        res.insert(ce);
+            CandidateError ce;
+            ce.ruleId = QStringLiteral("DET-002");
+            ce.sentId = QStringLiteral("test");
+            ce.displayTokenIds = allDetIds;
+            ce.conflictTokenIds = {det->id};
+            AtomicEdit edit;
+            edit.type = AtomicEditType::DeleteTokens;
+            edit.targetTokenIds = {det->id};
+            ce.edits.append(edit);
+            ce.description = QStringLiteral("Артикль и %1 не могут использоваться вместе.").arg(typeLabel);
+            res.insert(ce);
+        }
     }
     return res;
 }

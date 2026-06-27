@@ -113,14 +113,14 @@ bool isAmericaCompound(const TokenNode& head)
         return false;
 
     for (const TokenNode* child : head.children) {
-        if (child->deprel != Deprel::Compound)
-            continue;
-        const QString childLower = child->lemma.isEmpty() ? child->form.toLower() : child->lemma.toLower();
-        if (childLower == QStringLiteral("north") ||
-            childLower == QStringLiteral("south") ||
-            childLower == QStringLiteral("central") ||
-            childLower == QStringLiteral("latin"))
-            return true;
+        if (child->deprel == Deprel::Compound) {
+            const QString childLower = child->lemma.isEmpty() ? child->form.toLower() : child->lemma.toLower();
+            if (childLower == QStringLiteral("north") ||
+                childLower == QStringLiteral("south") ||
+                childLower == QStringLiteral("central") ||
+                childLower == QStringLiteral("latin"))
+                return true;
+        }
     }
     return false;
 }

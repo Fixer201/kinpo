@@ -63,13 +63,13 @@ QSet<CandidateError> Rule_OTHER006::check(const TokenNode& anchor,
     QSet<int> foundThenIds;
 
     for (const TokenNode* child : anchor.children) {
-        if (!child)
-            continue;
-        if (child->lemma.toLower() == QStringLiteral("then")) {
-            foundThenIds.insert(child->id);
-            if (const TokenNode* next = child->nextToken)
-                if (next->lemma.toLower() == QStringLiteral("then"))
-                    foundThenIds.insert(next->id);
+        if (child) {
+            if (child->lemma.toLower() == QStringLiteral("then")) {
+                foundThenIds.insert(child->id);
+                if (const TokenNode* next = child->nextToken)
+                    if (next->lemma.toLower() == QStringLiteral("then"))
+                        foundThenIds.insert(next->id);
+            }
         }
     }
 

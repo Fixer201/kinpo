@@ -72,13 +72,10 @@ bool hasSmallerQualifyingAdj(const TokenNode& anchor, const TokenNode& noun,
                              const CheckerRuntime& runtime)
 {
     for (const TokenNode* child : noun.children) {
-        if (child->id >= anchor.id)
-            continue;
-        if (child->upos != Upos::Adj)
-            continue;
-        if (child->deprel != Deprel::Amod)
-            continue;
-        if (adjSatisfiesCondition(*child, runtime))
+        if (child->id < anchor.id &&
+            child->upos == Upos::Adj &&
+            child->deprel == Deprel::Amod &&
+            adjSatisfiesCondition(*child, runtime))
             return true;
     }
     return false;
@@ -225,18 +222,15 @@ QSet<CandidateError> Rule_ART002a::check(const TokenNode& anchor,
     // Дедупликация: если у NOUN есть другой ADV (most/least) с меньшим id,
     // прикреплённый к подходящему ADJ-amod, срабатывает только ADV с минимальным id
     for (const TokenNode* siblingAdv : noun.children) {
-        if (siblingAdv->id >= anchor.id)
-            continue;
-        if (siblingAdv->upos != Upos::Adv || siblingAdv->deprel != Deprel::Advmod)
-            continue;
         const QString sibLemma = siblingAdv->lemma.toLower();
-        if (sibLemma != QStringLiteral("most") && sibLemma != QStringLiteral("least"))
-            continue;
-        if (!siblingAdv->parent || siblingAdv->parent->upos != Upos::Adj ||
-            siblingAdv->parent->deprel != Deprel::Amod)
-            continue;
-        // Найден ADV с меньшим id, удовлетворяющий условию
-        return res;
+        if (siblingAdv->id < anchor.id &&
+            siblingAdv->upos == Upos::Adv &&
+            siblingAdv->deprel == Deprel::Advmod &&
+            (sibLemma == QStringLiteral("most") || sibLemma == QStringLiteral("least")) &&
+            siblingAdv->parent &&
+            siblingAdv->parent->upos == Upos::Adj &&
+            siblingAdv->parent->deprel == Deprel::Amod)
+            return res;
     }
 
     if (nounHasDet(noun))

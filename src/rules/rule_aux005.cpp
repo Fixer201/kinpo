@@ -59,11 +59,9 @@ const QSet<QString> modalVerbs = {
 bool hasHaveChild(const TokenNode& v)
 {
     for (const TokenNode* child : v.children) {
-        if (child->upos != Upos::Aux)
-            continue;
-        if (child->deprel != Deprel::Aux)
-            continue;
-        if (child->lemma.toLower() == QStringLiteral("have"))
+        if (child->upos == Upos::Aux &&
+            child->deprel == Deprel::Aux &&
+            child->lemma.toLower() == QStringLiteral("have"))
             return true;
     }
     return false;
