@@ -19,7 +19,6 @@
 
 #include <QtTest>
 #include <QObject>
-#include <variant>
 
 #include "TEST_ParseCommandLine.h"
 #include "datamodel.h"
@@ -110,23 +109,28 @@ void TEST_ParseCommandLine::TestParseCommandLine()
     QFETCH(QString, expectedListsDir);
 
     const QString tag = QString(QTest::currentDataTag());
-    std::variant<RunConfig, Diagnostic> result = parseCommandLine(args);
 
     if (expectOk) {
-        if (std::holds_alternative<Diagnostic>(result)) {
-            const Diagnostic& d = std::get<Diagnostic>(result);
+        RunConfig cfg;
+        try {
+            cfg = parseCommandLine(args);
+        } catch (const Diagnostic& d) {
             qDebug() << "[" << tag << "] неожиданная ошибка:" << d.message;
+            QFAIL("parseCommandLine выбросил Diagnostic при корректных аргументах");
         }
-        QVERIFY(std::holds_alternative<RunConfig>(result));
-        const RunConfig& cfg = std::get<RunConfig>(result);
         QCOMPARE(cfg.inputPath, expectedInputPath);
         QCOMPARE(cfg.outputPath, expectedOutputPath);
         QCOMPARE(cfg.listsDir.has_value(), expectListsDir);
         if (expectListsDir)
             QCOMPARE(cfg.listsDir.value(), expectedListsDir);
     } else {
-        QVERIFY(std::holds_alternative<Diagnostic>(result));
-        const Diagnostic& d = std::get<Diagnostic>(result);
-        QCOMPARE(d.kind, DiagnosticKind::CliUsageError);
+        bool caught = false;
+        try {
+            parseCommandLine(args);
+        } catch (const Diagnostic& d) {
+            caught = true;
+            QCOMPARE(d.kind, DiagnosticKind::CliUsageError);
+        }
+        QVERIFY2(caught, qPrintable(QStringLiteral("[%1] ожидалось исключение Diagnostic").arg(tag)));
     }
 }

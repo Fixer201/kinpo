@@ -39,29 +39,20 @@ int main(int argc, char *argv[])
 {
     QCoreApplication app(argc, argv);
 
-    // Настройка: аргументы CLI + инициализация runtime
-    auto setupResult = runSetup(app.arguments().mid(1));
-    if (std::holds_alternative<Diagnostic>(setupResult)) {
-        printDiagnostic(std::get<Diagnostic>(setupResult));
-        return 1;
-    }
-    const CheckerRuntime& runtime = std::get<CheckerRuntime>(setupResult);
+    try {
+        // Настройка: аргументы CLI + инициализация runtime
+        const CheckerRuntime runtime = runSetup(app.arguments().mid(1));
 
-    // Ввод: чтение файла + парсинг + построение модели
-    auto inputResult = runInput(runtime);
-    if (std::holds_alternative<Diagnostic>(inputResult)) {
-        printDiagnostic(std::get<Diagnostic>(inputResult));
-        return 1;
-    }
-    const DocumentModel& document = std::get<DocumentModel>(inputResult);
+        // Ввод: чтение файла + парсинг + построение модели
+        const DocumentModel document = runInput(runtime);
 
-    // Анализ: проверка всех предложений правилами
-    QSet<CandidateError> errors = runAnalysis(document, runtime);
+        // Анализ: проверка всех предложений правилами
+        const QSet<CandidateError> errors = runAnalysis(document, runtime);
 
-    // Вывод: форматирование и запись результата
-    auto writeResult = writeOutput(errors, document, runtime);
-    if (writeResult.has_value()) {
-        printDiagnostic(writeResult.value());
+        // Вывод: форматирование и запись результата
+        writeOutput(errors, document, runtime);
+    } catch (const Diagnostic& d) {
+        printDiagnostic(d);
         return 1;
     }
 

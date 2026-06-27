@@ -12,13 +12,11 @@
 
 #include <QtTest>
 #include <QObject>
-#include <optional>
 
 #include "TEST_ValidateSentenceStructure.h"
 #include "datamodel.h"
+#include "inputmodule.h"
 #include "auxiliaryfunctionsfortesting.h"
-
-std::optional<Diagnostic> validateSentenceStructure(const RawSentence& sentence);
 
 TEST_ValidateSentenceStructure::TEST_ValidateSentenceStructure() {}
 TEST_ValidateSentenceStructure::~TEST_ValidateSentenceStructure() {}
@@ -177,11 +175,28 @@ void TEST_ValidateSentenceStructure::TestValidateSentenceStructure()
     QFETCH(bool, expectValid);
     QFETCH(QString, expectedMessage);
 
-    // Вызов тестируемой функции
-    auto result = ::validateSentenceStructure(sentence);
     const QString tag = QString(QTest::currentDataTag());
 
-    // Сравниваем результат с ожидаемым через хелпер.
-    // При ожидании успеха, но получении ошибки — хелпер выведет сообщение в qDebug.
-    compareOptionalDiagnostic(tag, result, expectValid, expectedMessage);
+    if (expectValid) {
+        try {
+            validateSentenceStructure(sentence);
+        } catch (const Diagnostic& d) {
+            qDebug() << "[TEST FAIL] Неожиданная ошибка валидации:" << tag << d.message;
+            QFAIL("validateSentenceStructure выбросил Diagnostic при валидном предложении");
+        }
+    } else {
+        bool caught = false;
+        try {
+            validateSentenceStructure(sentence);
+        } catch (const Diagnostic& d) {
+            caught = true;
+            if (d.message != expectedMessage) {
+                qDebug() << "[TEST FAIL]" << tag
+                         << "сообщения не совпадают:" << d.message
+                         << "!=" << expectedMessage;
+            }
+            QCOMPARE(d.message, expectedMessage);
+        }
+        QVERIFY2(caught, qPrintable(QStringLiteral("[%1] ожидалось исключение Diagnostic").arg(tag)));
+    }
 }

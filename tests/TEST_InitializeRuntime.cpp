@@ -1,6 +1,5 @@
 #include <QtTest>
 #include <QObject>
-#include <variant>
 
 #include "TEST_InitializeRuntime.h"
 #include "datamodel.h"
@@ -38,11 +37,14 @@ void TEST_InitializeRuntime::TestInitializeRuntime()
     config.outputPath = QStringLiteral("output.txt");
     config.listsDir = listsDir;
 
-    std::variant<CheckerRuntime, Diagnostic> result = initializeRuntime(config);
-
     if (shouldSucceed) {
-        QVERIFY(std::holds_alternative<CheckerRuntime>(result));
-        const CheckerRuntime& rt = std::get<CheckerRuntime>(result);
+        CheckerRuntime rt;
+        try {
+            rt = initializeRuntime(config);
+        } catch (const Diagnostic& d) {
+            qDebug() << "[TEST FAIL] initializeRuntime выбросил исключение:" << d.message;
+            QFAIL("initializeRuntime должен был успешно инициализировать runtime");
+        }
 
         // dispatch должен быть непустым
         QVERIFY(rt.dispatch.size() > 0);
@@ -60,8 +62,13 @@ void TEST_InitializeRuntime::TestInitializeRuntime()
         QCOMPARE(rt.config.outputPath, config.outputPath);
     } else {
         // Ожидаем Diagnostic — словари не загрузились
-        QVERIFY(std::holds_alternative<Diagnostic>(result));
-        const Diagnostic& d = std::get<Diagnostic>(result);
-        QCOMPARE(d.kind, DiagnosticKind::ResourceLoadError);
+        bool caught = false;
+        try {
+            initializeRuntime(config);
+        } catch (const Diagnostic& d) {
+            caught = true;
+            QCOMPARE(d.kind, DiagnosticKind::ResourceLoadError);
+        }
+        QVERIFY(caught);
     }
 }

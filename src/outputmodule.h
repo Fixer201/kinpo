@@ -11,8 +11,6 @@
 #include "datamodel.h"
 #include <QSet>
 #include <QStringList>
-#include <optional>
-#include <variant>
 
 // Применяет edits к displayTokenIds и возвращает строку исправления.
 // Конкатенирует FORM оставшихся и добавленных токенов через пробел.
@@ -21,7 +19,7 @@ QString buildCorrection(const CandidateError& ce,
 
 // Форматирует все найденные ошибки в строки и записывает выходной файл.
 // При отсутствии ошибок пишет "NO ERRORS FOUND".
-// Возвращает nullopt при успехе или Diagnostic{OutputWriteError} при ошибке записи.
-std::optional<Diagnostic> writeOutput(const QSet<CandidateError>& errors,
-                                      const DocumentModel& document,
-                                      const CheckerRuntime& runtime);
+// При ошибке записи выбрасывает Diagnostic{OutputWriteError}.
+void writeOutput(const QSet<CandidateError>& errors,
+                 const DocumentModel& document,
+                 const CheckerRuntime& runtime);

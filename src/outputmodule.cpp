@@ -65,43 +65,43 @@ QString buildCorrection(const CandidateError& ce,
     // 2. Применяем правки
     for (const AtomicEdit& edit : ce.edits) {
         switch (edit.type) {
-        case AtomicEditType::DeleteTokens: {
-            QSet<int> toDelete(edit.targetTokenIds.begin(), edit.targetTokenIds.end());
-            QList<CorrectionElem> kept;
-            for (const CorrectionElem& e : elems)
-                if (!toDelete.contains(e.originalId))
-                    kept.append(e);
-            elems = kept;
-            break;
-        }
-        case AtomicEditType::ReplaceTokens: {
-            QSet<int> toReplace(edit.targetTokenIds.begin(), edit.targetTokenIds.end());
-            QString replacement = edit.newTokens.isEmpty() ? QString() : edit.newTokens.first();
-            for (CorrectionElem& e : elems)
-                if (toReplace.contains(e.originalId))
-                    e.text = replacement;
-            break;
-        }
-        case AtomicEditType::InsertBefore: {
-            int idx = -1;
-            for (int i = 0; i < elems.size() && idx < 0; ++i)
-                if (elems[i].originalId == edit.referenceTokenId)
-                    idx = i;
-            if (idx >= 0)
-                for (int j = edit.newTokens.size() - 1; j >= 0; --j)
-                    elems.insert(idx, {0, edit.newTokens[j]});
-            break;
-        }
-        case AtomicEditType::InsertAfter: {
-            int idx = -1;
-            for (int i = 0; i < elems.size() && idx < 0; ++i)
-                if (elems[i].originalId == edit.referenceTokenId)
-                    idx = i;
-            if (idx >= 0)
-                for (int j = 0; j < edit.newTokens.size(); ++j)
-                    elems.insert(idx + 1 + j, {0, edit.newTokens[j]});
-            break;
-        }
+            case AtomicEditType::DeleteTokens: {
+                QSet<int> toDelete(edit.targetTokenIds.begin(), edit.targetTokenIds.end());
+                QList<CorrectionElem> kept;
+                for (const CorrectionElem& e : elems)
+                    if (!toDelete.contains(e.originalId))
+                        kept.append(e);
+                elems = kept;
+                break;
+            }
+            case AtomicEditType::ReplaceTokens: {
+                QSet<int> toReplace(edit.targetTokenIds.begin(), edit.targetTokenIds.end());
+                QString replacement = edit.newTokens.isEmpty() ? QString() : edit.newTokens.first();
+                for (CorrectionElem& e : elems)
+                    if (toReplace.contains(e.originalId))
+                        e.text = replacement;
+                break;
+            }
+            case AtomicEditType::InsertBefore: {
+                int idx = -1;
+                for (int i = 0; i < elems.size() && idx < 0; ++i)
+                    if (elems[i].originalId == edit.referenceTokenId)
+                        idx = i;
+                if (idx >= 0)
+                    for (int j = edit.newTokens.size() - 1; j >= 0; --j)
+                        elems.insert(idx, {0, edit.newTokens[j]});
+                break;
+            }
+            case AtomicEditType::InsertAfter: {
+                int idx = -1;
+                for (int i = 0; i < elems.size() && idx < 0; ++i)
+                    if (elems[i].originalId == edit.referenceTokenId)
+                        idx = i;
+                if (idx >= 0)
+                    for (int j = 0; j < edit.newTokens.size(); ++j)
+                        elems.insert(idx + 1 + j, {0, edit.newTokens[j]});
+                break;
+            }
         }
     }
 
@@ -254,12 +254,15 @@ static QStringList formatErrors(const QSet<CandidateError>& errors,
 }
 
 /*!
-* \brief Записать отформатированные строки в выходной файл.
-* \return std::nullopt при успехе, Diagnostic{OutputWriteError} при ошибке.
+* \brief Записать отформатированные ошибки в выходной файл.
+* \param [in] errors Набор найденных ошибок.
+* \param [in] document Модель документа для доступа к предложениям.
+* \param [in] runtime Runtime-контекст с путём к выходному файлу.
+* \throws Diagnostic{OutputWriteError} при ошибке записи.
 */
-std::optional<Diagnostic> writeOutput(const QSet<CandidateError>& errors,
-                                      const DocumentModel& document,
-                                      const CheckerRuntime& runtime)
+void writeOutput(const QSet<CandidateError>& errors,
+                 const DocumentModel& document,
+                 const CheckerRuntime& runtime)
 {
     QStringList lines = formatErrors(errors, document, runtime);
 
@@ -274,7 +277,7 @@ std::optional<Diagnostic> writeOutput(const QSet<CandidateError>& errors,
         d.message = QStringLiteral("Невозможно создать выходной файл: %1")
                      .arg(outputPath);
         d.code = -1;
-        return d;
+        throw d;
     }
 
     QTextStream out(&tmpFile);
@@ -295,7 +298,7 @@ std::optional<Diagnostic> writeOutput(const QSet<CandidateError>& errors,
             d.message = QStringLiteral("Невозможно заменить выходной файл: %1")
                          .arg(outputPath);
             d.code = -1;
-            return d;
+            throw d;
         }
     }
 
@@ -306,8 +309,6 @@ std::optional<Diagnostic> writeOutput(const QSet<CandidateError>& errors,
         d.message = QStringLiteral("Невозможно завершить запись выходного файла: %1")
                      .arg(outputPath);
         d.code = -1;
-        return d;
+        throw d;
     }
-
-    return std::nullopt;
 }

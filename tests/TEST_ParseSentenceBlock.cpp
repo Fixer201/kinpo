@@ -10,7 +10,6 @@
 
 #include <QtTest>
 #include <QObject>
-#include <variant>
 
 #include "TEST_ParseSentenceBlock.h"
 #include "datamodel.h"
@@ -220,24 +219,17 @@ void TEST_ParseSentenceBlock::TestParseSentenceBlock()
     QFETCH(QString, expectedErrorKind);
     QFETCH(QString, expectedErrorMessage);
 
-    // Вызов тестируемой функции
-    auto result = parseSentenceBlock(block, firstLineNumber);
     const QString tag = QString(QTest::currentDataTag());
 
     if (expectedErrorKind.isEmpty()) {
         // Ожидаем успешный разбор
-        if (std::holds_alternative<Diagnostic>(result)) {
-            // Если пришла ошибка вместо RawSentence выводим её
-            const Diagnostic& d = std::get<Diagnostic>(result);
+        RawSentence rs;
+        try {
+            rs = parseSentenceBlock(block, firstLineNumber);
+        } catch (const Diagnostic& d) {
             qDebug() << "[TEST] " << tag << " - неожиданная диагностическая ошибка:" << d.message;
+            QFAIL("parseSentenceBlock выбросил Diagnostic при корректном блоке");
         }
-        // Проверяем, что функция действительно вернула RawSentence,
-        // а не Diagnostic с ошибкой. Если тут падает, значит
-        // входные данные в тесте сломаны, либо в реализации parseSentenceBlock баг
-        QVERIFY(std::holds_alternative<RawSentence>(result));
-
-        // Получаем ссылку на RawSentence
-        const RawSentence& rs = std::get<RawSentence>(result);
 
         // Сравниваем sentId, text, количество токенов, FORM первого токена
         // и UPOS последнего токена с ожидаемыми значениями из DDT-таблицы.
@@ -250,16 +242,18 @@ void TEST_ParseSentenceBlock::TestParseSentenceBlock()
         // expectedMwtCount = 0 для блоков без MWT, > 0 для блоков с MWT.
         QCOMPARE(rs.mwtRecords.size(), expectedMwtCount);
     } else {
-        // Проверяем, что функция вернула Diagnostic (а не RawSentence).
+        // Проверяем, что функция выбросила Diagnostic.
         // Если тут падает, значит тест неправильно ожидает ошибку:
         // либо входные данные валидны, либо баг в тесте.
-        QVERIFY(std::holds_alternative<Diagnostic>(result));
-
-        // Получаем ссылку на Diagnostic
-        const Diagnostic& d = std::get<Diagnostic>(result);
-
-        // Сравниваем категорию ошибки (InputFormatError) и текст сообщения
-        // с ожидаемыми значениями из DDT-таблицы.
-        compareDiagnostic(tag, d, expectedErrorKind, expectedErrorMessage);
+        bool caught = false;
+        try {
+            parseSentenceBlock(block, firstLineNumber);
+        } catch (const Diagnostic& d) {
+            caught = true;
+            // Сравниваем категорию ошибки и текст сообщения
+            // с ожидаемыми значениями из DDT-таблицы.
+            compareDiagnostic(tag, d, expectedErrorKind, expectedErrorMessage);
+        }
+        QVERIFY(caught);
     }
 }

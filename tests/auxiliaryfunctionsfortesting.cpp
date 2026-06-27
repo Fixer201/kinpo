@@ -192,28 +192,6 @@ void compareDiagnostic(const QString& testName,
     QCOMPARE(actual.message, expectedMessage);
 }
 
-void compareOptionalDiagnostic(const QString& testName,
-                                const std::optional<Diagnostic>& actual,
-                                bool expectValid,
-                                const QString& expectedMessage)
-{
-    if (expectValid) {
-        if (actual.has_value()) {
-            qDebug() << "[TEST FAIL] Неожиданная ошибка валидации:" << testName << actual->message;
-        }
-        QVERIFY(!actual.has_value());
-    } else {
-        QVERIFY(actual.has_value());
-
-        if (actual->message != expectedMessage) {
-            qDebug() << "[TEST FAIL]" << testName
-                     << "сообщеиня не совпадают:" << actual->message
-                     << "!=" << expectedMessage;
-        }
-        QCOMPARE(actual->message, expectedMessage);
-    }
-}
-
 // =====================================================================
 // Вспомогательные функции сравнения CandidateError / QSet<CandidateError>
 // =====================================================================

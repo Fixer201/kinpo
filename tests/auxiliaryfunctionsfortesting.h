@@ -13,7 +13,6 @@
 #include <QStringList>
 #include <QSet>
 #include <QTest>
-#include <optional>
 #include "datamodel.h"
 #include "checkersystem.h"
 #include "wordlists.h"
@@ -173,21 +172,6 @@ void compareDiagnostic(const QString& /*testName*/,
                        const Diagnostic& actual,
                        const QString& expectedKind,
                        const QString& expectedMessage);
-
-/*!
-* \brief Сравнивает std::optional<Diagnostic> с ожидаемым результатом.
-* \param [in] testName       Имя текущего теста (для логирования).
-* \param [in] actual         Фактический результат (nullopt или Diagnostic).
-* \param [in] expectValid    true если ожидается std::nullopt, false если ожидается ошибка.
-* \param [in] expectedMessage Ожидаемое сообщение об ошибке (игнорируется при expectValid=true).
-*
-* При ожидании успеха, но получении ошибки выводит сообщение ошибки в qDebug.
-* При ожидании ошибки проверяет наличие значения и совпадение сообщения.
-*/
-void compareOptionalDiagnostic(const QString& /*testName*/,
-                                const std::optional<Diagnostic>& actual,
-                                bool expectValid,
-                                const QString& expectedMessage);
 
 // =====================================================================
 // Хелперы сравнения CandidateError / QSet<CandidateError>
