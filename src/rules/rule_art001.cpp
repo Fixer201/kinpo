@@ -12,6 +12,7 @@
 #include <QSet>
 #include <QStringList>
 #include <algorithm>
+#include <QDebug>
 
 const Rule_ART001& Rule_ART001::instance()
 {
@@ -103,18 +104,35 @@ bool hasClassifierInGroup(const TokenNode& head, const QSet<QString>& classifier
 * \return true если головной токен имеет lemma/form «america» и среди
 *         зависимых с DEPREL=Compound есть lemma ∈ {north, south, central, latin}.
 *
-* Уточнение внешн. спецификации ART-001: составные с America не требуют
-* артикля, исключения 5–7 к ним не применяются.
+* Уточнение внешн. спецификации ART-001: составные с America
+* не требуют артикля, поэтому исключения 5–7 к ним не применяются.
+* Вызывающий код использует флаг для пропуска исключений 5–7,
+* но сама ошибка ART-001 срабатывает.
 */
 bool isAmericaCompound(const TokenNode& head)
 {
-    const QString headLower = head.lemma.isEmpty() ? head.form.toLower() : head.lemma.toLower();
+    // Берём lemma головного PROPN. Если lemma пуста — используем form.
+    // Оба значения приводятся к нижнему регистру для сравнения без учёта регистра.
+    const QString headLower = head.lemma.isEmpty()
+        ? head.form.toLower() : head.lemma.toLower();
+
+    // Головной токен группы PROPN должен иметь lemma «america».
+    // Без этого условия группа не является America-составным.
     if (headLower != QStringLiteral("america"))
         return false;
 
+    // Составной модификатор направления: North, South, Central или Latin.
+    // Перебираем прямых зависимых головного PROPN.
+    // Интересуют только токены с DEPREL=Compound именно через эту связь
+    // в UD-дереве оформляются составные географические названия.
     for (const TokenNode* child : head.children) {
         if (child->deprel == Deprel::Compound) {
-            const QString childLower = child->lemma.isEmpty() ? child->form.toLower() : child->lemma.toLower();
+            // Приводим lemma/form зависимого к нижнему регистру.
+            const QString childLower = child->lemma.isEmpty()
+                ? child->form.toLower() : child->lemma.toLower();
+
+            // Если зависимый — одно из четырёх направлений,
+            // группа PROPN является America-составным.
             if (childLower == QStringLiteral("north") ||
                 childLower == QStringLiteral("south") ||
                 childLower == QStringLiteral("central") ||
@@ -122,6 +140,9 @@ bool isAmericaCompound(const TokenNode& head)
                 return true;
         }
     }
+
+    // Ни один Compound-зависимый не является модификатором направления.
+    // Группа PROPN — не America-составное.
     return false;
 }
 
@@ -186,22 +207,21 @@ QSet<CandidateError> Rule_ART001::check(const TokenNode& anchor,
     if (isSpecialTitle(propn.form))
         return res;
 
-    // Уточнение: составные с America (North/South/Central/Latin America)
-    // не требуют артикля. Исключения 5–7 к ним не применяются.
-    if (isAmericaCompound(propn))
+    // Составные с America не требуют артикля — исключения 5–7
+    // к ним не применяются. Флаг isAmerica используется ниже
+    // для пропуска этих исключений.
+    const bool isAmerica = isAmericaCompound(propn);
+
+    // Исключение 5: N.Number=Plur и D.LEMMA=the
+    if (!isAmerica && propn.features.number == NumberValue::Plur)
         return res;
 
-    // Исключение 5: N.Number=Plur и D.LEMMA=the (the Smiths, the Beatles).
-    if (propn.features.number == NumberValue::Plur)
+    // Исключение 6: классификатор в группе PROPN
+    if (!isAmerica && hasClassifierInGroup(propn, runtime.resources.classifiers))
         return res;
 
-    // Исключение 6: среди прямых зависимых N или соседних токенов в группе PROPN
-    // есть токен с LEMMA из classifiers.txt и D.LEMMA=the
-    if (hasClassifierInGroup(propn, runtime.resources.classifiers))
-        return res;
-
-    // Исключение 7: N.LEMMA из propn_with_the.txt и D.LEMMA=the
-    if (runtime.resources.propnThe.contains(propnFormLower))
+    // Исключение 7: N.LEMMA из propn_with_the.txt
+    if (!isAmerica && runtime.resources.propnThe.contains(propnFormLower))
         return res;
 
     // Ошибка подтверждена

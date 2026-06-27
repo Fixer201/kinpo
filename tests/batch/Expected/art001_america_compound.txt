@@ -1,1 +1,1 @@
-NO ERRORS FOUND
+art001 | ART-001 | 1, 3 | the America | America | Артикль не используется перед именем собственным.
