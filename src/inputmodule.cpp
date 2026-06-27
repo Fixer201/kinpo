@@ -28,80 +28,96 @@ const QSet<QString> validUpos = {
 };
 
 /*!
-* \brief Разобрать строку обычного токена CoNLL-U.
-* \param [in] line Исходная строка (10 колонок через \t).
-* \param [in] lineNumber Номер строки во входном файле (для диагностики).
-* \param [in,out] expectedNextId Ожидаемый следующий ID (проверка порядка 1,2,3...).
-* \return RawToken при успехе, или Diagnostic{kind=InputFormatError} при ошибке.
-*
-* Проверяет: ровно 10 колонок, целочисленный ID >= 1, HEAD целое >= 0,
-* UPOS в справочнике, FORM не пустое, строгий порядок ID.
+* \brief Проверить, что строка содержит ровно 10 колонок.
+* \param [in] cols Колонки, полученные разбиением строки по табуляции.
+* \param [in] lineNumber Номер строки во входном файле.
+* \return Diagnostic при ошибке, std::nullopt при успехе.
 */
-std::variant<RawToken, Diagnostic> parseTokenLine(
-    const QString& line, int lineNumber, int& expectedNextId)
+void validateColumnCount(const QStringList& cols, int lineNumber)
 {
-    // Разбиваем строку по табуляциям  должно получиться ровно 10 колонок
-    QStringList cols = line.split('\t');
-    if (cols.size() != 10) {
-        return Diagnostic{
-            DiagnosticKind::InputFormatError,
-            lineNumber,
-            std::nullopt,
-            QStringLiteral("Ожидается 10 колонок, найдено %1").arg(cols.size()),
-            -1
-        };
-    }
+    if (cols.size() == 10)
+        return;
+    throw Diagnostic{
+        DiagnosticKind::InputFormatError,
+        lineNumber,
+        std::nullopt,
+        QStringLiteral("Ожидается 10 колонок, найдено %1").arg(cols.size()),
+        -1
+    };
+}
 
-    // Парсим ID: должен быть целым числом >= 1
+/*!
+* \brief Разобрать целочисленную колонку с проверкой минимума.
+* \param [in] value Строковое значение колонки.
+* \param [in] lineNumber Номер строки во входном файле.
+* \param [in] minValue Минимально допустимое значение.
+* \param [in] errorMessage Сообщение об ошибке при нарушении условия.
+* \return Целое значение при успехе, Diagnostic при ошибке.
+*/
+int parseIntColumn(const QString& value, int lineNumber,
+                   int minValue, const QString& errorMessage)
+{
     bool ok = false;
-    int id = cols[0].toInt(&ok);
-    if (!ok || id < 1) {
-        return Diagnostic{
+    int result = value.toInt(&ok);
+    if (!ok || result < minValue) {
+        throw Diagnostic{
             DiagnosticKind::InputFormatError,
             lineNumber,
             std::nullopt,
-            QStringLiteral("Некорректный ID"),
+            errorMessage,
             -1
         };
     }
+    return result;
+}
 
-    // Парсим HEAD: должен быть целым числом >= 0
-    int head = cols[6].toInt(&ok);
-    if (!ok || head < 0) {
-        return Diagnostic{
-            DiagnosticKind::InputFormatError,
-            lineNumber,
-            std::nullopt,
-            QStringLiteral("Некорректный HEAD"),
-            -1
-        };
-    }
+/*!
+* \brief Проверить, что UPOS входит в справочник допустимых значений.
+* \param [in] upos Строковое значение UPOS.
+* \param [in] lineNumber Номер строки во входном файле.
+* \return Diagnostic при ошибке, std::nullopt при успехе.
+*/
+void validateUposValue(const QString& upos, int lineNumber)
+{
+    if (validUpos.contains(upos))
+        return;
+    throw Diagnostic{
+        DiagnosticKind::InputFormatError,
+        lineNumber,
+        std::nullopt,
+        QStringLiteral("Некорректный UPOS"),
+        -1
+    };
+}
 
-    // Проверяем UPOS: должен быть в списке допустимых значений
-    if (!validUpos.contains(cols[3])) {
-        return Diagnostic{
-            DiagnosticKind::InputFormatError,
-            lineNumber,
-            std::nullopt,
-            QStringLiteral("Некорректный UPOS"),
-            -1
-        };
-    }
+/*!
+* \brief Проверить, что колонка FORM не пуста.
+* \param [in] form Строковое значение FORM.
+* \param [in] lineNumber Номер строки во входном файле.
+*/
+void validateFormValue(const QString& form, int lineNumber)
+{
+    if (!form.isEmpty())
+        return;
+    throw Diagnostic{
+        DiagnosticKind::InputFormatError,
+        lineNumber,
+        std::nullopt,
+        QStringLiteral("Колонка FORM не может быть пустой"),
+        -1
+    };
+}
 
-    // Проверяем FORM: не должен быть пустым
-    if (cols[1].isEmpty()) {
-        return Diagnostic{
-            DiagnosticKind::InputFormatError,
-            lineNumber,
-            std::nullopt,
-            QStringLiteral("Колонка FORM не может быть пустой"),
-            -1
-        };
-    }
-
-    // Проверяем порядок ID: должен строго следовать 1, 2, 3...
+/*!
+* \brief Проверить строгий порядок ID: 1, 2, 3...
+* \param [in] id Текущий ID токена.
+* \param [in,out] expectedNextId Ожидаемый следующий ID.
+* \param [in] lineNumber Номер строки во входном файле.
+*/
+void validateIdOrder(int id, int& expectedNextId, int lineNumber)
+{
     if (id != expectedNextId) {
-        return Diagnostic{
+        throw Diagnostic{
             DiagnosticKind::InputFormatError,
             lineNumber,
             std::nullopt,
@@ -109,10 +125,19 @@ std::variant<RawToken, Diagnostic> parseTokenLine(
             -1
         };
     }
-    // Сдвигаем ожидаемый ID для следующего токена
     expectedNextId = id + 1;
+}
 
-    // Заполняем структуру RawToken из распарсенных колонок
+/*!
+* \brief Собрать RawToken из уже проверенных колонок.
+* \param [in] cols Колонки исходной строки.
+* \param [in] lineNumber Номер строки во входном файле.
+* \param [in] id Распарсенный ID токена.
+* \param [in] head Распарсенный HEAD токена.
+* \return Заполненная структура RawToken.
+*/
+RawToken assembleRawToken(const QStringList& cols, int lineNumber, int id, int head)
+{
     RawToken token;
     token.lineNumber = lineNumber;
     token.id = id;
@@ -129,6 +154,33 @@ std::variant<RawToken, Diagnostic> parseTokenLine(
 }
 
 /*!
+* \brief Разобрать строку обычного токена CoNLL-U.
+* \param [in] line Исходная строка (10 колонок через \t).
+* \param [in] lineNumber Номер строки во входном файле (для диагностики).
+* \param [in,out] expectedNextId Ожидаемый следующий ID (проверка порядка 1,2,3...).
+* \return RawToken при успехе, или Diagnostic{kind=InputFormatError} при ошибке.
+*
+* Проверяет: ровно 10 колонок, целочисленный ID >= 1, HEAD целое >= 0,
+* UPOS в справочнике, FORM не пустое, строгий порядок ID.
+*/
+RawToken parseTokenLine(const QString& line, int lineNumber, int& expectedNextId)
+{
+    QStringList cols = line.split('\t');
+    validateColumnCount(cols, lineNumber);
+
+    const int id = parseIntColumn(cols[0], lineNumber, 1,
+                                  QStringLiteral("Некорректный ID"));
+    const int head = parseIntColumn(cols[6], lineNumber, 0,
+                                    QStringLiteral("Некорректный HEAD"));
+
+    validateUposValue(cols[3], lineNumber);
+    validateFormValue(cols[1], lineNumber);
+    validateIdOrder(id, expectedNextId, lineNumber);
+
+    return assembleRawToken(cols, lineNumber, id, head);
+}
+
+/*!
 * \brief Разобрать строку MWT (Multi-Word Token) в формате CoNLL-U.
 * \param [in] line Исходная строка (ID = N-M, 10 колонок).
 * \param [in] lineNumber Номер строки во входном файле (для диагностики).
@@ -137,12 +189,11 @@ std::variant<RawToken, Diagnostic> parseTokenLine(
 * Проверяет: ровно 10 колонок, ID вида N-M с N < M,
 * все колонки кроме ID и FORM содержат '_'.
 */
-std::variant<MwtRecord, Diagnostic> parseMwtLine(
-    const QString& line, int lineNumber)
+MwtRecord parseMwtLine(const QString& line, int lineNumber)
 {
     QStringList cols = line.split('\t');
     if (cols.size() != 10) {
-        return Diagnostic{
+        throw Diagnostic{
             DiagnosticKind::InputFormatError,
             lineNumber,
             std::nullopt,
@@ -153,7 +204,7 @@ std::variant<MwtRecord, Diagnostic> parseMwtLine(
 
     QStringList parts = cols[0].split('-');
     if (parts.size() != 2) {
-        return Diagnostic{
+        throw Diagnostic{
             DiagnosticKind::InputFormatError,
             lineNumber,
             std::nullopt,
@@ -166,7 +217,7 @@ std::variant<MwtRecord, Diagnostic> parseMwtLine(
     int rangeStart = parts[0].toInt(&ok1);
     int rangeEnd = parts[1].toInt(&ok2);
     if (!ok1 || !ok2 || rangeStart >= rangeEnd) {
-        return Diagnostic{
+        throw Diagnostic{
             DiagnosticKind::InputFormatError,
             lineNumber,
             std::nullopt,
@@ -175,10 +226,9 @@ std::variant<MwtRecord, Diagnostic> parseMwtLine(
         };
     }
 
-    std::optional<Diagnostic> mwtError;
     for (int i = 2; i < cols.size(); ++i) {
-        if (!mwtError.has_value() && cols[i] != QStringLiteral("_")) {
-            mwtError = Diagnostic{
+        if (cols[i] != QStringLiteral("_")) {
+            throw Diagnostic{
                 DiagnosticKind::InputFormatError,
                 lineNumber,
                 std::nullopt,
@@ -187,8 +237,6 @@ std::variant<MwtRecord, Diagnostic> parseMwtLine(
             };
         }
     }
-    if (mwtError.has_value())
-        return mwtError.value();
 
     MwtRecord rec;
     rec.lineNumber = lineNumber;
@@ -233,8 +281,7 @@ QHash<int, const RawToken*> buildTokenIndex(const RawSentence& sentence)
 
 } // namespace
 
-std::variant<RawSentence, Diagnostic> parseSentenceBlock(
-    const QStringList& block, int firstLineNumber)
+RawSentence parseSentenceBlock(const QStringList& block, int firstLineNumber)
 {
     RawSentence sentence;
     sentence.firstLineNumber = firstLineNumber;
@@ -248,15 +295,14 @@ std::variant<RawSentence, Diagnostic> parseSentenceBlock(
         int lineNumber = firstLineNumber + i;
 
         // Пропускаем пустые строки внутри блока
-        if (line.isEmpty()) {
+        if (line.isEmpty())
             continue;
-        }
 
         // Обрабатываем комментарии (строки, начинающиеся с '#')
         if (line.startsWith('#')) {
             // Комментарий должен начинаться с "# ", иначе это ошибка формата
             if (!line.startsWith(QStringLiteral("# "))) {
-                return Diagnostic{
+                throw Diagnostic{
                     DiagnosticKind::InputFormatError,
                     lineNumber,
                     std::nullopt,
@@ -279,7 +325,7 @@ std::variant<RawSentence, Diagnostic> parseSentenceBlock(
 
         // Строка данных — должна содержать табуляции (токен или MWT)
         if (!line.contains('\t')) {
-            return Diagnostic{
+            throw Diagnostic{
                 DiagnosticKind::InputFormatError,
                 lineNumber,
                 std::nullopt,
@@ -294,24 +340,16 @@ std::variant<RawSentence, Diagnostic> parseSentenceBlock(
 
         if (firstCol.contains('-')) {
             // Разбираем MWT и добавляем в список
-            auto mwtResult = parseMwtLine(line, lineNumber);
-            if (std::holds_alternative<Diagnostic>(mwtResult)) {
-                return std::get<Diagnostic>(mwtResult);
-            }
-            sentence.mwtRecords.append(std::get<MwtRecord>(mwtResult));
+            sentence.mwtRecords.append(parseMwtLine(line, lineNumber));
         } else {
             // Разбираем обычный токен и добавляем в список
-            auto tokenResult = parseTokenLine(line, lineNumber, expectedNextId);
-            if (std::holds_alternative<Diagnostic>(tokenResult)) {
-                return std::get<Diagnostic>(tokenResult);
-            }
-            sentence.tokens.append(std::get<RawToken>(tokenResult));
+            sentence.tokens.append(parseTokenLine(line, lineNumber, expectedNextId));
         }
     }
 
     // Проверяем, что в блоке были обязательные комментарии
     if (!hasSentId) {
-        return Diagnostic{
+        throw Diagnostic{
             DiagnosticKind::InputFormatError,
             firstLineNumber,
             std::nullopt,
@@ -321,7 +359,7 @@ std::variant<RawSentence, Diagnostic> parseSentenceBlock(
     }
 
     if (!hasText) {
-        return Diagnostic{
+        throw Diagnostic{
             DiagnosticKind::InputFormatError,
             firstLineNumber,
             std::nullopt,
@@ -348,14 +386,14 @@ std::variant<RawSentence, Diagnostic> parseSentenceBlock(
  *  - для каждой MWT-записи все ID из диапазона [rangeStart, rangeEnd]
  *    присутствуют в предложении и образуют непрерывную последовательность.
  */
-std::optional<Diagnostic> validateSentenceStructure(const RawSentence& sentence)
+void validateSentenceStructure(const RawSentence& sentence)
 {
     const int tokenCount = static_cast<int>(sentence.tokens.size());
 
     // 1. Лимит токенов
     if (tokenCount > 200) {
-        return makeDiag(sentence, sentence.firstLineNumber,
-                        QStringLiteral("Превышен максимум в 200 токенов"));
+        throw makeDiag(sentence, sentence.firstLineNumber,
+                       QStringLiteral("Превышен максимум в 200 токенов"));
     }
 
     const auto idToToken = buildTokenIndex(sentence);
@@ -364,72 +402,70 @@ std::optional<Diagnostic> validateSentenceStructure(const RawSentence& sentence)
     int rootCount = 0;
     for (const auto& token : sentence.tokens) {
         if (token.headId < 0) {
-            return makeDiag(sentence, token.lineNumber,
-                            QStringLiteral("Некорректный HEAD"));
+            throw makeDiag(sentence, token.lineNumber,
+                           QStringLiteral("Некорректный HEAD"));
         }
         if (token.headId != 0 && token.headId > tokenCount) {
-            return makeDiag(sentence, token.lineNumber,
-                            QStringLiteral("HEAD %1 ссылается на несуществующий токен")
-                                .arg(token.headId));
+            throw makeDiag(sentence, token.lineNumber,
+                           QStringLiteral("HEAD %1 ссылается на несуществующий токен")
+                               .arg(token.headId));
         }
         if (token.headId == token.id) {
-            return makeDiag(sentence, token.lineNumber,
-                            QStringLiteral("HEAD образует петлю"));
+            throw makeDiag(sentence, token.lineNumber,
+                           QStringLiteral("HEAD образует петлю"));
         }
-        if (token.headId == 0) {
+        if (token.headId == 0)
             ++rootCount;
-        }
     }
 
     // 3. Проверяем количество корней
     if (rootCount == 0) {
-        return makeDiag(sentence, sentence.firstLineNumber,
-                        QStringLiteral("Не найден корневой токен"));
+        throw makeDiag(sentence, sentence.firstLineNumber,
+                       QStringLiteral("Не найден корневой токен"));
     }
     if (rootCount > 1) {
-        return makeDiag(sentence, sentence.firstLineNumber,
-                        QStringLiteral("Несколько корней"));
+        throw makeDiag(sentence, sentence.firstLineNumber,
+                       QStringLiteral("Несколько корней"));
     }
 
     // 4. Проверяем отсутствие циклов (DFS с 3 цветами)
     QHash<int, int> color;
-    for (const auto& t : sentence.tokens) {
+    for (const auto& t : sentence.tokens)
         color[t.id] = 0;
-    }
 
     for (const auto& token : sentence.tokens) {
-        if (color[token.id] == 0) {
-            int current = token.id;
-            bool reachedProcessed = false;
-            while (current != 0 && !reachedProcessed) {
-                int state = color.value(current, 0);
-                if (state == 2)
-                    reachedProcessed = true;
-                else if (state == 1)
-                    return makeDiag(sentence, token.lineNumber,
-                                    QStringLiteral("HEAD образует петлю"));
-                else {
-                    color[current] = 1;
-                    current = idToToken.value(current)->headId;
-                }
-            }
+        if (color[token.id] != 0)
+            continue;
 
-            int fin = token.id;
-            while (fin != 0 && color.value(fin, 0) == 1) {
-                color[fin] = 2;
-                fin = idToToken.value(fin)->headId;
+        int current = token.id;
+        bool reachedProcessed = false;
+        while (current != 0 && !reachedProcessed) {
+            int state = color.value(current, 0);
+            if (state == 2) {
+                reachedProcessed = true;
+            } else if (state == 1) {
+                throw makeDiag(sentence, token.lineNumber,
+                               QStringLiteral("HEAD образует петлю"));
+            } else {
+                color[current] = 1;
+                current = idToToken.value(current)->headId;
             }
+        }
+
+        int fin = token.id;
+        while (fin != 0 && color.value(fin, 0) == 1) {
+            color[fin] = 2;
+            fin = idToToken.value(fin)->headId;
         }
     }
 
     // 5. Проверяем MWT
     for (const auto& mwt : sentence.mwtRecords) {
         for (int id = mwt.rangeStart; id <= mwt.rangeEnd; ++id) {
-            if (!idToToken.contains(id))
-                return makeDiag(sentence, mwt.lineNumber,
-                                QStringLiteral("Некорректный диапазон MWT"));
+            if (!idToToken.contains(id)) {
+                throw makeDiag(sentence, mwt.lineNumber,
+                               QStringLiteral("Некорректный диапазон MWT"));
+            }
         }
     }
-
-    return std::nullopt;
 }

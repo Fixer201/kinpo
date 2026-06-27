@@ -12,13 +12,13 @@
 
 #include "datamodel.h"
 #include <QStringList>
-#include <variant>
 
 /*!
 * \brief Разобрать один блок строк CoNLL-U в RawSentence.
 * \param [in] block Список строк одного предложения (без пустых-разделительных строк).
 * \param [in] firstLineNumber Номер первой строки блока во входном файле.
-* \return RawSentence при успехе, или Diagnostic{kind=InputFormatError} при ошибке.
+* \return Разобранное предложение RawSentence.
+* \throws Diagnostic{kind=InputFormatError} при ошибке формата.
 *
 * Выполняет локальную валидацию:
 *  - наличие комментариев # sent_id и # text;
@@ -28,13 +28,12 @@
 *  - строгий порядок ID (1, 2, 3...);
 *  - формат MWT (N-M) и проверку непустых колонок.
 */
-std::variant<RawSentence, Diagnostic> parseSentenceBlock(
-    const QStringList& block, int firstLineNumber);
+RawSentence parseSentenceBlock(const QStringList& block, int firstLineNumber);
 
 /*!
 * \brief Проверить корректность структуры предложения по условиям, для которых нужно знать все токены сразу.
 * \param [in] sentence Валидированное предложение (после parseSentenceBlock).
-* \return std::nullopt если ошибок нет; Diagnostic{kind=InputFormatError} если структура нарушена.
+* \throws Diagnostic{kind=InputFormatError} если структура нарушена.
 *
 * Проверяет:
 *  - число токенов <= 200;
@@ -43,4 +42,4 @@ std::variant<RawSentence, Diagnostic> parseSentenceBlock(
 *  - ровно один токен имеет HEAD=0;
 *  - нет циклов в дереве зависимостей (обход цепочки HEAD с маркировкой "в пути" / "завершён").
 */
-std::optional<Diagnostic> validateSentenceStructure(const RawSentence& sentence);
+void validateSentenceStructure(const RawSentence& sentence);

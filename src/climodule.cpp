@@ -24,7 +24,12 @@ Diagnostic makeCliError(const QString& message)
 
 } // namespace
 
-std::variant<RunConfig, Diagnostic> parseCommandLine(const QStringList& args)
+/*!
+* \brief Разобрать аргументы командной строки в RunConfig.
+* \param [in] args Список аргументов без имени программы.
+* \return RunConfig при успехе, Diagnostic{CliUsageError} при ошибке.
+*/
+RunConfig parseCommandLine(const QStringList& args)
 {
     QStringList positional;
     std::optional<QString> listsDir;
@@ -35,25 +40,28 @@ std::variant<RunConfig, Diagnostic> parseCommandLine(const QStringList& args)
 
         if (arg == QStringLiteral("--lists")) {
             // Флаг --lists требует значения — следующий аргумент
-            if (i + 1 >= args.size())
-                return makeCliError(QStringLiteral("Флаг --lists требует значение: путь к каталогу словарей."));
+            if (i + 1 >= args.size()) {
+                throw makeCliError(QStringLiteral("Флаг --lists требует значение: путь к каталогу словарей."));
+            }
             listsDir = args[++i];
             continue;
         }
 
         // Неизвестный флаг (начинается с --)
         if (arg.startsWith(QStringLiteral("--")))
-            return makeCliError(QStringLiteral("Неизвестный флаг: %1").arg(arg));
+            throw makeCliError(QStringLiteral("Неизвестный флаг: %1").arg(arg));
 
         // Позиционный аргумент
         positional.append(arg);
     }
 
     // Позиционных аргументов должно быть ровно два
-    if (positional.size() < 2)
-        return makeCliError(QStringLiteral("Недостаточно аргументов. Использование: checker <input.conllu> <output.txt> [--lists <dir>]."));
-    if (positional.size() > 2)
-        return makeCliError(QStringLiteral("Лишние позиционные аргументы. Использование: checker <input.conllu> <output.txt> [--lists <dir>]."));
+    if (positional.size() < 2) {
+        throw makeCliError(QStringLiteral("Недостаточно аргументов. Использование: checker <input.conllu> <output.txt> [--lists <dir>]."));
+    }
+    if (positional.size() > 2) {
+        throw makeCliError(QStringLiteral("Лишние позиционные аргументы. Использование: checker <input.conllu> <output.txt> [--lists <dir>]."));
+    }
 
     RunConfig config;
     config.inputPath = positional[0];
@@ -63,15 +71,14 @@ std::variant<RunConfig, Diagnostic> parseCommandLine(const QStringList& args)
     return config;
 }
 
-// Оркестратор слоя настройки: разбирает аргументы и инициализирует runtime.
-// При ошибке разбора аргументов возвращает Diagnostic, иначе строит CheckerRuntime
-// через initializeRuntime с загруженными словарями и таблицей диспетчеризации.
-std::variant<CheckerRuntime, Diagnostic> runSetup(const QStringList& args)
+/*!
+* \brief Оркестратор слоя настройки: разбор аргументов и инициализация runtime.
+* \param [in] args Список аргументов без имени программы.
+* \return CheckerRuntime при успехе, Diagnostic при ошибке разбора аргументов
+*         или инициализации ресурсов.
+*/
+CheckerRuntime runSetup(const QStringList& args)
 {
-    auto cliResult = parseCommandLine(args);
-    if (std::holds_alternative<Diagnostic>(cliResult))
-        return std::get<Diagnostic>(cliResult);
-
-    const RunConfig& config = std::get<RunConfig>(cliResult);
+    RunConfig config = parseCommandLine(args);
     return initializeRuntime(config);
 }
