@@ -142,22 +142,58 @@ bool hasChildNumTypeOrd(const TokenNode& node)
 * конкретное время → день/дата → месяц/сезон → год/век → weekend →
 * часть дня → ночь.
 */
-QString expectedPreposition(const TokenNode& n)
+/*!
+* \brief Определить ожидаемый предлог для временного выражения N.
+* \param [in] n Временное выражение (HEAD предлога).
+* \param [in] runtime Runtime со словарём timeUnits.
+* \return "in", "on", "at" или пустая строка если N не распознано.
+*
+* Порядок проверок соответствует приоритетам спецификации:
+* конкретное время → день/дата → месяц/сезон → год/век → weekend →
+* часть дня → ночь.
+*
+* Проверки по шаблону (время вида 12:30, год, o'clock) и по хардкодным
+* категориям (weekend, night, century) выполняются до сверки
+* с time_units.txt. Категорийные проверки (дни недели, месяцы,
+* части дня) требуют, чтобы лемма была в time_units.txt — это
+* гарантирует что кастомный lists/time_units.txt влияет на PREP-001.
+*/
+QString expectedPreposition(const TokenNode& n, const CheckerRuntime& runtime)
 {
     const QString lemmaLower = n.lemma.toLower();
     const QString form = n.form;
 
-    // Конкретное время: слова-маркеры, время вида 12:30, или o'clock рядом
+    // Конкретное время: слова-маркеры, время вида 12:30 или o'clock рядом
+    // Эти проверки по FORM или хардкодному набору — timeUnits не нужен.
     if (specificTimeWords.contains(lemmaLower))
         return QStringLiteral("at");
     if (n.upos == Upos::Num && timePattern.match(form).hasMatch())
         return QStringLiteral("at");
     if (hasChildWithLemma(n, QStringLiteral("o'clock")))
         return QStringLiteral("at");
-    // N=NUM и parent(N) имеет LEMMA=o'clock ("at 5 o'clock": N=5, parent=o'clock)
     if (n.upos == Upos::Num && n.parent &&
         n.parent->lemma.toLower() == QStringLiteral("o'clock"))
         return QStringLiteral("at");
+
+    // Год (число из 4 цифр) или слово "century"
+    if (n.upos == Upos::Num && yearPattern.match(form).hasMatch())
+        return QStringLiteral("in");
+    if (lemmaLower == QStringLiteral("century"))
+        return QStringLiteral("in");
+
+    // Weekend: in — ошибка, on и at допустимы.
+    if (lemmaLower == QStringLiteral("weekend"))
+        return QStringLiteral("");
+
+    // Ночь → at
+    if (lemmaLower == QStringLiteral("night"))
+        return QStringLiteral("at");
+
+    // Категорийные проверки ниже требуют присутствия леммы в time_units.txt.
+    // Это сделано намеренно: если пользователь через --lists убрал слово из
+    // time_units.txt, PREP-001 не будет проверять для него предлог.
+    if (!runtime.resources.timeUnits.contains(lemmaLower))
+        return QString();
 
     // День недели или дата (NOUN с порядковым числительным)
     if (daysOfWeek.contains(lemmaLower))
@@ -169,29 +205,12 @@ QString expectedPreposition(const TokenNode& n)
     if (monthsAndSeasons.contains(lemmaLower))
         return QStringLiteral("in");
 
-    // Год (число из 4 цифр) или слово "century"
-    if (n.upos == Upos::Num && yearPattern.match(form).hasMatch())
-        return QStringLiteral("in");
-    if (lemmaLower == QStringLiteral("century"))
-        return QStringLiteral("in");
-
-    // Weekend: in — ошибка, on и at допустимы. Возвращаем пустую строку,
-    // чтобы не сработать на корректных on/at.
-    if (lemmaLower == QStringLiteral("weekend")) {
-        // Ошибка только для in; on и at — корректны
-        return QStringLiteral("");
-    }
-
     // Часть дня (morning/afternoon/evening) → in, но compound с днём недели → on
     if (dayPartsIn.contains(lemmaLower)) {
         if (hasCompoundDayOfWeek(n))
             return QStringLiteral("on");
         return QStringLiteral("in");
     }
-
-    // Ночь → at
-    if (lemmaLower == QStringLiteral("night"))
-        return QStringLiteral("at");
 
     // N не распознано как временное выражение
     return QString();
@@ -200,9 +219,9 @@ QString expectedPreposition(const TokenNode& n)
 } // namespace
 
 QSet<CandidateError> Rule_PREP001::check(const TokenNode& anchor,
-                                        int /*sentenceIndex*/,
-                                        const DocumentModel& /*document*/,
-                                        const CheckerRuntime& /*runtime*/) const
+                                         int /*sentenceIndex*/,
+                                         const DocumentModel& /*document*/,
+                                         const CheckerRuntime& runtime) const
 {
     QSet<CandidateError> res;
 
@@ -225,7 +244,7 @@ QSet<CandidateError> Rule_PREP001::check(const TokenNode& anchor,
         return res;
 
     const TokenNode& n = *anchor.parent;
-    const QString expected = expectedPreposition(n);
+    const QString expected = expectedPreposition(n, runtime);
 
     // Weekend: ошибка только для in, on и at допустимы.
     // expectedPreposition возвращает пустую строку, обрабатываем отдельно.

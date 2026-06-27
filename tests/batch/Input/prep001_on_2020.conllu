@@ -1,0 +1,4 @@
+# sent_id = prep001_on_2020
+# text = on 2020
+1	on	on	ADP	IN	_	2	case	_	_
+2	2020	2020	NUM	CD	NumType=Card	0	root	_	_
