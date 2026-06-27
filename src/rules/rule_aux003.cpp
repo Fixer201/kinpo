@@ -24,7 +24,7 @@ QString Rule_AUX003::ruleId() const
 
 QSet<Upos> Rule_AUX003::anchorUpos() const
 {
-    return {Upos::PART};
+    return {Upos::Part};
 }
 
 bool Rule_AUX003::canConflict() const
@@ -53,7 +53,7 @@ bool hasModalChild(const TokenNode& v)
 {
     bool found = false;
     for (const TokenNode* child : v.children) {
-        if (child->upos == Upos::AUX && child->deprel == Deprel::Aux &&
+        if (child->upos == Upos::Aux && child->deprel == Deprel::Aux &&
             modalVerbs.contains(child->lemma.toLower()))
             found = true;
     }
@@ -70,7 +70,7 @@ QSet<CandidateError> Rule_AUX003::check(const TokenNode& anchor,
     QSet<CandidateError> res;
 
     // Якорь — частица to, присоединённая как маркер
-    if (anchor.upos != Upos::PART || anchor.deprel != Deprel::Mark)
+    if (anchor.upos != Upos::Part || anchor.deprel != Deprel::Mark)
         return res;
 
     if (anchor.lemma.toLower() != QStringLiteral("to"))

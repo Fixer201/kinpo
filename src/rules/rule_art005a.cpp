@@ -25,7 +25,7 @@ QString Rule_ART005a::ruleId() const
 
 QSet<Upos> Rule_ART005a::anchorUpos() const
 {
-    return {Upos::NOUN};
+    return {Upos::Noun};
 }
 
 bool Rule_ART005a::canConflict() const
@@ -74,7 +74,7 @@ QSet<CandidateError> Rule_ART005a::check(const TokenNode& anchor,
 {
     QSet<CandidateError> res;
 
-    if (anchor.upos != Upos::NOUN)
+    if (anchor.upos != Upos::Noun)
         return res;
 
     const QString nounLemma = anchor.lemma.toLower();
@@ -92,14 +92,14 @@ QSet<CandidateError> Rule_ART005a::check(const TokenNode& anchor,
 
     // Основной путь: DEPREL=nmod:desc к PROPN
     if (anchor.deprel == Deprel::NmodDesc && anchor.parent &&
-        anchor.parent->upos == Upos::PROPN) {
+        anchor.parent->upos == Upos::Prop) {
         propn = anchor.parent;
     }
 
     // Fallback: T.LEMMA из titles.txt + связь с PROPN через flat/compound
     if (!propn) {
         // HEAD — PROPN, связь через flat/compound
-        if (anchor.parent && anchor.parent->upos == Upos::PROPN &&
+        if (anchor.parent && anchor.parent->upos == Upos::Prop &&
             (anchor.deprel == Deprel::Flat ||
              anchor.deprel == Deprel::FlatName ||
              anchor.deprel == Deprel::Compound)) {
@@ -108,7 +108,7 @@ QSet<CandidateError> Rule_ART005a::check(const TokenNode& anchor,
         // Зависимый PROPN, связь через flat/compound
         bool propnFound = false;
         for (const TokenNode* child : anchor.children) {
-            if (!propnFound && child->upos == Upos::PROPN &&
+            if (!propnFound && child->upos == Upos::Prop &&
                 (child->deprel == Deprel::Flat ||
                  child->deprel == Deprel::FlatName ||
                  child->deprel == Deprel::Compound)) {

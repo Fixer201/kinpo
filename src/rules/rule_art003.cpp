@@ -20,7 +20,7 @@ QString Rule_ART003::ruleId() const
 
 QSet<Upos> Rule_ART003::anchorUpos() const
 {
-    return {Upos::DET};
+    return {Upos::Det};
 }
 
 bool Rule_ART003::canConflict() const
@@ -91,7 +91,7 @@ QSet<CandidateError> Rule_ART003::check(const TokenNode& anchor,
 {
     QSet<CandidateError> res;
 
-    if (anchor.upos != Upos::DET)
+    if (anchor.upos != Upos::Det)
         return res;
 
     if (!isArticle(anchor.form))
@@ -107,7 +107,7 @@ QSet<CandidateError> Rule_ART003::check(const TokenNode& anchor,
     const QString nounLemma = noun.lemma.toLower();
     const QString articleForm = anchor.form.toLower();
 
-    bool isLanguage = (noun.upos == Upos::PROPN && runtime.resources.languages.contains(nounLemma));
+    bool isLanguage = (noun.upos == Upos::Prop && runtime.resources.languages.contains(nounLemma));
     bool isSport = runtime.resources.sports.contains(nounLemma);
     bool isMeal = runtime.resources.meals.contains(nounLemma);
 

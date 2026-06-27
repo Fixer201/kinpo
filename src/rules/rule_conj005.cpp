@@ -25,7 +25,7 @@ QString Rule_CONJ005::ruleId() const
 
 QSet<Upos> Rule_CONJ005::anchorUpos() const
 {
-    return {Upos::SCONJ};
+    return {Upos::SConj};
 }
 
 bool Rule_CONJ005::canConflict() const
@@ -66,7 +66,7 @@ QList<const TokenNode*> collectOrInSubtree(const TokenNode& root)
 {
     QList<const TokenNode*> result;
     for (const TokenNode* child : root.children) {
-        if (child->upos == Upos::CCONJ &&
+        if (child->upos == Upos::CConj &&
             child->lemma.toLower() == QStringLiteral("or"))
             result.append(child);
         result += collectOrInSubtree(*child);
@@ -84,7 +84,7 @@ QSet<CandidateError> Rule_CONJ005::check(const TokenNode& anchor,
     QSet<CandidateError> res;
 
     // Якорь должен быть подчинительным союзом, выступающим маркером клаузы
-    if (anchor.upos != Upos::SCONJ || anchor.deprel != Deprel::Mark)
+    if (anchor.upos != Upos::SConj || anchor.deprel != Deprel::Mark)
         return res;
 
     // Проверяем только союз if; whether корректен и не должен срабатывать
@@ -106,7 +106,7 @@ QSet<CandidateError> Rule_CONJ005::check(const TokenNode& anchor,
         // not должен идти сразу после or, пропуская пунктуацию и MWT.
         // not — отрицательная частица, сочинённый элемент из поддерева V.
         if (notTok != nullptr &&
-            notTok->upos == Upos::PART &&
+            notTok->upos == Upos::Part &&
             notTok->lemma.toLower() == QStringLiteral("not") &&
             notTok->deprel == Deprel::Conj &&
             isInSubtree(notTok, *v)) {

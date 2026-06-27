@@ -25,7 +25,7 @@ QString Rule_AUX001::ruleId() const
 
 QSet<Upos> Rule_AUX001::anchorUpos() const
 {
-    return {Upos::AUX};
+    return {Upos::Aux};
 }
 
 bool Rule_AUX001::canConflict() const
@@ -55,7 +55,7 @@ bool hasModalChild(const TokenNode& v, const TokenNode& d)
 {
     bool found = false;
     for (const TokenNode* child : v.children) {
-        if (child != &d && child->upos == Upos::AUX &&
+        if (child != &d && child->upos == Upos::Aux &&
             child->deprel == Deprel::Aux &&
             modalVerbs.contains(child->lemma.toLower()))
             found = true;
@@ -73,7 +73,7 @@ QSet<CandidateError> Rule_AUX001::check(const TokenNode& anchor,
     QSet<CandidateError> res;
 
     // Якорь — вспомогательный do, присоединённый как aux
-    if (anchor.upos != Upos::AUX || anchor.deprel != Deprel::Aux)
+    if (anchor.upos != Upos::Aux || anchor.deprel != Deprel::Aux)
         return res;
 
     // LEMMA=do покрывает формы did/does (лемма одинаковая)

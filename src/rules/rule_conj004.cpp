@@ -25,7 +25,7 @@ QString Rule_CONJ004::ruleId() const
 
 QSet<Upos> Rule_CONJ004::anchorUpos() const
 {
-    return {Upos::CCONJ};
+    return {Upos::CConj};
 }
 
 bool Rule_CONJ004::canConflict() const
@@ -57,7 +57,7 @@ bool hasCorrelate(const DocumentModel& document, int sentenceIndex,
 
     bool found = false;
     for (const TokenNode* token : sentence.tokens) {
-        if (token->upos == Upos::CCONJ && token->deprel == Deprel::CcPreconj &&
+        if (token->upos == Upos::CConj && token->deprel == Deprel::CcPreconj &&
             token->lemma.toLower() == lower)
             found = true;
     }
@@ -74,7 +74,7 @@ QSet<CandidateError> Rule_CONJ004::check(const TokenNode& anchor,
     QSet<CandidateError> res;
 
     // Якорь — координатор, присоединяющий элемент перечисления
-    if (anchor.upos != Upos::CCONJ || anchor.deprel != Deprel::Cc)
+    if (anchor.upos != Upos::CConj || anchor.deprel != Deprel::Cc)
         return res;
 
     const QString lemma = anchor.lemma.toLower();

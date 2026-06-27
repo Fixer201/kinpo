@@ -29,7 +29,7 @@ QString Rule_PREP005::ruleId() const
 
 QSet<Upos> Rule_PREP005::anchorUpos() const
 {
-    return {Upos::VERB};
+    return {Upos::Verb};
 }
 
 bool Rule_PREP005::canConflict() const
@@ -55,15 +55,13 @@ bool findOblWithCaseLemma(const TokenNode& verb,
 {
     bool found = false;
     for (const TokenNode* child : verb.children) {
-        if (child->deprel == Deprel::Obl && !found) {
-            for (const TokenNode* grandchild : child->children) {
+        if (child->deprel == Deprel::Obl && !found)
+            for (const TokenNode* grandchild : child->children)
                 if (grandchild->deprel == Deprel::Case &&
                     grandchild->lemma.toLower() == wrongPrepLemma) {
                     caseNode = grandchild;
                     found = true;
                 }
-            }
-        }
     }
     return found;
 }
@@ -106,7 +104,7 @@ QSet<CandidateError> Rule_PREP005::check(const TokenNode& anchor,
     QSet<CandidateError> res;
 
     // Якорь — VERB
-    if (anchor.upos != Upos::VERB)
+    if (anchor.upos != Upos::Verb)
         return res;
 
     // LEMMA должна быть в verb_prep.txt

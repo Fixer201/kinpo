@@ -26,7 +26,7 @@ QString Rule_CONJ001::ruleId() const
 
 QSet<Upos> Rule_CONJ001::anchorUpos() const
 {
-    return {Upos::CCONJ};
+    return {Upos::CConj};
 }
 
 bool Rule_CONJ001::canConflict() const
@@ -104,7 +104,7 @@ QSet<CandidateError> Rule_CONJ001::check(const TokenNode& anchor,
     QSet<CandidateError> res;
 
     // Якорь — CCONJ с LEMMA=nor
-    if (anchor.upos != Upos::CCONJ)
+    if (anchor.upos != Upos::CConj)
         return res;
     if (anchor.lemma.toLower() != QStringLiteral("nor"))
         return res;

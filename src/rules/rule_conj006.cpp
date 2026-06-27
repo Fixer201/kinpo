@@ -27,7 +27,7 @@ QString Rule_CONJ006::ruleId() const
 QSet<Upos> Rule_CONJ006::anchorUpos() const
 {
     // so/therefore обычно ADV, but обычно CCONJ
-    return {Upos::CCONJ, Upos::ADV};
+    return {Upos::CConj, Upos::Adv};
 }
 
 bool Rule_CONJ006::canConflict() const
@@ -65,7 +65,7 @@ const TokenNode* findSubordinator(const TokenNode& v1,
 {
     const TokenNode* result = nullptr;
     for (const TokenNode* child : v1.children) {
-        if (child->deprel == Deprel::Mark && child->upos == Upos::SCONJ &&
+        if (child->deprel == Deprel::Mark && child->upos == Upos::SConj &&
             allowedLemmas.contains(child->lemma.toLower()))
             result = child;
     }

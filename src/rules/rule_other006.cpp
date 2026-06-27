@@ -39,7 +39,7 @@ QString Rule_OTHER006::ruleId() const
 
 QSet<Upos> Rule_OTHER006::anchorUpos() const
 {
-    return {Upos::ADJ, Upos::ADV};
+    return {Upos::Adj, Upos::Adv};
 }
 
 bool Rule_OTHER006::canConflict() const
@@ -54,7 +54,7 @@ QSet<CandidateError> Rule_OTHER006::check(const TokenNode& anchor,
 {
     QSet<CandidateError> res;
 
-    if (anchor.upos != Upos::ADJ && anchor.upos != Upos::ADV)
+    if (anchor.upos != Upos::Adj && anchor.upos != Upos::Adv)
         return res;
 
     if (!isComparativeAnchor(anchor))
@@ -67,18 +67,16 @@ QSet<CandidateError> Rule_OTHER006::check(const TokenNode& anchor,
             continue;
         if (child->lemma.toLower() == QStringLiteral("then")) {
             foundThenIds.insert(child->id);
-            if (const TokenNode* next = child->nextToken) {
+            if (const TokenNode* next = child->nextToken)
                 if (next->lemma.toLower() == QStringLiteral("then"))
                     foundThenIds.insert(next->id);
-            }
         }
     }
 
     if (foundThenIds.isEmpty()) {
-        if (const TokenNode* next = anchor.nextToken) {
+        if (const TokenNode* next = anchor.nextToken)
             if (next->lemma.toLower() == QStringLiteral("then"))
                 foundThenIds.insert(next->id);
-        }
     }
 
     for (int id : foundThenIds) {

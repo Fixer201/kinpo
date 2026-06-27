@@ -23,7 +23,7 @@ QString Rule_OTHER003::ruleId() const
 
 QSet<Upos> Rule_OTHER003::anchorUpos() const
 {
-    return {Upos::ADV};
+    return {Upos::Adv};
 }
 
 bool Rule_OTHER003::canConflict() const
@@ -39,14 +39,14 @@ QSet<CandidateError> Rule_OTHER003::check(const TokenNode& anchor,
     QSet<CandidateError> res;
 
     // Якорь — наречие, присоединённое как advmod
-    if (anchor.upos != Upos::ADV || anchor.deprel != Deprel::Advmod)
+    if (anchor.upos != Upos::Adv || anchor.deprel != Deprel::Advmod)
         return res;
 
     const QString lemma = anchor.lemma.toLower();
 
     // A — голова якоря, должна быть прилагательным
     const TokenNode* a = anchor.parent;
-    if (a == nullptr || a->upos != Upos::ADJ)
+    if (a == nullptr || a->upos != Upos::Adj)
         return res;
 
     const bool isCmp = a->features.degree.has_value() &&

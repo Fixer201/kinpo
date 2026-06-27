@@ -24,7 +24,7 @@ QString Rule_ART006::ruleId() const
 
 QSet<Upos> Rule_ART006::anchorUpos() const
 {
-    return {Upos::DET};
+    return {Upos::Det};
 }
 
 bool Rule_ART006::canConflict() const
@@ -142,7 +142,7 @@ QSet<CandidateError> Rule_ART006::check(const TokenNode& anchor,
 {
     QSet<CandidateError> res;
 
-    if (anchor.upos != Upos::DET)
+    if (anchor.upos != Upos::Det)
         return res;
 
     const QString formLower = anchor.form.toLower();

@@ -56,7 +56,7 @@ QString Rule_OTHER004::ruleId() const
 
 QSet<Upos> Rule_OTHER004::anchorUpos() const
 {
-    return {Upos::PRON};
+    return {Upos::Pron};
 }
 
 bool Rule_OTHER004::canConflict() const
@@ -72,7 +72,7 @@ QSet<CandidateError> Rule_OTHER004::check(const TokenNode& anchor,
     QSet<CandidateError> res;
 
     // Якорь должен быть местоимением
-    if (anchor.upos != Upos::PRON)
+    if (anchor.upos != Upos::Pron)
         return res;
 
     const QString f = anchor.form.toLower();

@@ -27,7 +27,7 @@ QString Rule_PREP003::ruleId() const
 QSet<Upos> Rule_PREP003::anchorUpos() const
 {
     // While — SCONJ, during — ADP
-    return {Upos::SCONJ, Upos::ADP};
+    return {Upos::SConj, Upos::Adp};
 }
 
 bool Rule_PREP003::canConflict() const
@@ -49,7 +49,7 @@ namespace {
 bool hasVerbOrAuxChild(const TokenNode& node)
 {
     for (const TokenNode* child : node.children)
-        if (child->upos == Upos::VERB || child->upos == Upos::AUX)
+        if (child->upos == Upos::Verb || child->upos == Upos::Aux)
             return true;
     return false;
 }
@@ -85,14 +85,14 @@ QSet<CandidateError> Rule_PREP003::check(const TokenNode& anchor,
     const QString lemmaLower = anchor.lemma.toLower();
 
     // Ветка (а): while → during
-    if (anchor.upos == Upos::SCONJ && lemmaLower == QStringLiteral("while")) {
+    if (anchor.upos == Upos::SConj && lemmaLower == QStringLiteral("while")) {
         if (!anchor.parent)
             return res;
 
         const TokenNode& h = *anchor.parent;
 
         // HEAD должен быть именной группой: NOUN или PROPN
-        if (h.upos != Upos::NOUN && h.upos != Upos::PROPN)
+        if (h.upos != Upos::Noun && h.upos != Upos::Prop)
             return res;
 
         // У HEAD не должно быть прямых зависимых VERB или AUX
@@ -119,7 +119,7 @@ QSet<CandidateError> Rule_PREP003::check(const TokenNode& anchor,
     }
 
     // Ветка (б): during → while
-    if (anchor.upos == Upos::ADP && lemmaLower == QStringLiteral("during")) {
+    if (anchor.upos == Upos::Adp && lemmaLower == QStringLiteral("during")) {
         // DEPREL должен быть case
         if (anchor.deprel != Deprel::Case)
             return res;

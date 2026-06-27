@@ -26,7 +26,7 @@ QString Rule_AUX006::ruleId() const
 
 QSet<Upos> Rule_AUX006::anchorUpos() const
 {
-    return {Upos::PART};
+    return {Upos::Part};
 }
 
 bool Rule_AUX006::canConflict() const
@@ -67,7 +67,7 @@ QSet<CandidateError> Rule_AUX006::check(const TokenNode& anchor,
     QSet<CandidateError> res;
 
     // Якорь — частица to, присоединённая как маркер
-    if (anchor.upos != Upos::PART || anchor.deprel != Deprel::Mark)
+    if (anchor.upos != Upos::Part || anchor.deprel != Deprel::Mark)
         return res;
 
     if (anchor.lemma.toLower() != QStringLiteral("to"))
@@ -75,12 +75,12 @@ QSet<CandidateError> Rule_AUX006::check(const TokenNode& anchor,
 
     // V2 — голова to (должна быть глаголом)
     const TokenNode* v2 = anchor.parent;
-    if (v2 == nullptr || v2->upos != Upos::VERB)
+    if (v2 == nullptr || v2->upos != Upos::Verb)
         return res;
 
     // V — голова V2 (должна быть глаголом let или make)
     const TokenNode* v = v2->parent;
-    if (v == nullptr || v->upos != Upos::VERB)
+    if (v == nullptr || v->upos != Upos::Verb)
         return res;
 
     if (!bareInfinitiveVerbs.contains(v->lemma.toLower()))

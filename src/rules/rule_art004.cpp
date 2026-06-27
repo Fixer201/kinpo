@@ -26,7 +26,7 @@ QString Rule_ART004::ruleId() const
 
 QSet<Upos> Rule_ART004::anchorUpos() const
 {
-    return {Upos::PROPN};
+    return {Upos::Prop};
 }
 
 bool Rule_ART004::canConflict() const
@@ -95,7 +95,7 @@ bool isPropnGroupHead(const TokenNode& anchor)
 {
     if (!anchor.parent)
         return true;
-    if (anchor.parent->upos != Upos::PROPN)
+    if (anchor.parent->upos != Upos::Prop)
         return true;
     if (anchor.deprel == Deprel::Flat ||
         anchor.deprel == Deprel::FlatName ||
@@ -154,7 +154,7 @@ QSet<CandidateError> Rule_ART004::check(const TokenNode& anchor,
 {
     QSet<CandidateError> res;
 
-    if (anchor.upos != Upos::PROPN)
+    if (anchor.upos != Upos::Prop)
         return res;
 
     if (!isPropnGroupHead(anchor))

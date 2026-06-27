@@ -26,7 +26,7 @@ QString Rule_ART002::ruleId() const
 
 QSet<Upos> Rule_ART002::anchorUpos() const
 {
-    return {Upos::ADJ};
+    return {Upos::Adj};
 }
 
 bool Rule_ART002::canConflict() const
@@ -74,7 +74,7 @@ bool hasSmallerQualifyingAdj(const TokenNode& anchor, const TokenNode& noun,
     for (const TokenNode* child : noun.children) {
         if (child->id >= anchor.id)
             continue;
-        if (child->upos != Upos::ADJ)
+        if (child->upos != Upos::Adj)
             continue;
         if (child->deprel != Deprel::Amod)
             continue;
@@ -98,13 +98,11 @@ bool isTimeException(const TokenNode& adj, const TokenNode& noun,
 
     bool hasModifyingContext = false;
     for (const TokenNode* child : noun.children) {
-        if (!hasModifyingContext && child->deprel == Deprel::Nmod) {
-            for (const TokenNode* sub : child->children) {
+        if (!hasModifyingContext && child->deprel == Deprel::Nmod)
+            for (const TokenNode* sub : child->children)
                 if (sub->deprel == Deprel::Case && sub->lemma.toLower() == QStringLiteral("of"))
                     hasModifyingContext = true;
-            }
-        }
-        if (!hasModifyingContext && child->upos == Upos::NUM)
+        if (!hasModifyingContext && child->upos == Upos::Num)
             hasModifyingContext = true;
         if (!hasModifyingContext && child->deprel == Deprel::Case) {
             const QString caseLemma = child->lemma.toLower();
@@ -126,7 +124,7 @@ QSet<CandidateError> Rule_ART002::check(const TokenNode& anchor,
 {
     QSet<CandidateError> res;
 
-    if (anchor.upos != Upos::ADJ)
+    if (anchor.upos != Upos::Adj)
         return res;
     if (anchor.deprel != Deprel::Amod)
         return res;
@@ -134,7 +132,7 @@ QSet<CandidateError> Rule_ART002::check(const TokenNode& anchor,
         return res;
 
     const TokenNode& noun = *anchor.parent;
-    if (noun.upos != Upos::NOUN)
+    if (noun.upos != Upos::Noun)
         return res;
 
     const QString adjLemma = anchor.lemma.toLower();
@@ -153,7 +151,7 @@ QSet<CandidateError> Rule_ART002::check(const TokenNode& anchor,
     if (nounHasDet(noun))
         return res;
 
-    if (noun.upos == Upos::PROPN)
+    if (noun.upos == Upos::Prop)
         return res;
 
     if (isTimeException(anchor, noun, runtime))
@@ -186,7 +184,7 @@ QString Rule_ART002a::ruleId() const
 
 QSet<Upos> Rule_ART002a::anchorUpos() const
 {
-    return {Upos::ADV};
+    return {Upos::Adv};
 }
 
 bool Rule_ART002a::canConflict() const
@@ -201,7 +199,7 @@ QSet<CandidateError> Rule_ART002a::check(const TokenNode& anchor,
 {
     QSet<CandidateError> res;
 
-    if (anchor.upos != Upos::ADV)
+    if (anchor.upos != Upos::Adv)
         return res;
     if (anchor.deprel != Deprel::Advmod)
         return res;
@@ -213,7 +211,7 @@ QSet<CandidateError> Rule_ART002a::check(const TokenNode& anchor,
     if (!anchor.parent)
         return res;
     const TokenNode& adj = *anchor.parent;
-    if (adj.upos != Upos::ADJ)
+    if (adj.upos != Upos::Adj)
         return res;
     if (adj.deprel != Deprel::Amod)
         return res;
@@ -221,7 +219,7 @@ QSet<CandidateError> Rule_ART002a::check(const TokenNode& anchor,
     if (!adj.parent)
         return res;
     const TokenNode& noun = *adj.parent;
-    if (noun.upos != Upos::NOUN)
+    if (noun.upos != Upos::Noun)
         return res;
 
     // Дедупликация: если у NOUN есть другой ADV (most/least) с меньшим id,
@@ -229,12 +227,12 @@ QSet<CandidateError> Rule_ART002a::check(const TokenNode& anchor,
     for (const TokenNode* siblingAdv : noun.children) {
         if (siblingAdv->id >= anchor.id)
             continue;
-        if (siblingAdv->upos != Upos::ADV || siblingAdv->deprel != Deprel::Advmod)
+        if (siblingAdv->upos != Upos::Adv || siblingAdv->deprel != Deprel::Advmod)
             continue;
         const QString sibLemma = siblingAdv->lemma.toLower();
         if (sibLemma != QStringLiteral("most") && sibLemma != QStringLiteral("least"))
             continue;
-        if (!siblingAdv->parent || siblingAdv->parent->upos != Upos::ADJ ||
+        if (!siblingAdv->parent || siblingAdv->parent->upos != Upos::Adj ||
             siblingAdv->parent->deprel != Deprel::Amod)
             continue;
         // Найден ADV с меньшим id, удовлетворяющий условию
@@ -244,7 +242,7 @@ QSet<CandidateError> Rule_ART002a::check(const TokenNode& anchor,
     if (nounHasDet(noun))
         return res;
 
-    if (noun.upos == Upos::PROPN)
+    if (noun.upos == Upos::Prop)
         return res;
 
     CandidateError ce;

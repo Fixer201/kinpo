@@ -24,7 +24,7 @@ QString Rule_DET002::ruleId() const
 
 QSet<Upos> Rule_DET002::anchorUpos() const
 {
-    return {Upos::NOUN};
+    return {Upos::Noun};
 }
 
 bool Rule_DET002::canConflict() const
@@ -112,7 +112,7 @@ QSet<CandidateError> Rule_DET002::check(const TokenNode& anchor,
 {
     QSet<CandidateError> res;
 
-    if (anchor.upos != Upos::NOUN)
+    if (anchor.upos != Upos::Noun)
         return res;
 
     const QList<const TokenNode*> dets = collectCentralDets(anchor);

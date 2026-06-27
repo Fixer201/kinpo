@@ -29,7 +29,7 @@ QString Rule_CONJ003::ruleId() const
 QSet<Upos> Rule_CONJ003::anchorUpos() const
 {
     // although — SCONJ; despite — ADP; in (in spite of) — ADP
-    return {Upos::SCONJ, Upos::ADP};
+    return {Upos::SConj, Upos::Adp};
 }
 
 bool Rule_CONJ003::canConflict() const
@@ -50,7 +50,7 @@ namespace {
 bool hasVerbOrAuxChild(const TokenNode& node)
 {
     for (const TokenNode* child : node.children)
-        if (child->upos == Upos::VERB || child->upos == Upos::AUX)
+        if (child->upos == Upos::Verb || child->upos == Upos::Aux)
             return true;
     return false;
 }
@@ -103,7 +103,7 @@ QSet<CandidateError> Rule_CONJ003::check(const TokenNode& anchor,
     const QString lemmaLower = anchor.lemma.toLower();
 
     // Ветка (а): although → despite
-    if (anchor.upos == Upos::SCONJ && lemmaLower == QStringLiteral("although")) {
+    if (anchor.upos == Upos::SConj && lemmaLower == QStringLiteral("although")) {
         // DEPREL должен быть mark
         if (anchor.deprel != Deprel::Mark)
             return res;
@@ -114,7 +114,7 @@ QSet<CandidateError> Rule_CONJ003::check(const TokenNode& anchor,
         const TokenNode& h = *anchor.parent;
 
         // H должен быть именной группой: NOUN или PROPN
-        if (h.upos != Upos::NOUN && h.upos != Upos::PROPN)
+        if (h.upos != Upos::Noun && h.upos != Upos::Prop)
             return res;
 
         // Не срабатывает если H.DEPREL=advcl (эллиптическая клауза)
@@ -144,7 +144,7 @@ QSet<CandidateError> Rule_CONJ003::check(const TokenNode& anchor,
     }
 
     // Ветка (б): despite → although (и in spite of → although)
-    if (anchor.upos == Upos::ADP &&
+    if (anchor.upos == Upos::Adp &&
         (lemmaLower == QStringLiteral("despite") || lemmaLower == QStringLiteral("in"))) {
 
         // Для despite: DEPREL=case

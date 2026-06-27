@@ -26,7 +26,7 @@ QString Rule_ART001::ruleId() const
 
 QSet<Upos> Rule_ART001::anchorUpos() const
 {
-    return {Upos::DET};
+    return {Upos::Det};
 }
 
 bool Rule_ART001::canConflict() const
@@ -146,7 +146,7 @@ QSet<CandidateError> Rule_ART001::check(const TokenNode& anchor,
     QSet<CandidateError> res;
 
     // Условие срабатывания: DET с form ∈ {a, an, the}, DEPREL=det к PROPN
-    if (anchor.upos != Upos::DET)
+    if (anchor.upos != Upos::Det)
         return res;
 
     const QString formLower = anchor.form.toLower();
@@ -157,7 +157,7 @@ QSet<CandidateError> Rule_ART001::check(const TokenNode& anchor,
 
     if (!anchor.parent)
         return res;
-    if (anchor.parent->upos != Upos::PROPN)
+    if (anchor.parent->upos != Upos::Prop)
         return res;
 
     const TokenNode& propn = *anchor.parent;

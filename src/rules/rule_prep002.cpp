@@ -28,7 +28,7 @@ QString Rule_PREP002::ruleId() const
 
 QSet<Upos> Rule_PREP002::anchorUpos() const
 {
-    return {Upos::ADP};
+    return {Upos::Adp};
 }
 
 bool Rule_PREP002::canConflict() const
@@ -56,7 +56,7 @@ bool isTimeMoment(const TokenNode& n, const CheckerRuntime& runtime)
     const QString lemmaLower = n.lemma.toLower();
 
     // Год: NUM и FORM из 4 цифр
-    if (n.upos == Upos::NUM && yearPattern.match(n.form).hasMatch())
+    if (n.upos == Upos::Num && yearPattern.match(n.form).hasMatch())
         return true;
 
     // День недели или месяц из time_units.txt
@@ -64,11 +64,10 @@ bool isTimeMoment(const TokenNode& n, const CheckerRuntime& runtime)
         return true;
 
     // Дата: NOUN с зависимым NumType=Ord
-    if (n.upos == Upos::NOUN) {
+    if (n.upos == Upos::Noun)
         for (const TokenNode* child : n.children)
             if (child->features.numTypeOrd)
                 return true;
-    }
 
     return false;
 }
@@ -85,12 +84,12 @@ bool hasPerfectConstruction(const TokenNode& root)
 {
     // Рекурсивный обход: проверяем текущий токен и всех потомков
     for (const TokenNode* child : root.children) {
-        if (child->upos == Upos::AUX &&
+        if (child->upos == Upos::Aux &&
             child->lemma.toLower() == QStringLiteral("have") &&
             child->deprel == Deprel::Aux) {
             // HEAD AUX должен быть VERB с VerbForm=Part
             if (child->parent &&
-                child->parent->upos == Upos::VERB &&
+                child->parent->upos == Upos::Verb &&
                 child->parent->features.verbForm.has_value() &&
                 *child->parent->features.verbForm == VerbFormValue::Part)
                 return true;
@@ -163,7 +162,7 @@ bool checkSinceToFor(const TokenNode& anchor,
 
     // У N должен быть зависимый UPOS=NUM
     for (const TokenNode* child : n.children)
-        if (child->upos == Upos::NUM)
+        if (child->upos == Upos::Num)
             return true;
 
     return false;
@@ -179,7 +178,7 @@ QSet<CandidateError> Rule_PREP002::check(const TokenNode& anchor,
     QSet<CandidateError> res;
 
     // Якорь — ADP
-    if (anchor.upos != Upos::ADP)
+    if (anchor.upos != Upos::Adp)
         return res;
 
     // DEPREL должен быть case

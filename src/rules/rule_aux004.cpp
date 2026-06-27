@@ -24,7 +24,7 @@ QString Rule_AUX004::ruleId() const
 
 QSet<Upos> Rule_AUX004::anchorUpos() const
 {
-    return {Upos::AUX};
+    return {Upos::Aux};
 }
 
 bool Rule_AUX004::canConflict() const
@@ -54,7 +54,7 @@ bool hasEarlierModalChild(const TokenNode& v, int anchorId)
 {
     bool found = false;
     for (const TokenNode* child : v.children) {
-        if (child->id < anchorId && child->upos == Upos::AUX &&
+        if (child->id < anchorId && child->upos == Upos::Aux &&
             child->deprel == Deprel::Aux &&
             modalVerbs.contains(child->lemma.toLower()))
             found = true;
@@ -72,7 +72,7 @@ QSet<CandidateError> Rule_AUX004::check(const TokenNode& anchor,
     QSet<CandidateError> res;
 
     // Якорь — модальный AUX, присоединённый как aux
-    if (anchor.upos != Upos::AUX || anchor.deprel != Deprel::Aux)
+    if (anchor.upos != Upos::Aux || anchor.deprel != Deprel::Aux)
         return res;
 
     if (!modalVerbs.contains(anchor.lemma.toLower()))

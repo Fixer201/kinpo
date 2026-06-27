@@ -24,7 +24,7 @@ QString Rule_PREP004::ruleId() const
 
 QSet<Upos> Rule_PREP004::anchorUpos() const
 {
-    return {Upos::ADV};
+    return {Upos::Adv};
 }
 
 bool Rule_PREP004::canConflict() const
@@ -63,11 +63,11 @@ bool findPerfectAuxAndVerb(const TokenNode& root,
                            const TokenNode*& verbFound)
 {
     for (const TokenNode* child : root.children) {
-        if (child->upos == Upos::AUX &&
+        if (child->upos == Upos::Aux &&
             child->lemma.toLower() == QStringLiteral("have") &&
             child->deprel == Deprel::Aux &&
             child->parent &&
-            child->parent->upos == Upos::VERB &&
+            child->parent->upos == Upos::Verb &&
             child->parent->features.verbForm.has_value() &&
             *child->parent->features.verbForm == VerbFormValue::Part) {
             auxFound = child;
@@ -90,7 +90,7 @@ QSet<CandidateError> Rule_PREP004::check(const TokenNode& anchor,
     QSet<CandidateError> res;
 
     // Якорь — ADV с LEMMA=ago
-    if (anchor.upos != Upos::ADV)
+    if (anchor.upos != Upos::Adv)
         return res;
     if (anchor.lemma.toLower() != QStringLiteral("ago"))
         return res;

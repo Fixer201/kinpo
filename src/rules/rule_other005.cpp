@@ -63,7 +63,7 @@ QString Rule_OTHER005::ruleId() const
 
 QSet<Upos> Rule_OTHER005::anchorUpos() const
 {
-    return {Upos::VERB};
+    return {Upos::Verb};
 }
 
 bool Rule_OTHER005::canConflict() const
@@ -79,7 +79,7 @@ QSet<CandidateError> Rule_OTHER005::check(const TokenNode& anchor,
     QSet<CandidateError> res;
 
     // Якорь должен быть глаголом
-    if (anchor.upos != Upos::VERB)
+    if (anchor.upos != Upos::Verb)
         return res;
 
     // Проверяем наличие прямого зависимого с Polarity=Neg

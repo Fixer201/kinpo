@@ -31,7 +31,7 @@ QString Rule_AUX005::ruleId() const
 
 QSet<Upos> Rule_AUX005::anchorUpos() const
 {
-    return {Upos::AUX};
+    return {Upos::Aux};
 }
 
 bool Rule_AUX005::canConflict() const
@@ -59,7 +59,7 @@ const QSet<QString> modalVerbs = {
 bool hasHaveChild(const TokenNode& v)
 {
     for (const TokenNode* child : v.children) {
-        if (child->upos != Upos::AUX)
+        if (child->upos != Upos::Aux)
             continue;
         if (child->deprel != Deprel::Aux)
             continue;
@@ -79,7 +79,7 @@ QSet<CandidateError> Rule_AUX005::check(const TokenNode& anchor,
     QSet<CandidateError> res;
 
     // Якорь — модальный AUX, присоединённый как aux
-    if (anchor.upos != Upos::AUX || anchor.deprel != Deprel::Aux)
+    if (anchor.upos != Upos::Aux || anchor.deprel != Deprel::Aux)
         return res;
 
     if (!modalVerbs.contains(anchor.lemma.toLower()))
@@ -104,7 +104,7 @@ QSet<CandidateError> Rule_AUX005::check(const TokenNode& anchor,
 
     // Ветка (б): следующий токен — of (ADP). Заменить of на have.
     if (nextTok != nullptr &&
-        nextTok->upos == Upos::ADP &&
+        nextTok->upos == Upos::Adp &&
         nextTok->lemma.toLower() == QStringLiteral("of")) {
         CandidateError ce;
         ce.ruleId = QStringLiteral("AUX-005");

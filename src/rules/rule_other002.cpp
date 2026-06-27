@@ -24,7 +24,7 @@ QString Rule_OTHER002::ruleId() const
 
 QSet<Upos> Rule_OTHER002::anchorUpos() const
 {
-    return {Upos::ADJ};
+    return {Upos::Adj};
 }
 
 bool Rule_OTHER002::canConflict() const
@@ -40,7 +40,7 @@ QSet<CandidateError> Rule_OTHER002::check(const TokenNode& anchor,
     QSet<CandidateError> res;
 
     // Якорь — прилагательное good в наречной позиции (advmod)
-    if (anchor.upos != Upos::ADJ || anchor.deprel != Deprel::Advmod)
+    if (anchor.upos != Upos::Adj || anchor.deprel != Deprel::Advmod)
         return res;
 
     if (anchor.lemma.toLower() != QStringLiteral("good"))
@@ -48,7 +48,7 @@ QSet<CandidateError> Rule_OTHER002::check(const TokenNode& anchor,
 
     // V — голова якоря, должна быть глаголом
     const TokenNode* v = anchor.parent;
-    if (v == nullptr || v->upos != Upos::VERB)
+    if (v == nullptr || v->upos != Upos::Verb)
         return res;
 
     // Исключение: «do good» — устойчивое выражение

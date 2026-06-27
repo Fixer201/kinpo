@@ -35,7 +35,7 @@ QString Rule_PREP001::ruleId() const
 
 QSet<Upos> Rule_PREP001::anchorUpos() const
 {
-    return {Upos::ADP};
+    return {Upos::Adp};
 }
 
 bool Rule_PREP001::canConflict() const
@@ -150,19 +150,19 @@ QString expectedPreposition(const TokenNode& n)
     // Конкретное время: слова-маркеры, время вида 12:30, или o'clock рядом
     if (specificTimeWords.contains(lemmaLower))
         return QStringLiteral("at");
-    if (n.upos == Upos::NUM && timePattern.match(form).hasMatch())
+    if (n.upos == Upos::Num && timePattern.match(form).hasMatch())
         return QStringLiteral("at");
     if (hasChildWithLemma(n, QStringLiteral("o'clock")))
         return QStringLiteral("at");
     // N=NUM и parent(N) имеет LEMMA=o'clock ("at 5 o'clock": N=5, parent=o'clock)
-    if (n.upos == Upos::NUM && n.parent &&
+    if (n.upos == Upos::Num && n.parent &&
         n.parent->lemma.toLower() == QStringLiteral("o'clock"))
         return QStringLiteral("at");
 
     // День недели или дата (NOUN с порядковым числительным)
     if (daysOfWeek.contains(lemmaLower))
         return QStringLiteral("on");
-    if (n.upos == Upos::NOUN && hasChildNumTypeOrd(n))
+    if (n.upos == Upos::Noun && hasChildNumTypeOrd(n))
         return QStringLiteral("on");
 
     // Месяц или сезон
@@ -170,7 +170,7 @@ QString expectedPreposition(const TokenNode& n)
         return QStringLiteral("in");
 
     // Год (число из 4 цифр) или слово "century"
-    if (n.upos == Upos::NUM && yearPattern.match(form).hasMatch())
+    if (n.upos == Upos::Num && yearPattern.match(form).hasMatch())
         return QStringLiteral("in");
     if (lemmaLower == QStringLiteral("century"))
         return QStringLiteral("in");
@@ -207,7 +207,7 @@ QSet<CandidateError> Rule_PREP001::check(const TokenNode& anchor,
     QSet<CandidateError> res;
 
     // Якорь — ADP с LEMMA ∈ {in, on, at}
-    if (anchor.upos != Upos::ADP)
+    if (anchor.upos != Upos::Adp)
         return res;
 
     const QString formLower = anchor.lemma.toLower();

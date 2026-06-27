@@ -24,7 +24,7 @@ QString Rule_DET003::ruleId() const
 
 QSet<Upos> Rule_DET003::anchorUpos() const
 {
-    return {Upos::PRON, Upos::DET};
+    return {Upos::Pron, Upos::Det};
 }
 
 bool Rule_DET003::canConflict() const
@@ -50,7 +50,7 @@ QSet<CandidateError> Rule_DET003::check(const TokenNode& anchor,
 {
     QSet<CandidateError> res;
 
-    if (anchor.upos != Upos::PRON && anchor.upos != Upos::DET)
+    if (anchor.upos != Upos::Pron && anchor.upos != Upos::Det)
         return res;
 
     // MWT-формы исключаются: токен с такой FORM отсутствует как единый токен
@@ -75,7 +75,7 @@ QSet<CandidateError> Rule_DET003::check(const TokenNode& anchor,
     if (!anchor.parent)
         return res;
     const Upos headUpos = anchor.parent->upos;
-    if (headUpos != Upos::VERB && headUpos != Upos::AUX && headUpos != Upos::ADJ)
+    if (headUpos != Upos::Verb && headUpos != Upos::Aux && headUpos != Upos::Adj)
         return res;
 
     // LEMMA должна быть в таблице омофонов

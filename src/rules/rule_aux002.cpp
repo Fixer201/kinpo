@@ -26,7 +26,7 @@ QString Rule_AUX002::ruleId() const
 
 QSet<Upos> Rule_AUX002::anchorUpos() const
 {
-    return {Upos::AUX};
+    return {Upos::Aux};
 }
 
 bool Rule_AUX002::canConflict() const
@@ -42,7 +42,7 @@ QSet<CandidateError> Rule_AUX002::check(const TokenNode& anchor,
     QSet<CandidateError> res;
 
     // Якорь — вспомогательный глагол, присоединённый как aux
-    if (anchor.upos != Upos::AUX || anchor.deprel != Deprel::Aux)
+    if (anchor.upos != Upos::Aux || anchor.deprel != Deprel::Aux)
         return res;
 
     const QString aLemma = anchor.lemma.toLower();
@@ -56,7 +56,7 @@ QSet<CandidateError> Rule_AUX002::check(const TokenNode& anchor,
 
     // V — голова A, должна быть обычным глаголом
     const TokenNode* v = anchor.parent;
-    if (v == nullptr || v->upos != Upos::VERB)
+    if (v == nullptr || v->upos != Upos::Verb)
         return res;
 
     if (isDo) {

@@ -24,7 +24,7 @@ QString Rule_DET004::ruleId() const
 
 QSet<Upos> Rule_DET004::anchorUpos() const
 {
-    return {Upos::PRON, Upos::DET, Upos::ADV};
+    return {Upos::Pron, Upos::Det, Upos::Adv};
 }
 
 bool Rule_DET004::canConflict() const
@@ -59,7 +59,7 @@ QSet<CandidateError> Rule_DET004::check(const TokenNode& anchor,
         return res;
 
     // HEAD должен быть NOUN
-    if (!anchor.parent || anchor.parent->upos != Upos::NOUN)
+    if (!anchor.parent || anchor.parent->upos != Upos::Noun)
         return res;
 
     // FORM должна быть в таблице омофонов

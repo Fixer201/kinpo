@@ -25,7 +25,7 @@ QString Rule_DET005::ruleId() const
 QSet<Upos> Rule_DET005::anchorUpos() const
 {
     // Цель проверки — сам NOUN, а не подчинённый детерминатив
-    return {Upos::NOUN};
+    return {Upos::Noun};
 }
 
 bool Rule_DET005::canConflict() const
@@ -43,7 +43,7 @@ QSet<CandidateError> Rule_DET005::check(const TokenNode& anchor,
     QSet<CandidateError> res;
 
     // Цель — только NOUN
-    if (anchor.upos != Upos::NOUN)
+    if (anchor.upos != Upos::Noun)
         return res;
 
     // Должно быть явно указано множественное число

@@ -30,7 +30,7 @@ QSet<Upos> Rule_CONJ002::anchorUpos() const
 {
     // because — SCONJ; в конструкции "because of" because всё ещё SCONJ
     // (of прикрепляется к because через fixed)
-    return {Upos::SCONJ};
+    return {Upos::SConj};
 }
 
 bool Rule_CONJ002::canConflict() const
@@ -51,7 +51,7 @@ namespace {
 bool hasVerbOrAuxChild(const TokenNode& node)
 {
     for (const TokenNode* child : node.children)
-        if (child->upos == Upos::VERB || child->upos == Upos::AUX)
+        if (child->upos == Upos::Verb || child->upos == Upos::Aux)
             return true;
     return false;
 }
@@ -105,7 +105,7 @@ QSet<CandidateError> Rule_CONJ002::check(const TokenNode& anchor,
     QSet<CandidateError> res;
 
     // Якорь — SCONJ с LEMMA=because
-    if (anchor.upos != Upos::SCONJ)
+    if (anchor.upos != Upos::SConj)
         return res;
     if (anchor.lemma.toLower() != QStringLiteral("because"))
         return res;
@@ -126,7 +126,7 @@ QSet<CandidateError> Rule_CONJ002::check(const TokenNode& anchor,
     if (!hasFixedOf) {
         // Ветка (а): because → because of (нет fixed-of)
         // H должен быть именной группой: NOUN или PROPN
-        if (h.upos != Upos::NOUN && h.upos != Upos::PROPN)
+        if (h.upos != Upos::Noun && h.upos != Upos::Prop)
             return res;
         // У H не должно быть прямых зависимых VERB или AUX (иначе клауза)
         if (hasVerbOrAuxChild(h))

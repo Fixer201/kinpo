@@ -23,7 +23,7 @@ QString Rule_DET001::ruleId() const
 
 QSet<Upos> Rule_DET001::anchorUpos() const
 {
-    return {Upos::DET, Upos::ADV};
+    return {Upos::Det, Upos::Adv};
 }
 
 bool Rule_DET001::canConflict() const
@@ -115,7 +115,7 @@ QSet<CandidateError> Rule_DET001::check(const TokenNode& anchor,
         return res;
 
     // HEAD должен быть NOUN
-    if (!anchor.parent || anchor.parent->upos != Upos::NOUN)
+    if (!anchor.parent || anchor.parent->upos != Upos::Noun)
         return res;
 
     const TokenNode& noun = *anchor.parent;
