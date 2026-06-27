@@ -14,6 +14,12 @@
 #include <QTextStream>
 #include <utility>
 
+/*!
+* \brief Установить UTF-8 кодировку для QTextStream.
+* \param [in,out] stream Поток для настройки.
+*
+* В Qt5 использует setCodec, в Qt6 — setEncoding.
+*/
 void setUtf8Encoding(QTextStream& stream);
 
 /*!

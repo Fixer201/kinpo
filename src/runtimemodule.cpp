@@ -110,6 +110,15 @@ void loadPriorityIndex(PriorityIndex& idx)
 
 } // namespace
 
+/*!
+* \brief Построить CheckerRuntime по параметрам запуска.
+* \param [in] config Параметры запуска с путями к файлам и каталогу словарей.
+* \return Заполненный контекст проверки с диспетчеризацией и ресурсами.
+* \throws Diagnostic{ResourceLoadError} при ошибке загрузки словарей.
+*
+* Заполняет dispatch (правила по UPOS), priorityIndex (приоритеты между
+* правилами) и загружает словари через loadResources.
+*/
 CheckerRuntime initializeRuntime(const RunConfig& config)
 {
     CheckerRuntime runtime;

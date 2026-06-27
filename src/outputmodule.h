@@ -12,14 +12,27 @@
 #include <QSet>
 #include <QStringList>
 
-// Применяет edits к displayTokenIds и возвращает строку исправления.
-// Конкатенирует FORM оставшихся и добавленных токенов через пробел.
+/*!
+* \brief Применить edits к displayTokenIds и сформировать строку исправления.
+* \param [in] ce Кандидат ошибки с edits и displayTokenIds.
+* \param [in] sentence Предложение для доступа к форме токенов.
+* \return Строка исправления (FORM через пробел).
+*
+* Конкатенирует FORM оставшихся и добавленных токенов через пробел.
+*/
 QString buildCorrection(const CandidateError& ce,
                          const SentenceModel& sentence);
 
-// Форматирует все найденные ошибки в строки и записывает выходной файл.
-// При отсутствии ошибок пишет "NO ERRORS FOUND".
-// При ошибке записи выбрасывает Diagnostic{OutputWriteError}.
+/*!
+* \brief Форматировать все найденные ошибки и записать выходной файл.
+* \param [in] errors Набор найденных ошибок.
+* \param [in] document Модель документа для доступа к предложениям.
+* \param [in] runtime Runtime-контекст с путём к выходному файлу.
+* \throws Diagnostic{OutputWriteError} при ошибке записи.
+*
+* При отсутствии ошибок пишет "NO ERRORS FOUND".
+* Запись атомарная: временный файл, затем переименование.
+*/
 void writeOutput(const QSet<CandidateError>& errors,
                  const DocumentModel& document,
                  const CheckerRuntime& runtime);

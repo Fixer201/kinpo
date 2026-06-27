@@ -14,15 +14,27 @@
 #include "datamodel.h"
 #include <QStringList>
 
-// Читает входной файл CoNLL-U в список строк.
-// При ошибке доступа выбрасывает Diagnostic{InputFileError}.
+/*!
+* \brief Читать входной файл CoNLL-U в список строк.
+* \param [in] path Путь ко входному файлу.
+* \return Список строк файла.
+* \throws Diagnostic{InputFileError} при ошибке доступа к файлу.
+*/
 QStringList readFile(const QString& path);
 
-// Разбивает список строк на блоки предложений, парсит каждый блок
-// и проверяет структуру. При ошибке выбрасывает Diagnostic{InputFormatError}.
+/*!
+* \brief Разбить строки на блоки предложений, распарсить и проверить.
+* \param [in] lines Строки входного файла.
+* \return Валидированное сырое представление документа.
+* \throws Diagnostic{InputFormatError} при ошибке формата.
+*/
 RawDocument parseAndValidate(const QStringList& lines);
 
-// Преобразует RawDocument в DocumentModel с деревьями зависимостей.
+/*!
+* \brief Преобразовать RawDocument в DocumentModel с деревьями зависимостей.
+* \param [in] rawDoc Валидированное сырое представление.
+* \return Аналитическая модель документа с индексом sentById.
+*/
 DocumentModel buildModel(const RawDocument& rawDoc);
 
 /*!

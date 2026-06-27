@@ -34,22 +34,23 @@ static void printDiagnostic(const Diagnostic& d)
         err << QStringLiteral("предложение ") << d.sentId.value() << QStringLiteral(": ");
     err << d.message << Qt::endl;
 }
-
+/*!
+* \brief Точка входа консольного приложения.
+* \param [in] argc Количество аргументов командной строки.
+* \param [in] argv Массив аргументов командной строки.
+* \return 0 при успехе, 1 при ошибке.
+*
+* Выполняет полный конвейер: разбор аргументов, чтение входного файла,
+* анализ правилами и запись результата. Любая ошибка выводится в stderr.
+*/
 int main(int argc, char *argv[])
 {
     QCoreApplication app(argc, argv);
 
     try {
-        // Настройка: аргументы CLI + инициализация runtime
         const CheckerRuntime runtime = runSetup(app.arguments().mid(1));
-
-        // Ввод: чтение файла + парсинг + построение модели
         const DocumentModel document = runInput(runtime);
-
-        // Анализ: проверка всех предложений правилами
         const QSet<CandidateError> errors = runAnalysis(document, runtime);
-
-        // Вывод: форматирование и запись результата
         writeOutput(errors, document, runtime);
     } catch (const Diagnostic& d) {
         printDiagnostic(d);

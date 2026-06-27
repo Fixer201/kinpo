@@ -90,6 +90,11 @@ uint qHash(const VerbPrepEntry& vpe, uint seed) noexcept
     return h;
 }
 
+/*!
+* \brief Преобразовать DiagnosticKind в строковое представление.
+* \param [in] kind Значение перечисления.
+* \return Строковое имя (например, "InputFormatError").
+*/
 QString diagnosticKindToString(DiagnosticKind kind)
 {
     switch (kind) {
