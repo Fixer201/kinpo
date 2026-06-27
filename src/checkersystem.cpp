@@ -27,22 +27,27 @@ bool conditionApplies(PriorityConditionKind kind,
         return true;
 
     if (kind == PriorityConditionKind::Art003LanguageCase) {
-        bool result = false;
-        for (int tid : higher.conflictTokenIds) {
+        // ART-003 записывает PROPN в displayTokenIds, но не в conflictTokenIds.
+        QSet<int> allIds(higher.conflictTokenIds.begin(), higher.conflictTokenIds.end());
+        for (int tid : higher.displayTokenIds)
+            allIds.insert(tid);
+
+        for (int tid : allIds) {
             TokenNode* node = sentence.tokensById.value(tid, nullptr);
-            if (!result && node &&
-                node->upos == Upos::Prop &&
-                (node->lemma == QStringLiteral("English") || node->form == QStringLiteral("English"))) {
+            if (node && node->upos == Upos::Prop) {
+                // PROPN-язык без зависимого «language» → условие выполнено
                 bool hasLanguageChild = false;
                 for (TokenNode* child : node->children) {
                     if (!hasLanguageChild &&
-                        (child->form == QStringLiteral("language") || child->lemma == QStringLiteral("language")))
+                        (child->form.toLower() == QStringLiteral("language") ||
+                         child->lemma.toLower() == QStringLiteral("language")))
                         hasLanguageChild = true;
                 }
-                result = !hasLanguageChild;
+                if (!hasLanguageChild)
+                    return true;
             }
         }
-        return result;
+        return false;
     }
 
     return false;

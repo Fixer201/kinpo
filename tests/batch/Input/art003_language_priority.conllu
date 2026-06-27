@@ -1,0 +1,4 @@
+# sent_id = art003_language_priority
+# text = the French
+1	the	the	DET	DT	Definite=Def|PronType=Art	2	det	_	_
+2	French	French	PROPN	NNP	Number=Sing	0	root	_	_
