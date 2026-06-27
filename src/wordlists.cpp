@@ -56,9 +56,8 @@ bool loadWordSet(const QString& filePath, QSet<QString>& target)
     setUtf8Encoding(in);
     while (!in.atEnd()) {
         QString line = in.readLine().trimmed();
-        if (line.isEmpty() || line.startsWith('#'))
-            continue;
-        target.insert(line.toLower());
+        if (!line.isEmpty() && !line.startsWith('#'))
+            target.insert(line.toLower());
     }
     return true;
 }
@@ -82,15 +81,15 @@ bool loadPastForms(const QString& filePath, QHash<QString, PastForms>& target)
     setUtf8Encoding(in);
     while (!in.atEnd()) {
         QString line = in.readLine().trimmed();
-        if (line.isEmpty() || line.startsWith('#'))
-            continue;
-        QStringList cols = line.split('\t');
-        if (cols.size() != 3)
-            continue;
-        PastForms pf;
-        pf.pastSimple = cols[1].toLower();
-        pf.pastParticiple = cols[2].toLower();
-        target.insert(cols[0].toLower(), pf);
+        if (!line.isEmpty() && !line.startsWith('#')) {
+            QStringList cols = line.split('\t');
+            if (cols.size() == 3) {
+                PastForms pf;
+                pf.pastSimple = cols[1].toLower();
+                pf.pastParticiple = cols[2].toLower();
+                target.insert(cols[0].toLower(), pf);
+            }
+        }
     }
     return true;
 }
@@ -146,22 +145,20 @@ bool loadDetCompat(const QString& filePath, QHash<QString, QList<DetCompatEntry>
     setUtf8Encoding(in);
     while (!in.atEnd()) {
         QString line = in.readLine().trimmed();
-        if (line.isEmpty() || line.startsWith('#'))
-            continue;
-        QStringList cols = line.split('\t');
-        if (cols.size() != 3)
-            continue;
-
-        NumberCondition number = NumberCondition::Any;
-        CountabilityCondition countability = CountabilityCondition::Any;
-        if (!parseDetCompatConditions(cols[1], number, countability))
-            continue;
-
-        DetCompatEntry entry;
-        entry.number = number;
-        entry.countability = countability;
-        entry.correction = cols[2];
-        target[cols[0].toLower()].append(entry);
+        if (!line.isEmpty() && !line.startsWith('#')) {
+            QStringList cols = line.split('\t');
+            if (cols.size() == 3) {
+                NumberCondition number = NumberCondition::Any;
+                CountabilityCondition countability = CountabilityCondition::Any;
+                if (parseDetCompatConditions(cols[1], number, countability)) {
+                    DetCompatEntry entry;
+                    entry.number = number;
+                    entry.countability = countability;
+                    entry.correction = cols[2];
+                    target[cols[0].toLower()].append(entry);
+                }
+            }
+        }
     }
     return true;
 }
@@ -188,42 +185,41 @@ bool loadVerbPrep(const QString& filePath, QHash<QString, QSet<VerbPrepEntry>>& 
     setUtf8Encoding(in);
     while (!in.atEnd()) {
         QString line = in.readLine().trimmed();
-        if (line.isEmpty() || line.startsWith('#'))
-            continue;
-        QStringList cols = line.split('\t');
-        if (cols.size() != 3)
-            continue;
+        if (!line.isEmpty() && !line.startsWith('#')) {
+            QStringList cols = line.split('\t');
+            if (cols.size() == 3) {
+                VerbPrepEntry entry;
+                QString wrongPrep = cols[1].trimmed().toLower();
+                QString correctPrep = cols[2].trimmed().toLower();
 
-        VerbPrepEntry entry;
-        QString wrongPrep = cols[1].trimmed().toLower();
-        QString correctPrep = cols[2].trimmed().toLower();
+                if (wrongPrep == "-") {
+                    // Вставка предлога
+                    entry.wrongPrep = std::nullopt;
+                    entry.action = VerbPrepAction::InsertPrep;
+                    if (correctPrep.startsWith('+')) {
+                        entry.prep = correctPrep.mid(1);
+                    } else {
+                        entry.prep = correctPrep;
+                    }
+                } else if (correctPrep == "-") {
+                    // Удаление предлога
+                    entry.wrongPrep = wrongPrep;
+                    entry.action = VerbPrepAction::DeletePrep;
+                    entry.prep = std::nullopt;
+                } else {
+                    // Замена предлога
+                    entry.wrongPrep = wrongPrep;
+                    entry.action = VerbPrepAction::ReplacePrep;
+                    if (correctPrep.startsWith('+')) {
+                        entry.prep = correctPrep.mid(1);
+                    } else {
+                        entry.prep = correctPrep;
+                    }
+                }
 
-        if (wrongPrep == "-") {
-            // Вставка предлога
-            entry.wrongPrep = std::nullopt;
-            entry.action = VerbPrepAction::InsertPrep;
-            if (correctPrep.startsWith('+')) {
-                entry.prep = correctPrep.mid(1);
-            } else {
-                entry.prep = correctPrep;
-            }
-        } else if (correctPrep == "-") {
-            // Удаление предлога
-            entry.wrongPrep = wrongPrep;
-            entry.action = VerbPrepAction::DeletePrep;
-            entry.prep = std::nullopt;
-        } else {
-            // Замена предлога
-            entry.wrongPrep = wrongPrep;
-            entry.action = VerbPrepAction::ReplacePrep;
-            if (correctPrep.startsWith('+')) {
-                entry.prep = correctPrep.mid(1);
-            } else {
-                entry.prep = correctPrep;
+                target[cols[0].toLower()].insert(entry);
             }
         }
-
-        target[cols[0].toLower()].insert(entry);
     }
     return true;
 }
@@ -248,13 +244,13 @@ bool loadCmuDict(const QString& filePath, QHash<QString, QStringList>& target)
     setUtf8Encoding(in);
     while (!in.atEnd()) {
         QString line = in.readLine().trimmed();
-        if (line.isEmpty() || line.startsWith(';') || line.startsWith('#'))
-            continue;
-        QStringList parts = line.split(' ', Qt::SkipEmptyParts);
-        if (parts.size() < 2)
-            continue;
-        const QString word = parts.takeFirst().toLower();
-        target.insert(word, parts);
+        if (!line.isEmpty() && !line.startsWith(';') && !line.startsWith('#')) {
+            QStringList parts = line.split(' ', Qt::SkipEmptyParts);
+            if (parts.size() >= 2) {
+                const QString word = parts.takeFirst().toLower();
+                target.insert(word, parts);
+            }
+        }
     }
     return true;
 }

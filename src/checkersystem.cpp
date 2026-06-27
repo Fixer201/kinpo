@@ -122,18 +122,18 @@ QSet<CandidateError> checkSentence(const SentenceModel& sentence,
     for (const TokenNode* token : sentence.tokens) {
         const QSet<const Rule*> rules = runtime.dispatch.value(token->upos);
         for (const Rule* rule : rules) {
-            if (!rule)
-                continue;
-            QSet<CandidateError> candidates = rule->check(*token, sentenceIndex, document, runtime);
-            for (CandidateError ce : candidates) {
-                ce.sentId = sentence.sentId; // заполняем sentId для writeOutput
-                // Кандидаты от правил с canConflict проходят через resolveCandidate
-                // для подавления менее приоритетных в той же зоне
-                if (rule->canConflict()) {
-                    resolveCandidate(ce, zoneMap, sentence, runtime);
-                } else {
-                    // Кандидаты от правил без canConflict добавляются напрямую
-                    nonConflict.insert(ce);
+            if (rule) {
+                QSet<CandidateError> candidates = rule->check(*token, sentenceIndex, document, runtime);
+                for (CandidateError ce : candidates) {
+                    ce.sentId = sentence.sentId; // заполняем sentId для writeOutput
+                    // Кандидаты от правил с canConflict проходят через resolveCandidate
+                    // для подавления менее приоритетных в той же зоне
+                    if (rule->canConflict()) {
+                        resolveCandidate(ce, zoneMap, sentence, runtime);
+                    } else {
+                        // Кандидаты от правил без canConflict добавляются напрямую
+                        nonConflict.insert(ce);
+                    }
                 }
             }
         }

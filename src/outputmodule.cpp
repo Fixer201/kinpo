@@ -244,11 +244,10 @@ static QStringList formatErrors(const QSet<CandidateError>& errors,
         if (!sentence) {
             lines.append(ce.sentId + QStringLiteral(" | ") + ce.ruleId
                          + QStringLiteral(" | ???"));
-            continue;
+        } else {
+            const Rule* rule = findRule(ce.ruleId, runtime);
+            lines.append(formatErrorLine(ce, *sentence, rule));
         }
-
-        const Rule* rule = findRule(ce.ruleId, runtime);
-        lines.append(formatErrorLine(ce, *sentence, rule));
     }
     return lines;
 }

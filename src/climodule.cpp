@@ -44,15 +44,13 @@ RunConfig parseCommandLine(const QStringList& args)
                 throw makeCliError(QStringLiteral("Флаг --lists требует значение: путь к каталогу словарей."));
             }
             listsDir = args[++i];
-            continue;
-        }
-
-        // Неизвестный флаг (начинается с --)
-        if (arg.startsWith(QStringLiteral("--")))
+        } else if (arg.startsWith(QStringLiteral("--"))) {
+            // Неизвестный флаг (начинается с --)
             throw makeCliError(QStringLiteral("Неизвестный флаг: %1").arg(arg));
-
-        // Позиционный аргумент
-        positional.append(arg);
+        } else {
+            // Позиционный аргумент
+            positional.append(arg);
+        }
     }
 
     // Позиционных аргументов должно быть ровно два

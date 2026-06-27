@@ -120,37 +120,37 @@ TokenFeatures parseFeats(const QString& featsRaw)
     QStringList pairs = featsRaw.split('|');
     for (const QString& pair : pairs) {
         QStringList kv = pair.split('=');
-        if (kv.size() != 2)
-            continue;
-        QString key = kv[0].trimmed();
-        QString value = kv[1].trimmed();
+        if (kv.size() == 2) {
+            QString key = kv[0].trimmed();
+            QString value = kv[1].trimmed();
 
-        if (key == QStringLiteral("Number")) {
-            if (value == QStringLiteral("Sing"))      f.number = NumberValue::Sing;
-            else if (value == QStringLiteral("Plur")) f.number = NumberValue::Plur;
-        } else if (key == QStringLiteral("Tense")) {
-            if (value == QStringLiteral("Past"))      f.tense = TenseValue::Past;
-            else if (value == QStringLiteral("Pres"))  f.tense = TenseValue::Pres;
-        } else if (key == QStringLiteral("VerbForm")) {
-            if (value == QStringLiteral("Inf"))       f.verbForm = VerbFormValue::Inf;
-            else if (value == QStringLiteral("Part"))  f.verbForm = VerbFormValue::Part;
-        } else if (key == QStringLiteral("Degree")) {
-            if (value == QStringLiteral("Pos"))       f.degree = DegreeValue::Pos;
-            else if (value == QStringLiteral("Cmp"))   f.degree = DegreeValue::Cmp;
-            else if (value == QStringLiteral("Sup"))   f.degree = DegreeValue::Sup;
-        } else if (key == QStringLiteral("Case")) {
-            if (value == QStringLiteral("Nom"))       f.caseValue = CaseValue::Nom;
-            else if (value == QStringLiteral("Acc"))   f.caseValue = CaseValue::Acc;
-        } else if (key == QStringLiteral("Person")) {
-            f.person = value;
-        } else if (key == QStringLiteral("Poss") && value == QStringLiteral("Yes")) {
-            f.poss = true;
-        } else if (key == QStringLiteral("Polarity") && value == QStringLiteral("Neg")) {
-            f.polarityNeg = true;
-        } else if (key == QStringLiteral("NumType") && value == QStringLiteral("Ord")) {
-            f.numTypeOrd = true;
-        } else if (key == QStringLiteral("Voice") && value == QStringLiteral("Pass")) {
-            f.voicePass = true;
+            if (key == QStringLiteral("Number")) {
+                if (value == QStringLiteral("Sing"))      f.number = NumberValue::Sing;
+                else if (value == QStringLiteral("Plur")) f.number = NumberValue::Plur;
+            } else if (key == QStringLiteral("Tense")) {
+                if (value == QStringLiteral("Past"))      f.tense = TenseValue::Past;
+                else if (value == QStringLiteral("Pres"))  f.tense = TenseValue::Pres;
+            } else if (key == QStringLiteral("VerbForm")) {
+                if (value == QStringLiteral("Inf"))       f.verbForm = VerbFormValue::Inf;
+                else if (value == QStringLiteral("Part"))  f.verbForm = VerbFormValue::Part;
+            } else if (key == QStringLiteral("Degree")) {
+                if (value == QStringLiteral("Pos"))       f.degree = DegreeValue::Pos;
+                else if (value == QStringLiteral("Cmp"))   f.degree = DegreeValue::Cmp;
+                else if (value == QStringLiteral("Sup"))   f.degree = DegreeValue::Sup;
+            } else if (key == QStringLiteral("Case")) {
+                if (value == QStringLiteral("Nom"))       f.caseValue = CaseValue::Nom;
+                else if (value == QStringLiteral("Acc"))   f.caseValue = CaseValue::Acc;
+            } else if (key == QStringLiteral("Person")) {
+                f.person = value;
+            } else if (key == QStringLiteral("Poss") && value == QStringLiteral("Yes")) {
+                f.poss = true;
+            } else if (key == QStringLiteral("Polarity") && value == QStringLiteral("Neg")) {
+                f.polarityNeg = true;
+            } else if (key == QStringLiteral("NumType") && value == QStringLiteral("Ord")) {
+                f.numTypeOrd = true;
+            } else if (key == QStringLiteral("Voice") && value == QStringLiteral("Pass")) {
+                f.voicePass = true;
+            }
         }
     }
     return f;
