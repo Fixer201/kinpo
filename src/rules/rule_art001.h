@@ -20,8 +20,10 @@ class Rule_ART001 : public Rule {
 public:
     static const Rule_ART001& instance();
 
+    /*! \brief Идентификатор правила ART-001. */
     QString ruleId() const override;
     QSet<Upos> anchorUpos() const override;
+    /*! \brief Флаг возможности конфликта с другими правилами. */
     bool canConflict() const override;
 
     QSet<CandidateError> check(const TokenNode& anchor,

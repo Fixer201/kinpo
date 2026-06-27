@@ -12,8 +12,10 @@ class Rule_DET002 : public Rule {
 public:
     static const Rule_DET002& instance();
 
+    /*! \brief Идентификатор правила DET-002. */
     QString ruleId() const override;
     QSet<Upos> anchorUpos() const override;
+    /*! \brief Флаг возможности конфликта с другими правилами. */
     bool canConflict() const override;
 
     QSet<CandidateError> check(const TokenNode& anchor,

@@ -15,8 +15,10 @@ class Rule_PREP005 : public Rule {
 public:
     static const Rule_PREP005& instance();
 
+    /*! \brief Идентификатор правила PREP-005. */
     QString ruleId() const override;
     QSet<Upos> anchorUpos() const override;
+    /*! \brief Флаг возможности конфликта с другими правилами. */
     bool canConflict() const override;
 
     QSet<CandidateError> check(const TokenNode& anchor,

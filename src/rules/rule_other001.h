@@ -15,8 +15,10 @@ class Rule_OTHER001 : public Rule {
 public:
     static const Rule_OTHER001& instance();
 
+    /*! \brief Идентификатор правила OTHER-001. */
     QString ruleId() const override;
     QSet<Upos> anchorUpos() const override;
+    /*! \brief Флаг возможности конфликта с другими правилами. */
     bool canConflict() const override;
 
     QSet<CandidateError> check(const TokenNode& anchor,

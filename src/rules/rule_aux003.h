@@ -14,8 +14,10 @@ class Rule_AUX003 : public Rule {
 public:
     static const Rule_AUX003& instance();
 
+    /*! \brief Идентификатор правила AUX-003. */
     QString ruleId() const override;
     QSet<Upos> anchorUpos() const override;
+    /*! \brief Флаг возможности конфликта с другими правилами. */
     bool canConflict() const override;
 
     QSet<CandidateError> check(const TokenNode& anchor,

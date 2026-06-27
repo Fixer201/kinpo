@@ -14,8 +14,10 @@ class Rule_CONJ004 : public Rule {
 public:
     static const Rule_CONJ004& instance();
 
+    /*! \brief Идентификатор правила CONJ-004. */
     QString ruleId() const override;
     QSet<Upos> anchorUpos() const override;
+    /*! \brief Флаг возможности конфликта с другими правилами. */
     bool canConflict() const override;
 
     QSet<CandidateError> check(const TokenNode& anchor,

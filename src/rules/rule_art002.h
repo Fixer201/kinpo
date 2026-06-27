@@ -12,8 +12,10 @@ class Rule_ART002 : public Rule {
 public:
     static const Rule_ART002& instance();
 
+    /*! \brief Идентификатор правила ART-002. */
     QString ruleId() const override;
     QSet<Upos> anchorUpos() const override;
+    /*! \brief Флаг возможности конфликта с другими правилами. */
     bool canConflict() const override;
 
     QSet<CandidateError> check(const TokenNode& anchor,
@@ -24,8 +26,10 @@ public:
 
 class Rule_ART002a : public Rule {
 public:
+    /*! \brief Идентификатор правила ART-002a. */
     QString ruleId() const override;
     QSet<Upos> anchorUpos() const override;
+    /*! \brief Флаг возможности конфликта с другими правилами. */
     bool canConflict() const override;
 
     QSet<CandidateError> check(const TokenNode& anchor,
