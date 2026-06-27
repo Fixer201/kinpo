@@ -245,7 +245,7 @@ void TEST_Rule_ART002::TestRule()
 
     // ART-002a вызывается, если якорь — ADV. Иначе ART-002.
     QSet<CandidateError> result;
-    if (anchor->upos == Upos::ADV) {
+    if (anchor->upos == Upos::Adv) {
         Rule_ART002a rule;
         result = rule.check(*anchor, 0, DocumentModel(), runtime);
     } else {

@@ -108,7 +108,7 @@ void TEST_Rule_AUX004::TestRule()
     // Обходим все AUX-токены: правило проверяет пары модальных.
     QSet<CandidateError> result;
     for (TokenNode* token : sentence.tokens) {
-        if (token->upos != Upos::AUX) {
+        if (token->upos != Upos::Aux) {
             continue;
         }
         QSet<CandidateError> found = rule.check(*token, 0, DocumentModel(), runtime);

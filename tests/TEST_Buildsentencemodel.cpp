@@ -164,7 +164,7 @@ void TEST_BuildSentenceModel::TestBuildSentenceModel_data()
         BuildExpect e;
         e.expectedRootId = 4;
         e.checkUposId = 3;
-        e.expectedUpos = Upos::PROPN;
+        e.expectedUpos = Upos::Prop;
         e.hasUposCheck = true;
         e.expectedLinearChain = {1, 2, 3, 4, 5, 6, 7};
         QTest::addRow("1.2_regular") << s << e;
@@ -300,22 +300,22 @@ void TEST_BuildSentenceModel::TestBuildSentenceModel_data()
         // Все используют одну и ту же RawSentence.
         struct UposCheck { int id; const char* tag; Upos upos; };
         UposCheck checks[] = {
-            {1,  "1.10_pron",  Upos::PRON},
-            {2,  "1.10_aux",   Upos::AUX},
-            {3,  "1.10_verb",  Upos::VERB},
-            {4,  "1.10_adv",   Upos::ADV},
-            {5,  "1.10_adp",   Upos::ADP},
-            {6,  "1.10_det",   Upos::DET},
-            {7,  "1.10_num",   Upos::NUM},
-            {8,  "1.10_adj",   Upos::ADJ},
-            {9,  "1.10_noun",  Upos::NOUN},
-            {10, "1.10_propn", Upos::PROPN},
-            {11, "1.10_cconj", Upos::CCONJ},
-            {12, "1.10_part",  Upos::PART},
-            {13, "1.10_sym",   Upos::SYM},
-            {14, "1.10_sconj", Upos::SCONJ},
+            {1,  "1.10_pron",  Upos::Pron},
+            {2,  "1.10_aux",   Upos::Aux},
+            {3,  "1.10_verb",  Upos::Verb},
+            {4,  "1.10_adv",   Upos::Adv},
+            {5,  "1.10_adp",   Upos::Adp},
+            {6,  "1.10_det",   Upos::Det},
+            {7,  "1.10_num",   Upos::Num},
+            {8,  "1.10_adj",   Upos::Adj},
+            {9,  "1.10_noun",  Upos::Noun},
+            {10, "1.10_propn", Upos::Prop},
+            {11, "1.10_cconj", Upos::CConj},
+            {12, "1.10_part",  Upos::Part},
+            {13, "1.10_sym",   Upos::Sym},
+            {14, "1.10_sconj", Upos::SConj},
             {15, "1.10_x",     Upos::X},
-            {16, "1.10_punct", Upos::PUNCT},
+            {16, "1.10_punct", Upos::Punct},
         };
         for (const auto& c : checks) {
             BuildExpect e;

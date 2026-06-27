@@ -105,7 +105,7 @@ void TEST_Rule_ART004::TestRule()
     // Обходим все PROPN: правило может сработать на нескольких группах.
     QSet<CandidateError> result;
     for (TokenNode* token : sentence.tokens) {
-        if (token->upos != Upos::PROPN) {
+        if (token->upos != Upos::Prop) {
             continue;
         }
         QSet<CandidateError> found = rule.check(*token, 0, DocumentModel(), runtime);

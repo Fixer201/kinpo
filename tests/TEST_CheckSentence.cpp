@@ -28,7 +28,7 @@ namespace {
 class StubRule_ART001 : public Rule {
 public:
     QString ruleId() const override { return QStringLiteral("ART-001"); }
-    QSet<Upos> anchorUpos() const override { return {Upos::DET}; }
+    QSet<Upos> anchorUpos() const override { return {Upos::Det}; }
     bool canConflict() const override { return true; }
 
     QSet<CandidateError> check(const TokenNode& anchor, int /*sentenceIndex*/,
@@ -37,11 +37,11 @@ public:
     {
         QSet<CandidateError> res;
         if (!anchor.parent) return res;
-        if (anchor.upos != Upos::DET) return res;
+        if (anchor.upos != Upos::Det) return res;
         QStringList articles = {QStringLiteral("a"), QStringLiteral("an"), QStringLiteral("the")};
         if (!articles.contains(anchor.form.toLower())) return res;
         // Родитель должен быть PROPN для срабатывания ART-001.
-        if (anchor.parent->upos == Upos::PROPN) {
+        if (anchor.parent->upos == Upos::Prop) {
             CandidateError ce;
             ce.ruleId = QStringLiteral("ART-001");
             ce.sentId = QStringLiteral("test");
@@ -58,7 +58,7 @@ public:
 class StubRule_ART006 : public Rule {
 public:
     QString ruleId() const override { return QStringLiteral("ART-006"); }
-    QSet<Upos> anchorUpos() const override { return {Upos::DET}; }
+    QSet<Upos> anchorUpos() const override { return {Upos::Det}; }
     bool canConflict() const override { return true; }
 
     QSet<CandidateError> check(const TokenNode& anchor, int /*sentenceIndex*/,
@@ -66,7 +66,7 @@ public:
                                const CheckerRuntime& /*runtime*/) const override
     {
         QSet<CandidateError> res;
-        if (anchor.upos != Upos::DET) return res;
+        if (anchor.upos != Upos::Det) return res;
         QString f = anchor.form.toLower();
         // Только "an" перед согласной — упрощённо для тестов
         if (f == QStringLiteral("an") && anchor.nextToken) {
@@ -89,7 +89,7 @@ public:
 class StubRule_DET001 : public Rule {
 public:
     QString ruleId() const override { return QStringLiteral("DET-001"); }
-    QSet<Upos> anchorUpos() const override { return {Upos::DET}; }
+    QSet<Upos> anchorUpos() const override { return {Upos::Det}; }
     bool canConflict() const override { return true; }
 
     QSet<CandidateError> check(const TokenNode& anchor, int /*sentenceIndex*/,
@@ -97,11 +97,11 @@ public:
                                const CheckerRuntime& /*runtime*/) const override
     {
         QSet<CandidateError> res;
-        if (anchor.upos != Upos::DET || !anchor.parent) return res;
+        if (anchor.upos != Upos::Det || !anchor.parent) return res;
 
         // "an" перед "books" — множественное число
         if (anchor.form.toLower() == QStringLiteral("an") &&
-            anchor.parent->upos == Upos::NOUN &&
+            anchor.parent->upos == Upos::Noun &&
             anchor.parent->form.toLower() == QStringLiteral("books"))
         {
             CandidateError ce;
@@ -114,7 +114,7 @@ public:
 
         // "this" перед "informations" — неисчисляемое
         if (anchor.form.toLower() == QStringLiteral("this") &&
-            anchor.parent->upos == Upos::NOUN &&
+            anchor.parent->upos == Upos::Noun &&
             anchor.parent->form.toLower() == QStringLiteral("informations"))
         {
             CandidateError ce;
@@ -134,7 +134,7 @@ public:
 class StubRule_PREP001 : public Rule {
 public:
     QString ruleId() const override { return QStringLiteral("PREP-001"); }
-    QSet<Upos> anchorUpos() const override { return {Upos::ADP}; }
+    QSet<Upos> anchorUpos() const override { return {Upos::Adp}; }
     bool canConflict() const override { return true; }
 
     QSet<CandidateError> check(const TokenNode& anchor, int /*sentenceIndex*/,
@@ -142,7 +142,7 @@ public:
                                const CheckerRuntime& /*runtime*/) const override
     {
         QSet<CandidateError> res;
-        if (anchor.upos != Upos::ADP) return res;
+        if (anchor.upos != Upos::Adp) return res;
 
         // "at Monday" должно быть "on Monday"
         if (anchor.form.toLower() == QStringLiteral("at") &&
@@ -168,10 +168,10 @@ CheckerRuntime makeTestRuntime()
     static StubRule_DET001 det001;
     static StubRule_PREP001 prep001;
 
-    rt.dispatch[Upos::DET].insert(&art001);
-    rt.dispatch[Upos::DET].insert(&art006);
-    rt.dispatch[Upos::DET].insert(&det001);
-    rt.dispatch[Upos::ADP].insert(&prep001);
+    rt.dispatch[Upos::Det].insert(&art001);
+    rt.dispatch[Upos::Det].insert(&art006);
+    rt.dispatch[Upos::Det].insert(&det001);
+    rt.dispatch[Upos::Adp].insert(&prep001);
 
     rt.priorityIndex.conditionsByHigherRule[QStringLiteral("DET-001")]
         [QStringLiteral("ART-006")] = PriorityConditionKind::Always;

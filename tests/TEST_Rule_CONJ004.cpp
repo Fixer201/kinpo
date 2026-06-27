@@ -272,7 +272,7 @@ void TEST_Rule_CONJ004::TestRule()
     // Обходим все CCONJ: правило проверяет пары коррелятов.
     QSet<CandidateError> result;
     for (TokenNode* token : document.sentences[0]->tokens) {
-        if (token->upos != Upos::CCONJ) {
+        if (token->upos != Upos::CConj) {
             continue;
         }
         QSet<CandidateError> found = rule.check(*token, 0, document, runtime);

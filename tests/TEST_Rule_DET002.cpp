@@ -111,7 +111,7 @@ void TEST_Rule_DET002::TestRule()
     // Обходим все NOUN: правило проверяет детерминативы при одном NOUN
     QSet<CandidateError> result;
     for (TokenNode* token : sentence.tokens) {
-        if (token->upos != Upos::NOUN)
+        if (token->upos != Upos::Noun)
             continue;
         QSet<CandidateError> found = rule.check(*token, 0, DocumentModel(), runtime);
         for (const CandidateError& ce : found)

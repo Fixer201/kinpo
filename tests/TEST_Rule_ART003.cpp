@@ -200,7 +200,7 @@ void TEST_Rule_ART003::TestRule()
     // Обходим все DET: правило может сработать на нескольких артиклях.
     QSet<CandidateError> result;
     for (TokenNode* token : sentence.tokens) {
-        if (token->upos != Upos::DET) {
+        if (token->upos != Upos::Det) {
             continue;
         }
         QSet<CandidateError> found = rule.check(*token, 0, DocumentModel(), runtime);
