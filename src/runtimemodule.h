@@ -10,13 +10,13 @@
 
 #include "datamodel.h"
 #include <QString>
-#include <variant>
 
 /*!
 * \brief Построить CheckerRuntime по параметрам запуска.
 * \param [in] config Параметры запуска с путями к файлам и каталогу словарей.
-* \return CheckerRuntime при успехе, Diagnostic при ошибке загрузки словарей.
+* \return CheckerRuntime при успехе.
+* \throws Diagnostic при ошибке загрузки словарей.
 *
 * Заполняет диспетчеризацию правил по UPOS, индекс приоритетов и ресурсы.
 */
-std::variant<CheckerRuntime, Diagnostic> initializeRuntime(const RunConfig& config);
+CheckerRuntime initializeRuntime(const RunConfig& config);

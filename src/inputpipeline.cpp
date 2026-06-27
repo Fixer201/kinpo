@@ -32,17 +32,22 @@ Diagnostic makeError(DiagnosticKind kind, const QString& message, int code = -1)
 
 } // namespace
 
-// Читает входной файл в список строк. При отсутствии файла или ошибке доступа
-// возвращает Diagnostic с категорией InputFileError.
-std::variant<QStringList, Diagnostic> readFile(const QString& path)
+/*!
+* \brief Читать входной файл CoNLL-U в список строк.
+* \param [in] path Путь ко входному файлу.
+* \return QStringList при успехе, Diagnostic{InputFileError} при ошибке доступа.
+*/
+QStringList readFile(const QString& path)
 {
     QFile file(path);
-    if (!file.exists())
-        return makeError(DiagnosticKind::InputFileError,
-                         QStringLiteral("Входной файл не найден: %1").arg(path));
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
-        return makeError(DiagnosticKind::InputFileError,
-                         QStringLiteral("Не удалось открыть входной файл: %1").arg(path));
+    if (!file.exists()) {
+        throw makeError(DiagnosticKind::InputFileError,
+                        QStringLiteral("Входной файл не найден: %1").arg(path));
+    }
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        throw makeError(DiagnosticKind::InputFileError,
+                        QStringLiteral("Не удалось открыть входной файл: %1").arg(path));
+    }
 
     QStringList lines;
     QTextStream in(&file);
@@ -60,10 +65,12 @@ struct Block {
     int firstLine;
 };
 
-// Разбивает список строк на блоки по пустым строкам, парсит каждый блок
-// через parseSentenceBlock и проверяет структуру через validateSentenceStructure.
-// Возвращает RawDocument при успехе или Diagnostic при первой ошибке.
-std::variant<RawDocument, Diagnostic> parseAndValidate(const QStringList& lines)
+/*!
+* \brief Разбить список строк на блоки предложений и проверить формат.
+* \param [in] lines Строки входного файла.
+* \return RawDocument при успехе, Diagnostic{InputFormatError} при первой ошибке.
+*/
+RawDocument parseAndValidate(const QStringList& lines)
 {
     QList<Block> blocks;
     Block current;
@@ -88,34 +95,31 @@ std::variant<RawDocument, Diagnostic> parseAndValidate(const QStringList& lines)
     if (!current.lines.isEmpty())
         blocks.append(current);
 
-    if (blocks.isEmpty())
-        return makeError(DiagnosticKind::InputFormatError,
-                         QStringLiteral("Входной файл не содержит предложений."));
+    if (blocks.isEmpty()) {
+        throw makeError(DiagnosticKind::InputFormatError,
+                        QStringLiteral("Входной файл не содержит предложений."));
+    }
 
-    if (blocks.size() > 1000)
-        return makeError(DiagnosticKind::InputFormatError,
-                         QStringLiteral("Превышено максимальное число предложений (1000): найдено %1.").arg(blocks.size()));
+    if (blocks.size() > 1000) {
+        throw makeError(DiagnosticKind::InputFormatError,
+                        QStringLiteral("Превышено максимальное число предложений (1000): найдено %1.").arg(blocks.size()));
+    }
 
     RawDocument doc;
     for (const Block& block : blocks) {
-        auto result = parseSentenceBlock(block.lines, block.firstLine);
-        if (std::holds_alternative<Diagnostic>(result))
-            return std::get<Diagnostic>(result);
-
-        RawSentence sentence = std::get<RawSentence>(result);
-        auto diag = validateSentenceStructure(sentence);
-        if (diag.has_value())
-            return diag.value();
-
+        RawSentence sentence = parseSentenceBlock(block.lines, block.firstLine);
+        validateSentenceStructure(sentence);
         doc.sentences.append(std::move(sentence));
     }
 
     return doc;
 }
 
-// Преобразует RawDocument в DocumentModel: строит SentenceModel для каждого
-// предложения, затем индекс sentById для доступа по идентификатору.
-// unique_ptr гарантирует стабильность адресов TokenNode.
+/*!
+* \brief Преобразовать RawDocument в DocumentModel с деревьями зависимостей.
+* \param [in] rawDoc Валидированное входное представление документа.
+* \return Модель документа с индексом sentById.
+*/
 DocumentModel buildModel(const RawDocument& rawDoc)
 {
     DocumentModel model;
@@ -129,20 +133,14 @@ DocumentModel buildModel(const RawDocument& rawDoc)
     return model;
 }
 
-// Оркестратор слоя ввода: readFile -> parseAndValidate -> buildModel.
-// При ошибке на любом этапе возвращает Diagnostic.
-std::variant<DocumentModel, Diagnostic> runInput(const CheckerRuntime& runtime)
+/*!
+* \brief Оркестратор слоя ввода: readFile, parseAndValidate, buildModel.
+* \param [in] runtime Runtime-контекст с путём ко входному файлу.
+* \return DocumentModel при успехе, Diagnostic при ошибке любого этапа.
+*/
+DocumentModel runInput(const CheckerRuntime& runtime)
 {
-    auto fileResult = readFile(runtime.config.inputPath);
-    if (std::holds_alternative<Diagnostic>(fileResult))
-        return std::get<Diagnostic>(fileResult);
-
-    const QStringList& lines = std::get<QStringList>(fileResult);
-
-    auto parseResult = parseAndValidate(lines);
-    if (std::holds_alternative<Diagnostic>(parseResult))
-        return std::get<Diagnostic>(parseResult);
-
-    const RawDocument& rawDoc = std::get<RawDocument>(parseResult);
+    QStringList lines = readFile(runtime.config.inputPath);
+    RawDocument rawDoc = parseAndValidate(lines);
     return buildModel(rawDoc);
 }

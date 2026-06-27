@@ -110,7 +110,7 @@ void loadPriorityIndex(PriorityIndex& idx)
 
 } // namespace
 
-std::variant<CheckerRuntime, Diagnostic> initializeRuntime(const RunConfig& config)
+CheckerRuntime initializeRuntime(const RunConfig& config)
 {
     CheckerRuntime runtime;
     runtime.config = config;
@@ -133,7 +133,7 @@ std::variant<CheckerRuntime, Diagnostic> initializeRuntime(const RunConfig& conf
         d.message = QStringLiteral("Не удалось загрузить словари. Укажите путь через --lists.")
                     + QStringLiteral("\n  ") + warns.join(QStringLiteral("\n  "));
         d.code = -1;
-        return d;
+        throw d;
     }
 
     runtime.resources = std::move(res);

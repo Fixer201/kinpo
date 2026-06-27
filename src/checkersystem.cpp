@@ -31,7 +31,7 @@ bool conditionApplies(PriorityConditionKind kind,
         for (int tid : higher.conflictTokenIds) {
             TokenNode* node = sentence.tokensById.value(tid, nullptr);
             if (!result && node &&
-                node->upos == Upos::PROPN &&
+                node->upos == Upos::Prop &&
                 (node->lemma == QStringLiteral("English") || node->form == QStringLiteral("English"))) {
                 bool hasLanguageChild = false;
                 for (TokenNode* child : node->children) {
@@ -149,8 +149,12 @@ QSet<CandidateError> checkSentence(const SentenceModel& sentence,
     return result;
 }
 
-// Цикл проверки всех предложений документа. Для каждого предложения
-// вызывает checkSentence и накапливает найденные ошибки в общий набор.
+/*!
+* \brief Проверить все предложения документа и собрать найденные ошибки.
+* \param [in] document Модель документа для анализа.
+* \param [in] runtime Runtime-контекст с правилами и ресурсами.
+* \return Общий набор неподавленных ошибок по всему документу.
+*/
 QSet<CandidateError> runAnalysis(const DocumentModel& document,
                                  const CheckerRuntime& runtime)
 {
