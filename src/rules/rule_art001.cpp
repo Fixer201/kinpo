@@ -212,6 +212,13 @@ QSet<CandidateError> Rule_ART001::check(const TokenNode& anchor,
     // для пропуска этих исключений.
     const bool isAmerica = isAmericaCompound(propn);
 
+    // PROPN-язык в позиции подлежащего = народ/нация.
+    // «The English are polite» — the здесь корректен.
+    // Зеркалирует исключение ART-003 для nsubj (строка 129 rule_art003.cpp).
+    if (runtime.resources.languages.contains(propn.lemma.toLower()) &&
+        propn.deprel == Deprel::Nsubj)
+        return res;
+
     // Исключение 5: N.Number=Plur и D.LEMMA=the
     if (!isAmerica && propn.features.number == NumberValue::Plur)
         return res;
