@@ -64,6 +64,56 @@ bool hasCorrelate(const DocumentModel& document, int sentenceIndex,
     return found;
 }
 
+/*!
+* \brief Проверить, есть ли в предложении токен с заданной леммой.
+* \param [in] document Модель документа.
+* \param [in] sentenceIndex Индекс предложения.
+* \param [in] lemma Искомая лемма.
+* \return true если токен с такой леммой найден.
+*/
+bool hasLemmaInSentence(const DocumentModel& document, int sentenceIndex,
+                        const QString& lemma)
+{
+    if (sentenceIndex < 0 || sentenceIndex >= static_cast<int>(document.sentences.size()))
+        return false;
+
+    const SentenceModel& sentence = *document.sentences[sentenceIndex];
+    const QString lower = lemma.toLower();
+
+    for (const TokenNode* token : sentence.tokens)
+        if (token->lemma.toLower() == lower)
+            return true;
+    return false;
+}
+
+/*!
+* \brief Создать CandidateError для CONJ-004 с заменой союза.
+* \param [in] anchor Ошибочный союз.
+* \param [in] res Множество для добавления кандидата.
+* \param [in] expected Ожидаемый союз (nor или or).
+* \return Множество с добавленным кандидатом.
+*/
+QSet<CandidateError> produceError(const TokenNode& anchor, QSet<CandidateError> res,
+                                  const QString& expected)
+{
+    CandidateError ce;
+    ce.ruleId = QStringLiteral("CONJ-004");
+    ce.sentId = QStringLiteral("test");
+    ce.displayTokenIds = {anchor.id};
+    ce.conflictTokenIds = {anchor.id};
+    AtomicEdit edit;
+    edit.type = AtomicEditType::ReplaceTokens;
+    edit.targetTokenIds = {anchor.id};
+    edit.newTokens.append(expected);
+    ce.edits.append(edit);
+    const QString correlate = (expected == QStringLiteral("nor"))
+                              ? QStringLiteral("neither") : QStringLiteral("either");
+    ce.description = QStringLiteral("В паре «%1» ожидается «%2», а не «%3».")
+                         .arg(correlate).arg(expected).arg(anchor.lemma.toLower());
+    res.insert(ce);
+    return res;
+}
+
 } // namespace
 
 QSet<CandidateError> Rule_CONJ004::check(const TokenNode& anchor,
@@ -79,56 +129,24 @@ QSet<CandidateError> Rule_CONJ004::check(const TokenNode& anchor,
 
     const QString lemma = anchor.lemma.toLower();
 
-    // neither в предложении: or заменяется на nor, nor заменяется на or.
-    // В смешанных конструкциях (neither...or...nor) оба союза ошибочны.
-    if ((lemma == QStringLiteral("or") || lemma == QStringLiteral("nor")) &&
-        hasCorrelate(document, sentenceIndex, QStringLiteral("neither"))) {
-        CandidateError ce;
-        ce.ruleId = QStringLiteral("CONJ-004");
-        ce.sentId = QStringLiteral("test");
-        ce.displayTokenIds = {anchor.id};
-        ce.conflictTokenIds = {anchor.id};
-        {
-            AtomicEdit edit;
-            edit.type = AtomicEditType::ReplaceTokens;
-            edit.targetTokenIds = {anchor.id};
-            const QString expected = (lemma == QStringLiteral("or"))
-                                     ? QStringLiteral("nor") : QStringLiteral("or");
-            edit.newTokens.append(expected);
-            ce.edits.append(edit);
-        }
-        const QString expected = (lemma == QStringLiteral("or"))
-                                 ? QStringLiteral("nor") : QStringLiteral("or");
-        ce.description = QStringLiteral("В паре «neither» ожидается «%1», а не «%2».")
-                             .arg(expected).arg(lemma);
-        res.insert(ce);
-        return res;
+    // neither в предложении: or всегда ошибочен, nor — только в смешанной
+    // конструкции где есть и or, и nor одновременно
+    if (lemma == QStringLiteral("or") && hasCorrelate(document, sentenceIndex, QStringLiteral("neither"))) {
+        return produceError(anchor, res, QStringLiteral("nor"));
+    }
+    if (lemma == QStringLiteral("nor") && hasCorrelate(document, sentenceIndex, QStringLiteral("neither")) &&
+        hasLemmaInSentence(document, sentenceIndex, QStringLiteral("or"))) {
+        return produceError(anchor, res, QStringLiteral("or"));
     }
 
-    // either в предложении: nor заменяется на or, or заменяется на nor.
-    // В смешанных конструкциях (either...nor...or) оба союза ошибочны.
-    if ((lemma == QStringLiteral("nor") || lemma == QStringLiteral("or")) &&
-        hasCorrelate(document, sentenceIndex, QStringLiteral("either"))) {
-        CandidateError ce;
-        ce.ruleId = QStringLiteral("CONJ-004");
-        ce.sentId = QStringLiteral("test");
-        ce.displayTokenIds = {anchor.id};
-        ce.conflictTokenIds = {anchor.id};
-        {
-            AtomicEdit edit;
-            edit.type = AtomicEditType::ReplaceTokens;
-            edit.targetTokenIds = {anchor.id};
-            const QString expected = (lemma == QStringLiteral("nor"))
-                                     ? QStringLiteral("or") : QStringLiteral("nor");
-            edit.newTokens.append(expected);
-            ce.edits.append(edit);
-        }
-        const QString expected = (lemma == QStringLiteral("nor"))
-                                 ? QStringLiteral("or") : QStringLiteral("nor");
-        ce.description = QStringLiteral("В паре «either» ожидается «%1», а не «%2».")
-                             .arg(expected).arg(lemma);
-        res.insert(ce);
-        return res;
+    // either в предложении: nor всегда ошибочен, or — только в смешанной
+    // конструкции где есть и nor, и or одновременно
+    if (lemma == QStringLiteral("nor") && hasCorrelate(document, sentenceIndex, QStringLiteral("either"))) {
+        return produceError(anchor, res, QStringLiteral("or"));
+    }
+    if (lemma == QStringLiteral("or") && hasCorrelate(document, sentenceIndex, QStringLiteral("either")) &&
+        hasLemmaInSentence(document, sentenceIndex, QStringLiteral("nor"))) {
+        return produceError(anchor, res, QStringLiteral("nor"));
     }
 
     return res;
