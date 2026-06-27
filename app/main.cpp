@@ -17,22 +17,22 @@
 #include "checkersystem.h"
 #include "outputmodule.h"
 #include <QCoreApplication>
-#include <QTextStream>
-#include <iostream>
+#include <cstdio>
 
 /*!
 * \brief Вывести Diagnostic в stderr.
 */
 static void printDiagnostic(const Diagnostic& d)
 {
-    QTextStream err(stderr);
-    err << QStringLiteral("[") << diagnosticKindToString(d.kind)
-        << QStringLiteral("] ");
+    QString msg = QStringLiteral("[") + diagnosticKindToString(d.kind) + QStringLiteral("] ");
     if (d.lineNumber.has_value())
-        err << QStringLiteral("строка ") << d.lineNumber.value() << QStringLiteral(": ");
+        msg += QStringLiteral("строка ") + QString::number(d.lineNumber.value()) + QStringLiteral(": ");
     if (d.sentId.has_value())
-        err << QStringLiteral("предложение ") << d.sentId.value() << QStringLiteral(": ");
-    err << d.message << Qt::endl;
+        msg += QStringLiteral("предложение ") + d.sentId.value() + QStringLiteral(": ");
+    msg += d.message;
+    QByteArray utf8 = msg.toUtf8();
+    fwrite(utf8.constData(), 1, utf8.size(), stderr);
+    fwrite("\n", 1, 1, stderr);
 }
 /*!
 * \brief Точка входа консольного приложения.
