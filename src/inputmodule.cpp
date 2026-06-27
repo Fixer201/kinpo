@@ -281,6 +281,16 @@ QHash<int, const RawToken*> buildTokenIndex(const RawSentence& sentence)
 
 } // namespace
 
+/*!
+* \brief Разобрать один блок строк CoNLL-U в RawSentence.
+* \param [in] block Список строк одного предложения (без пустых разделителей).
+* \param [in] firstLineNumber Номер первой строки блока во входном файле.
+* \return Разобранное предложение RawSentence.
+* \throws Diagnostic{InputFormatError} при ошибке формата.
+*
+* Разделяет строки на комментарии (# sent_id, # text), токены и MWT.
+* Выполняет локальную валидацию каждой строки.
+*/
 RawSentence parseSentenceBlock(const QStringList& block, int firstLineNumber)
 {
     RawSentence sentence;
@@ -294,56 +304,52 @@ RawSentence parseSentenceBlock(const QStringList& block, int firstLineNumber)
         const QString& line = block[i];
         int lineNumber = firstLineNumber + i;
 
-        // Пропускаем пустые строки внутри блока
-        if (line.isEmpty())
-            continue;
+        if (!line.isEmpty()) {
+            if (line.startsWith('#')) {
+                // Комментарий должен начинаться с "# ", иначе это ошибка формата
+                if (!line.startsWith(QStringLiteral("# "))) {
+                    throw Diagnostic{
+                        DiagnosticKind::InputFormatError,
+                        lineNumber,
+                        std::nullopt,
+                        QStringLiteral("Ошибка формата комментария"),
+                        -1
+                    };
+                }
 
-        // Обрабатываем комментарии (строки, начинающиеся с '#')
-        if (line.startsWith('#')) {
-            // Комментарий должен начинаться с "# ", иначе это ошибка формата
-            if (!line.startsWith(QStringLiteral("# "))) {
-                throw Diagnostic{
-                    DiagnosticKind::InputFormatError,
-                    lineNumber,
-                    std::nullopt,
-                    QStringLiteral("Ошибка формата комментария"),
-                    -1
-                };
+                // Извлекаем содержимое после "# "
+                QString content = line.mid(2);
+                if (content.startsWith(QStringLiteral("sent_id = "))) {
+                    sentence.sentId = content.mid(10).trimmed();
+                    hasSentId = true;
+                } else if (content.startsWith(QStringLiteral("text = "))) {
+                    sentence.text = content.mid(7).trimmed();
+                    hasText = true;
+                }
+            } else {
+                // Строка данных — должна содержать табуляции (токен или MWT)
+                if (!line.contains('\t')) {
+                    throw Diagnostic{
+                        DiagnosticKind::InputFormatError,
+                        lineNumber,
+                        std::nullopt,
+                        QStringLiteral("Ожидается 10 колонок, найдено 1"),
+                        -1
+                    };
+                }
+
+                // Определяем тип строки: MWT (ID содержит '-') или обычный токен
+                QStringList cols = line.split('\t');
+                QString firstCol = cols[0];
+
+                if (firstCol.contains('-')) {
+                    // Разбираем MWT и добавляем в список
+                    sentence.mwtRecords.append(parseMwtLine(line, lineNumber));
+                } else {
+                    // Разбираем обычный токен и добавляем в список
+                    sentence.tokens.append(parseTokenLine(line, lineNumber, expectedNextId));
+                }
             }
-
-            // Извлекаем содержимое после "# "
-            QString content = line.mid(2);
-            if (content.startsWith(QStringLiteral("sent_id = "))) {
-                sentence.sentId = content.mid(10).trimmed();
-                hasSentId = true;
-            } else if (content.startsWith(QStringLiteral("text = "))) {
-                sentence.text = content.mid(7).trimmed();
-                hasText = true;
-            }
-            continue;
-        }
-
-        // Строка данных — должна содержать табуляции (токен или MWT)
-        if (!line.contains('\t')) {
-            throw Diagnostic{
-                DiagnosticKind::InputFormatError,
-                lineNumber,
-                std::nullopt,
-                QStringLiteral("Ожидается 10 колонок, найдено 1"),
-                -1
-            };
-        }
-
-        // Определяем тип строки: MWT (ID содержит '-') или обычный токен
-        QStringList cols = line.split('\t');
-        QString firstCol = cols[0];
-
-        if (firstCol.contains('-')) {
-            // Разбираем MWT и добавляем в список
-            sentence.mwtRecords.append(parseMwtLine(line, lineNumber));
-        } else {
-            // Разбираем обычный токен и добавляем в список
-            sentence.tokens.append(parseTokenLine(line, lineNumber, expectedNextId));
         }
     }
 
@@ -434,28 +440,27 @@ void validateSentenceStructure(const RawSentence& sentence)
         color[t.id] = 0;
 
     for (const auto& token : sentence.tokens) {
-        if (color[token.id] != 0)
-            continue;
-
-        int current = token.id;
-        bool reachedProcessed = false;
-        while (current != 0 && !reachedProcessed) {
-            int state = color.value(current, 0);
-            if (state == 2) {
-                reachedProcessed = true;
-            } else if (state == 1) {
-                throw makeDiag(sentence, token.lineNumber,
-                               QStringLiteral("HEAD образует петлю"));
-            } else {
-                color[current] = 1;
-                current = idToToken.value(current)->headId;
+        if (color[token.id] == 0) {
+            int current = token.id;
+            bool reachedProcessed = false;
+            while (current != 0 && !reachedProcessed) {
+                int state = color.value(current, 0);
+                if (state == 2) {
+                    reachedProcessed = true;
+                } else if (state == 1) {
+                    throw makeDiag(sentence, token.lineNumber,
+                                   QStringLiteral("HEAD образует петлю"));
+                } else {
+                    color[current] = 1;
+                    current = idToToken.value(current)->headId;
+                }
             }
-        }
 
-        int fin = token.id;
-        while (fin != 0 && color.value(fin, 0) == 1) {
-            color[fin] = 2;
-            fin = idToToken.value(fin)->headId;
+            int fin = token.id;
+            while (fin != 0 && color.value(fin, 0) == 1) {
+                color[fin] = 2;
+                fin = idToToken.value(fin)->headId;
+            }
         }
     }
 
